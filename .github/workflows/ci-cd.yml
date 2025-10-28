@@ -1,0 +1,82 @@
+# (paste contents below)
+name: CI / CD - PatternOS
+
+on:
+  push:
+    branches: [ main, master ]   # adjust branches as needed
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  test-and-lint:
+    name: Lint → Test
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python: [3.11]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python }}
+          cache: "pip"
+
+      - name: Install system deps (linux)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential
+
+      - name: Install pip deps
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Lint (optional - installs flake8 if not present)
+        run: |
+          pip install flake8 || true
+          if [ -f .flake8 ] || [ -n "$(git ls-files '*.py' | sed -n '1p')" ]; then
+            flake8 || true
+          fi
+
+      - name: Run tests
+        run: |
+          pytest -q
+
+  build-and-push-image:
+    name: Build Docker image (optional push)
+    runs-on: ubuntu-latest
+    needs: test-and-lint
+    if: github.event_name == 'push'    # only build/push on push, not PRs (change if desired)
+    env:
+      IMAGE_NAME: patternos-app
+      IMAGE_TAG: ${{ github.sha }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up QEMU (multi-arch support)
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to registry (DockerHub/GHCR) if secrets provided
+        if: secrets.DOCKER_USERNAME && secrets.DOCKER_PASSWORD
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Build and optionally push image
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          file: ./Dockerfile
+          platforms: linux/amd64,linux/arm64
+          push: ${{ secrets.DOCKER_PUSH == 'true' && secrets.DOCKER_USERNAME && secrets.DOCKER_PASSWORD }}
+          tags: |
+            ${{ secrets.DOCKER_REGISTRY || 'docker.io' }}/${{ secrets.DOCKER_USERNAME || 'your-user' }}/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}
+            ${{ secrets.DOCKER_REGISTRY || 'docker.io' }}/${{ secrets.DOCKER_USERNAME || 'your-user' }}/${{ env.IMAGE_NAME }}:latest

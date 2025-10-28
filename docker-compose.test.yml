@@ -1,0 +1,11 @@
+version: "3.9"
+services:
+  app:
+    build: { context: ., }
+    ports: ["8000:8000"]
+    environment:
+      - ENV=dev
+      - JWT_SECRET=patternos-dev-secret
+      - JWT_ALGO=HS256
+      - DATABASE_URL=sqlite:///./patternos.db
+    command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]

@@ -1,0 +1,15 @@
+fastapi
+uvicorn[standard]
+sqlalchemy
+pydantic
+python-jose
+joblib
+scikit-learn
+kafka-python
+python-dotenv
+psycopg2-binary
+pandas
+pyarrow
+PyJWT
+alembic
+requests
