@@ -1,0 +1,24 @@
+[build]
+  base = "frontend/"
+  command = "npm run build"
+  publish = "frontend/dist"
+
+[[redirects]]
+  from = "/api/*"
+  to = "https://your-backend-url.com/api/:splat"
+  status = 200
+
+[[redirects]]
+  from = "/auth/*"
+  to = "https://your-backend-url.com/auth/:splat"
+  status = 200
+
+[[redirects]]
+  from = "/audience/*"
+  to = "https://your-backend-url.com/audience/:splat"
+  status = 200
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
