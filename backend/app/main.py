@@ -26,6 +26,10 @@ async def root():
         "docs": "/docs"
     }
 
+@app.get("/health")
+async def health():
+    return {"status": "healthy"}
+
 @app.get("/api/v1/health")
 async def health_check():
     return {
@@ -34,11 +38,16 @@ async def health_check():
         "version": "1.0.0"
     }
 
-# Import routers
-from app.api.v1 import auth, behavioral, audience, campaigns
-
-# Include routers
-app.include_router(auth.router, prefix="/api/v1/auth", tags=["Authentication"])
-app.include_router(behavioral.router, prefix="/api/v1/behavioral", tags=["Behavioral"])
-app.include_router(audience.router, prefix="/api/v1/audience", tags=["Audience"])
-app.include_router(campaigns.router, prefix="/api/v1/campaigns", tags=["Campaigns"])
+# Import routers with error handling
+try:
+    from app.api.v1 import auth, behavioral, audience, campaigns
+    
+    # Include routers
+    app.include_router(auth.router, prefix="/api/v1/auth", tags=["Authentication"])
+    app.include_router(behavioral.router, prefix="/api/v1/behavioral", tags=["Behavioral"])
+    app.include_router(audience.router, prefix="/api/v1/audience", tags=["Audience"])
+    app.include_router(campaigns.router, prefix="/api/v1/campaigns", tags=["Campaigns"])
+    
+    print("✓ All routers loaded successfully")
+except Exception as e:
+    print(f"✗ Error loading routers: {e}")
