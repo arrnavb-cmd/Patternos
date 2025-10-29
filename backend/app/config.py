@@ -10,10 +10,10 @@ class Settings(BaseSettings):
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
     
-    # CORS
-    ALLOWED_ORIGINS: List[str] = ["http://localhost:3000", "https://*.netlify.app"]
+    # CORS - Allow all origins for now
+    ALLOWED_ORIGINS: List[str] = ["*"]
     
-    # Database (we'll add PostgreSQL later)
+    # Database
     DATABASE_URL: str = "sqlite:///./patternos.db"
     
     class Config:

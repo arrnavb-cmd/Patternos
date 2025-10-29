@@ -9,10 +9,10 @@ app = FastAPI(
     redoc_url="/redoc"
 )
 
-# CORS - Allow frontend to connect
+# CORS - Allow all origins
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "https://*.netlify.app"],
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

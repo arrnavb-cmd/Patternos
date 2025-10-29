@@ -1,13 +1,17 @@
-import React, { useState } from 'react';
-import LandingPage from './pages/LandingPage';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 
-export default function App() {
-  const [currentPage, setCurrentPage] = useState('landing');
-
-  if (currentPage === 'dashboard') {
-    return <Dashboard onBackToHome={() => setCurrentPage('landing')} />;
-  }
-
-  return <LandingPage onEnterDashboard={() => setCurrentPage('dashboard')} />;
+function App() {
+  return (
+    <Router>
+      <Routes>
+        <Route path="/login" element={<Login />} />
+        <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/" element={<Navigate to="/login" replace />} />
+      </Routes>
+    </Router>
+  );
 }
+
+export default App;

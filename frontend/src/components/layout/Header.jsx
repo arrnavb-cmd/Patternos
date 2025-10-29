@@ -1,37 +1,32 @@
-import React from 'react';
-
-const Header = () => {
+export default function Header({ user, onLogout }) {
   return (
-    <header className="sticky top-0 z-50 bg-white/5 backdrop-blur-xl border-b border-white/10">
-      <div className="max-w-7xl mx-auto px-6 py-4">
-        <div className="flex justify-between items-center">
-          <div className="flex flex-col">
-            <h1 className="text-2xl font-bold tracking-wider bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent">
-              PATTERNOS
-            </h1>
-            <span className="text-xs text-white/60 mt-1">
-              Retail Media Intelligence OS
-            </span>
+    <header className="bg-slate-800 border-b border-slate-700 px-6 py-4">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-blue-400">PATTERNOS</h1>
+          <p className="text-sm text-slate-400">Retail Media Intelligence OS</p>
+        </div>
+        
+        <nav className="flex items-center gap-8">
+          <a href="/dashboard" className="text-slate-300 hover:text-white transition-colors">Dashboard</a>
+          <a href="#" className="text-slate-300 hover:text-white transition-colors">Analytics</a>
+          <a href="#" className="text-slate-300 hover:text-white transition-colors">Campaigns</a>
+          <a href="#" className="text-slate-300 hover:text-white transition-colors">Settings</a>
+        </nav>
+
+        <div className="flex items-center gap-4">
+          <div className="text-right">
+            <p className="text-sm text-white font-medium">{user?.company_name || 'User'}</p>
+            <p className="text-xs text-slate-400">{user?.email}</p>
           </div>
-          
-          <nav className="hidden md:flex gap-8">
-            <a href="#dashboard" className="text-white/80 hover:text-cyan-400 transition-colors font-medium">
-              Dashboard
-            </a>
-            <a href="#analytics" className="text-white/80 hover:text-cyan-400 transition-colors font-medium">
-              Analytics
-            </a>
-            <a href="#campaigns" className="text-white/80 hover:text-cyan-400 transition-colors font-medium">
-              Campaigns
-            </a>
-            <a href="#settings" className="text-white/80 hover:text-cyan-400 transition-colors font-medium">
-              Settings
-            </a>
-          </nav>
+          <button
+            onClick={onLogout}
+            className="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg transition-colors text-sm"
+          >
+            Logout
+          </button>
         </div>
       </div>
     </header>
   );
-};
-
-export default Header;
+}
