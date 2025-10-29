@@ -1,17 +1,17 @@
 from fastapi import APIRouter, HTTPException, status
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel
 from typing import Optional
 
 router = APIRouter()
 
 class UserRegister(BaseModel):
-    email: EmailStr
+    email: str
     password: str
     company_name: str
     role: str = "advertiser"
 
 class UserLogin(BaseModel):
-    email: EmailStr
+    email: str
     password: str
 
 class Token(BaseModel):
@@ -23,7 +23,6 @@ class Token(BaseModel):
 @router.post("/register", response_model=Token, status_code=status.HTTP_201_CREATED)
 async def register(user_data: UserRegister):
     """Register a new user/advertiser"""
-    # Mock response for now
     return {
         "access_token": "mock_access_token_abc123",
         "refresh_token": "mock_refresh_token_xyz789",
@@ -39,18 +38,24 @@ async def register(user_data: UserRegister):
 @router.post("/login", response_model=Token)
 async def login(credentials: UserLogin):
     """Login and get access token"""
-    # Mock response for now
-    return {
-        "access_token": "mock_access_token_abc123",
-        "refresh_token": "mock_refresh_token_xyz789",
-        "token_type": "bearer",
-        "user": {
-            "id": "usr_001",
-            "email": credentials.email,
-            "company_name": "Demo Company",
-            "role": "advertiser"
+    # Simple demo check
+    if credentials.email == "demo@patternos.ai" and credentials.password == "demo123":
+        return {
+            "access_token": "mock_access_token_abc123",
+            "refresh_token": "mock_refresh_token_xyz789",
+            "token_type": "bearer",
+            "user": {
+                "id": "usr_001",
+                "email": credentials.email,
+                "company_name": "Demo Company",
+                "role": "advertiser"
+            }
         }
-    }
+    else:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid email or password"
+        )
 
 @router.get("/me")
 async def get_current_user():
