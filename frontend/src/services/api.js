@@ -1,4 +1,5 @@
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1';
+const USE_MOCK = true; // Set to false when Railway works
 
 class PatternOSAPI {
   constructor() {
@@ -7,6 +8,11 @@ class PatternOSAPI {
   }
 
   async request(endpoint, options = {}) {
+    // MOCK MODE - Return fake data immediately
+    if (USE_MOCK) {
+      return this.mockRequest(endpoint, options);
+    }
+
     const headers = {
       'Content-Type': 'application/json',
       ...options.headers,
@@ -29,7 +35,44 @@ class PatternOSAPI {
     return response.json();
   }
 
-  // Auth
+  mockRequest(endpoint, options) {
+    // Mock responses
+    if (endpoint === '/auth/login') {
+      const body = JSON.parse(options.body);
+      if (body.email === 'demo@patternos.ai' && body.password === 'demo123') {
+        return Promise.resolve({
+          access_token: 'mock_token_123',
+          refresh_token: 'mock_refresh_456',
+          token_type: 'bearer',
+          user: {
+            id: 'usr_001',
+            email: body.email,
+            company_name: 'Demo Company',
+            role: 'advertiser'
+          }
+        });
+      }
+      return Promise.reject(new Error('Invalid credentials'));
+    }
+
+    if (endpoint === '/auth/register') {
+      const body = JSON.parse(options.body);
+      return Promise.resolve({
+        access_token: 'mock_token_123',
+        refresh_token: 'mock_refresh_456',
+        token_type: 'bearer',
+        user: {
+          id: 'usr_002',
+          email: body.email,
+          company_name: body.company_name,
+          role: body.role
+        }
+      });
+    }
+
+    return Promise.resolve({ status: 'ok' });
+  }
+
   async register(userData) {
     const response = await this.request('/auth/register', {
       method: 'POST',
@@ -54,12 +97,10 @@ class PatternOSAPI {
     return this.request('/auth/me');
   }
 
-  // Behavioral Intelligence
   async getIntentSignals(timeframe = '24h') {
     return this.request(`/behavioral/intent-signals?timeframe=${timeframe}`);
   }
 
-  // Campaigns
   async listCampaigns() {
     return this.request('/campaigns/list');
   }
