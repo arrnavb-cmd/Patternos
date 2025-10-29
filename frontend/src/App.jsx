@@ -6,7 +6,7 @@ import React, { useEffect, useState } from "react";
  * - fetches token from backend, then calls protected endpoints
  */
 // use Vite env if provided, otherwise fall back to relative '' for nginx proxying
-const BACKEND = import.meta.env.VITE_BACKEND_URL || "http://localhost:8000";
+const BACKEND = import.meta.env.VITE_BACKEND_URL ?? "";
 
 export default function App() {
   const [segments, setSegments] = useState([]);
