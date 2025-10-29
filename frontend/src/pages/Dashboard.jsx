@@ -8,21 +8,35 @@ export default function Dashboard() {
   const navigate = useNavigate();
 
   useEffect(() => {
+    const token = localStorage.getItem('access_token');
     const storedUser = localStorage.getItem('user');
-    if (!storedUser) {
-      navigate('/login');
-    } else {
+    
+    if (!token || !storedUser) {
+      navigate('/login', { replace: true });
+      return;
+    }
+    
+    try {
       setUser(JSON.parse(storedUser));
+    } catch (e) {
+      localStorage.clear();
+      navigate('/login', { replace: true });
     }
   }, [navigate]);
 
   const handleLogout = () => {
     localStorage.removeItem('user');
     localStorage.removeItem('access_token');
-    navigate('/login');
+    navigate('/login', { replace: true });
   };
 
-  if (!user) return null;
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-slate-900 flex items-center justify-center">
+        <div className="text-white">Loading...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-slate-900">
