@@ -1,5 +1,5 @@
-import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import React, { useEffect } from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import Login from './pages/auth/Login';
 import CreateCampaign from './pages/campaigns/CreateCampaign';
@@ -14,6 +14,23 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
     return <Navigate to="/login" />;
   }
   return <>{children}</>;
+}
+
+function RoleBasedRedirect() {
+  const { user } = useAuth();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (user) {
+      if (user.role === 'aggregator') {
+        navigate('/dashboard');
+      } else {
+        navigate('/campaigns');
+      }
+    }
+  }, [user, navigate]);
+
+  return <Navigate to="/login" />;
 }
 
 function Navigation() {
@@ -37,14 +54,21 @@ function Navigation() {
             </div>
             
             <div className="flex gap-1">
-              
-                href="/"
-                className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg font-medium transition"
-              >
-                {user.role === 'aggregator' ? 'Dashboard' : 'My Campaigns'}
-              </a>
-              {user.role === 'brand' && (
+              {user.role === 'aggregator' ? (
+                
+                  href="/dashboard"
+                  className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg font-medium transition"
+                >
+                  Dashboard
+                </a>
+              ) : (
                 <>
+                  
+                    href="/campaigns"
+                    className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg font-medium transition"
+                  >
+                    My Campaigns
+                  </a>
                   
                     href="/campaigns/create"
                     className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg font-medium transition"
@@ -93,13 +117,15 @@ function AppContent() {
     <div className="min-h-screen bg-gray-50">
       <Navigation />
       <Routes>
-        <Route path="/login" element={user ? <Navigate to="/" /> : <Login />} />
+        <Route path="/login" element={user ? <RoleBasedRedirect /> : <Login />} />
+        
+        <Route path="/" element={<RoleBasedRedirect />} />
         
         <Route
-          path="/"
+          path="/dashboard"
           element={
             <ProtectedRoute>
-              {user?.role === 'aggregator' ? <Dashboard /> : <CampaignsList />}
+              {user?.role === 'aggregator' ? <Dashboard /> : <Navigate to="/campaigns" />}
             </ProtectedRoute>
           }
         />
@@ -117,7 +143,7 @@ function AppContent() {
           path="/campaigns/create"
           element={
             <ProtectedRoute>
-              <CreateCampaign />
+              {user?.role === 'brand' ? <CreateCampaign /> : <Navigate to="/dashboard" />}
             </ProtectedRoute>
           }
         />
