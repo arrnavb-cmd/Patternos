@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import {
   DollarSign,
@@ -7,13 +8,28 @@ import {
   TrendingUp,
   Eye,
   BarChart3,
-  Settings,
   Palette
 } from 'lucide-react';
 
 export default function Dashboard() {
   const { user } = useAuth();
-  const [stats, setStats] = useState({
+  const navigate = useNavigate();
+
+  // FORCE REDIRECT brands to campaigns
+  useEffect(() => {
+    if (user?.role === 'brand') {
+      navigate('/campaigns', { replace: true });
+    }
+  }, [user, navigate]);
+
+  // If brand, show nothing (will redirect)
+  if (user?.role === 'brand') {
+    return <div className="min-h-screen bg-gray-900 flex items-center justify-center">
+      <p className="text-white">Redirecting...</p>
+    </div>;
+  }
+
+  const stats = {
     totalRevenue: 13000000,
     activeBrands: 47,
     liveCampaigns: 128,
@@ -21,7 +37,7 @@ export default function Dashboard() {
     totalImpressions: 45000000,
     avgCpm: 125,
     growthRate: 34.5
-  });
+  };
 
   const topBrands = [
     { name: 'HUL', campaigns: 15, tier: 'platinum', revenue: 2500000, roi: 4.8 },
@@ -41,17 +57,15 @@ export default function Dashboard() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 py-8">
       <div className="max-w-7xl mx-auto px-4">
-        {/* Welcome Banner */}
         <div className="bg-gradient-to-r from-purple-600 to-indigo-600 rounded-2xl p-8 mb-8 shadow-2xl">
           <h1 className="text-3xl font-bold text-white mb-2">
-            Welcome back, {user?.role === 'aggregator' ? 'Zepto' : user?.name}! 👋
+            Welcome back, Zepto! 👋
           </h1>
           <p className="text-purple-100">
             Your retail media network is performing excellently
           </p>
         </div>
 
-        {/* Key Metrics */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           <div className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-xl p-6 border border-gray-700 shadow-xl">
             <div className="flex items-center justify-between mb-4">
@@ -91,9 +105,7 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Revenue Breakdown & Performance */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-          {/* Revenue Breakdown */}
           <div className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-xl p-6 border border-gray-700 shadow-xl">
             <h2 className="text-xl font-bold text-white mb-6">Revenue Breakdown</h2>
             
@@ -137,7 +149,6 @@ export default function Dashboard() {
             </div>
           </div>
 
-          {/* Performance Metrics */}
           <div className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-xl p-6 border border-gray-700 shadow-xl">
             <h2 className="text-xl font-bold text-white mb-6">Performance Metrics</h2>
             
@@ -169,7 +180,6 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Top Performing Brands */}
         <div className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-xl p-6 border border-gray-700 shadow-xl mb-8">
           <h2 className="text-xl font-bold text-white mb-6">Top Performing Brands</h2>
           
@@ -201,7 +211,6 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Quick Actions */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           
             href="/brands/manage"
