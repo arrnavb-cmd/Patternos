@@ -19,7 +19,12 @@ export default function Login() {
     try {
       if (isLogin) {
         const response = await api.login({ email, password });
+        
+        // CRITICAL: Store both token and user
+        localStorage.setItem('access_token', response.access_token);
         localStorage.setItem('user', JSON.stringify(response.user));
+        
+        console.log('Login successful, token saved:', response.access_token);
         navigate('/dashboard');
       } else {
         const response = await api.register({ 
@@ -28,7 +33,11 @@ export default function Login() {
           company_name: companyName,
           role: 'advertiser'
         });
+        
+        // CRITICAL: Store both token and user
+        localStorage.setItem('access_token', response.access_token);
         localStorage.setItem('user', JSON.stringify(response.user));
+        
         navigate('/dashboard');
       }
     } catch (err) {
