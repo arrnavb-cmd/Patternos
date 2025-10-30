@@ -38,7 +38,7 @@ export default function CampaignsList() {
 
   const fetchCampaigns = async () => {
     try {
-      const response = await fetch('http://localhost:8001/api/v1/campaigns/list');
+      const response = await fetch('https://patternos-production-1cca.up.railway.app/api/v1/campaigns/list');
       const data = await response.json();
       
       // Add mock performance data
