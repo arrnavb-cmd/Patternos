@@ -33,15 +33,16 @@ export default function Login() {
           name: user.name
         }));
         
+        // FIXED: Proper routing based on role
         if (user.role === 'aggregator') {
-          navigate('/');
+          window.location.href = '/dashboard';
         } else {
-          navigate('/campaigns');
+          window.location.href = '/campaigns';
         }
       } else {
         setError('Invalid credentials. Try: admin@zepto.com / demo123');
+        setLoading(false);
       }
-      setLoading(false);
     }, 1000);
   };
 
@@ -114,7 +115,8 @@ export default function Login() {
             <div className="space-y-1 text-xs text-gray-600">
               <p>🏢 Admin: <code className="bg-white px-2 py-0.5 rounded">admin@zepto.com</code></p>
               <p>🎨 HUL: <code className="bg-white px-2 py-0.5 rounded">hul@zepto.com</code></p>
-              <p>Password: <code className="bg-white px-2 py-0.5 rounded">demo123</code></p>
+              <p>👟 Nike: <code className="bg-white px-2 py-0.5 rounded">nike@zepto.com</code></p>
+              <p>🔐 Password: <code className="bg-white px-2 py-0.5 rounded">demo123</code></p>
             </div>
           </div>
         </div>
