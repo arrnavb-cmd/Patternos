@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 import { 
   TrendingUp, 
   DollarSign, 
@@ -27,6 +28,7 @@ interface Campaign {
 }
 
 export default function CampaignsList() {
+  const { user } = useAuth();
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<'all' | 'active' | 'paused' | 'completed'>('all');
@@ -41,7 +43,6 @@ export default function CampaignsList() {
       const response = await fetch('https://patternos-production-1cca.up.railway.app/api/v1/campaigns/list');
       const data = await response.json();
       
-      // Add mock performance data
       const campaignsWithStats = data.campaigns.map((c: any) => ({
         ...c,
         impressions: Math.floor(Math.random() * 100000) + 10000,
@@ -71,18 +72,22 @@ export default function CampaignsList() {
     }
   };
 
-  const filteredCampaigns = campaigns.filter(c => {
+  // CRITICAL: Filter campaigns by brand if user is a brand
+  const brandFilteredCampaigns = user?.role === 'brand' 
+    ? campaigns.filter(c => c.brand === user.brand)
+    : campaigns;
+
+  const filteredCampaigns = brandFilteredCampaigns.filter(c => {
     const matchesFilter = filter === 'all' || c.status === filter;
     const matchesSearch = c.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
                          c.brand.toLowerCase().includes(searchQuery.toLowerCase());
     return matchesFilter && matchesSearch;
   });
 
-  // Calculate totals
-  const totalBudget = campaigns.reduce((sum, c) => sum + c.budget, 0);
-  const totalSpent = campaigns.reduce((sum, c) => sum + c.spent, 0);
-  const totalImpressions = campaigns.reduce((sum, c) => sum + (c.impressions || 0), 0);
-  const totalClicks = campaigns.reduce((sum, c) => sum + (c.clicks || 0), 0);
+  const totalBudget = brandFilteredCampaigns.reduce((sum, c) => sum + c.budget, 0);
+  const totalSpent = brandFilteredCampaigns.reduce((sum, c) => sum + c.spent, 0);
+  const totalImpressions = brandFilteredCampaigns.reduce((sum, c) => sum + (c.impressions || 0), 0);
+  const totalClicks = brandFilteredCampaigns.reduce((sum, c) => sum + (c.clicks || 0), 0);
 
   if (loading) {
     return (
@@ -98,19 +103,40 @@ export default function CampaignsList() {
   return (
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="max-w-7xl mx-auto px-4">
+        
+        {/* PERSONALIZED WELCOME BANNER FOR BRANDS */}
+        {user?.role === 'brand' && (
+          <div className="bg-gradient-to-r from-purple-600 to-indigo-600 rounded-2xl p-8 mb-8 shadow-2xl">
+            <h1 className="text-3xl font-bold text-white mb-2">
+              Welcome back, {user.brand}! 👋
+            </h1>
+            <p className="text-purple-100">
+              Manage your campaigns on Zepto Retail Media
+            </p>
+          </div>
+        )}
+
         {/* Header */}
         <div className="flex justify-between items-center mb-8">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Campaigns</h1>
-            <p className="text-gray-600 mt-1">Manage and track your advertising campaigns</p>
+            <h1 className="text-3xl font-bold text-gray-900">
+              {user?.role === 'brand' ? `${user.brand} Campaigns` : 'All Campaigns'}
+            </h1>
+            <p className="text-gray-600 mt-1">
+              {user?.role === 'brand' 
+                ? `Track and optimize your ${user.brand} advertising performance` 
+                : 'Manage and track all advertising campaigns'}
+            </p>
           </div>
-          <Link
-            to="/campaigns/create"
-            className="flex items-center gap-2 bg-purple-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-purple-700 transition"
-          >
-            <Plus size={20} />
-            Create Campaign
-          </Link>
+          {user?.role === 'brand' && (
+            <Link
+              to="/campaigns/create"
+              className="flex items-center gap-2 bg-purple-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-purple-700 transition"
+            >
+              <Plus size={20} />
+              Create Campaign
+            </Link>
+          )}
         </div>
 
         {/* Stats Cards */}
@@ -221,6 +247,11 @@ export default function CampaignsList() {
                   <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Campaign
                   </th>
+                  {user?.role !== 'brand' && (
+                    <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Brand
+                    </th>
+                  )}
                   <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Status
                   </th>
@@ -234,9 +265,6 @@ export default function CampaignsList() {
                     Clicks
                   </th>
                   <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Conversions
-                  </th>
-                  <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     ROAS
                   </th>
                   <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -248,11 +276,13 @@ export default function CampaignsList() {
                 {filteredCampaigns.map((campaign) => (
                   <tr key={campaign.id} className="hover:bg-gray-50 transition">
                     <td className="px-6 py-4">
-                      <div>
-                        <p className="font-medium text-gray-900">{campaign.name}</p>
-                        <p className="text-sm text-gray-500">{campaign.brand}</p>
-                      </div>
+                      <p className="font-medium text-gray-900">{campaign.name}</p>
                     </td>
+                    {user?.role !== 'brand' && (
+                      <td className="px-6 py-4 text-sm text-gray-600">
+                        {campaign.brand}
+                      </td>
+                    )}
                     <td className="px-6 py-4">
                       <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(campaign.status)}`}>
                         {campaign.status}
@@ -282,9 +312,6 @@ export default function CampaignsList() {
                         </p>
                       </div>
                     </td>
-                    <td className="px-6 py-4 text-sm text-gray-900">
-                      {campaign.conversions}
-                    </td>
                     <td className="px-6 py-4">
                       <span className={`text-sm font-medium ${
                         parseFloat(campaign.roas!) > 3 ? 'text-green-600' : 
@@ -312,17 +339,19 @@ export default function CampaignsList() {
               <Activity className="mx-auto text-gray-400" size={48} />
               <h3 className="mt-4 text-lg font-medium text-gray-900">No campaigns found</h3>
               <p className="mt-2 text-sm text-gray-500">
-                {filter === 'all' 
-                  ? 'Get started by creating your first campaign.'
-                  : `No ${filter} campaigns found. Try a different filter.`}
+                {user?.role === 'brand' 
+                  ? `Get started by creating your first ${user.brand} campaign.`
+                  : 'No campaigns match your filters.'}
               </p>
-              <Link
-                to="/campaigns/create"
-                className="mt-4 inline-flex items-center gap-2 bg-purple-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-purple-700"
-              >
-                <Plus size={20} />
-                Create Campaign
-              </Link>
+              {user?.role === 'brand' && (
+                <Link
+                  to="/campaigns/create"
+                  className="mt-4 inline-flex items-center gap-2 bg-purple-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-purple-700"
+                >
+                  <Plus size={20} />
+                  Create Campaign
+                </Link>
+              )}
             </div>
           )}
         </div>
