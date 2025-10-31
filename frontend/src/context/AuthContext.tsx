@@ -9,6 +9,7 @@ interface User {
 
 interface AuthContextType {
   user: User | null;
+  login: (userData: User) => void;
   logout: () => void;
 }
 
@@ -18,21 +19,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
 
   useEffect(() => {
-    // Load user from localStorage
-    const stored = localStorage.getItem('user');
+    const stored = localStorage.getItem('patternos_user');
     if (stored) {
-      setUser(JSON.parse(stored));
+      try {
+        setUser(JSON.parse(stored));
+      } catch (e) {
+        localStorage.removeItem('patternos_user');
+      }
     }
   }, []);
 
+  const login = (userData: User) => {
+    localStorage.setItem('patternos_user', JSON.stringify(userData));
+    setUser(userData);
+  };
+
   const logout = () => {
-    localStorage.removeItem('user');
+    localStorage.removeItem('patternos_user');
     setUser(null);
     window.location.href = '/login';
   };
 
   return (
-    <AuthContext.Provider value={{ user, logout }}>
+    <AuthContext.Provider value={{ user, login, logout }}>
       {children}
     </AuthContext.Provider>
   );

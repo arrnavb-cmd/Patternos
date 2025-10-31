@@ -1,20 +1,22 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext';
 import { Lock, Mail, Zap } from 'lucide-react';
 
 export default function Login() {
   const navigate = useNavigate();
+  const { login } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
   const users = {
-    'admin@zepto.com': { role: 'aggregator', brand: null, name: 'Zepto Admin' },
-    'hul@zepto.com': { role: 'brand', brand: 'HUL', name: 'HUL Marketing' },
-    'nike@zepto.com': { role: 'brand', brand: 'Nike', name: 'Nike India' },
-    'pg@zepto.com': { role: 'brand', brand: 'P&G', name: 'P&G Marketing' },
-    'boat@zepto.com': { role: 'brand', brand: 'boAt', name: 'boAt Team' },
+    'admin@zepto.com': { role: 'aggregator' as const, brand: null, name: 'Zepto Admin' },
+    'hul@zepto.com': { role: 'brand' as const, brand: 'HUL', name: 'HUL Marketing' },
+    'nike@zepto.com': { role: 'brand' as const, brand: 'Nike', name: 'Nike India' },
+    'pg@zepto.com': { role: 'brand' as const, brand: 'P&G', name: 'P&G Marketing' },
+    'boat@zepto.com': { role: 'brand' as const, brand: 'boAt', name: 'boAt Team' },
   };
 
   const handleLogin = (e: React.FormEvent) => {
@@ -26,24 +28,25 @@ export default function Login() {
       const user = users[email as keyof typeof users];
       
       if (user && password === 'demo123') {
-        localStorage.setItem('user', JSON.stringify({
+        const userData = {
           email,
           role: user.role,
           brand: user.brand,
           name: user.name
-        }));
+        };
+
+        login(userData);
         
-        // FIXED: Proper routing based on role
         if (user.role === 'aggregator') {
-          window.location.href = '/dashboard';
+          navigate('/dashboard', { replace: true });
         } else {
-          window.location.href = '/campaigns';
+          navigate('/campaigns', { replace: true });
         }
       } else {
         setError('Invalid credentials. Try: admin@zepto.com / demo123');
-        setLoading(false);
       }
-    }, 1000);
+      setLoading(false);
+    }, 500);
   };
 
   return (
