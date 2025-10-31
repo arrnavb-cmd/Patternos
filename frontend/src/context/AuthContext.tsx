@@ -1,47 +1,62 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { AuthService } from '../services/authService';
 
 interface User {
   email: string;
   role: 'aggregator' | 'brand';
   brand: string | null;
   name: string;
+  sessionId: string;
+  expiresAt: number;
 }
 
 interface AuthContextType {
   user: User | null;
-  login: (userData: User) => void;
+  loading: boolean;
+  login: (email: string, password: string) => boolean;
   logout: () => void;
+  isAggregator: () => boolean;
+  isBrand: () => boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
 
+  // Check session on mount and after every route change
   useEffect(() => {
-    const stored = localStorage.getItem('patternos_user');
-    if (stored) {
-      try {
-        setUser(JSON.parse(stored));
-      } catch (e) {
-        localStorage.removeItem('patternos_user');
-      }
-    }
+    console.log('🔍 Checking authentication...');
+    const session = AuthService.getSession();
+    setUser(session);
+    setLoading(false);
   }, []);
 
-  const login = (userData: User) => {
-    localStorage.setItem('patternos_user', JSON.stringify(userData));
-    setUser(userData);
+  const login = (email: string, password: string): boolean => {
+    console.log('🔐 Login attempt:', email);
+    const session = AuthService.login(email, password);
+    
+    if (session) {
+      setUser(session);
+      console.log('✅ Login successful');
+      return true;
+    }
+    
+    console.log('❌ Login failed');
+    return false;
   };
 
   const logout = () => {
-    localStorage.removeItem('patternos_user');
+    AuthService.logout();
     setUser(null);
-    window.location.href = '/login';
   };
 
+  const isAggregator = () => user?.role === 'aggregator';
+  const isBrand = () => user?.role === 'brand';
+
   return (
-    <AuthContext.Provider value={{ user, login, logout }}>
+    <AuthContext.Provider value={{ user, loading, login, logout, isAggregator, isBrand }}>
       {children}
     </AuthContext.Provider>
   );
