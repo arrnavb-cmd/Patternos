@@ -1,0 +1,136 @@
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import Header from './components/layout/Header';
+import Login from './pages/Login';
+import Dashboard from './pages/Dashboard';
+import BrandDashboard from './pages/BrandDashboard';
+import Campaigns from './pages/Campaigns';
+import Products from './pages/Products';
+import Profile from './pages/Profile';
+import Settings from './pages/Settings';
+import BehavioralIntelligence from './pages/intelligence/Behavioral';
+import VisualIntelligence from './pages/intelligence/Visual';
+import VoiceIntelligence from './pages/intelligence/Voice';
+import PredictiveIntelligence from './pages/intelligence/Predictive';
+import SocialMedia from './pages/social/SocialMedia';
+import Audiences from './pages/social/Audiences';
+import SocialAnalytics from './pages/social/Analytics';
+import ProtectedRoute from './components/ProtectedRoute';
+
+function App() {
+  const user = JSON.parse(localStorage.getItem('user') || '{}');
+  const isBrand = user?.role === 'brand_user' || user?.role === 'brand';
+  const isLoggedIn = !!localStorage.getItem('access_token');
+
+  return (
+    <Router>
+      {isLoggedIn && <Header />}
+      <Routes>
+        <Route path="/login" element={<Login />} />
+        <Route 
+          path="/dashboard" 
+          element={
+            <ProtectedRoute>
+              {isBrand ? <BrandDashboard /> : <Dashboard />}
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/campaigns" 
+          element={
+            <ProtectedRoute>
+              <Campaigns />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/products" 
+          element={
+            <ProtectedRoute>
+              <Products />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/profile" 
+          element={
+            <ProtectedRoute>
+              <Profile />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/settings" 
+          element={
+            <ProtectedRoute>
+              <Settings />
+            </ProtectedRoute>
+          } 
+        />
+        
+        {/* Intelligence Modules */}
+        <Route 
+          path="/intelligence/behavioral" 
+          element={
+            <ProtectedRoute>
+              <BehavioralIntelligence />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/intelligence/visual" 
+          element={
+            <ProtectedRoute>
+              <VisualIntelligence />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/intelligence/voice" 
+          element={
+            <ProtectedRoute>
+              <VoiceIntelligence />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/intelligence/predictive" 
+          element={
+            <ProtectedRoute>
+              <PredictiveIntelligence />
+            </ProtectedRoute>
+          } 
+        />
+
+        {/* Social Media Integration */}
+        <Route 
+          path="/social" 
+          element={
+            <ProtectedRoute>
+              <SocialMedia />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/social/audiences" 
+          element={
+            <ProtectedRoute>
+              <Audiences />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/social/analytics" 
+          element={
+            <ProtectedRoute>
+              <SocialAnalytics />
+            </ProtectedRoute>
+          } 
+        />
+
+        <Route path="/" element={<Navigate to="/dashboard" replace />} />
+      </Routes>
+    </Router>
+  );
+}
+
+export default App;

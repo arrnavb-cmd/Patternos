@@ -1,0 +1,12 @@
+// Add this import at the top with other imports
+import ZeptoAds from './pages/zepto-ads/ZeptoAds';
+
+// Add this route in the Routes section
+<Route 
+  path="/zepto-ads" 
+  element={
+    <ProtectedRoute>
+      <ZeptoAds />
+    </ProtectedRoute>
+  } 
+/>

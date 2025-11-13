@@ -1,0 +1,239 @@
+import React, { useEffect, useState } from 'react';
+import { Users, Activity, Brain, TrendingUp, Target, Zap, Package, ShoppingBag } from 'lucide-react';
+
+const StatCard = ({ icon: Icon, label, value, color }) => {
+  const colorClasses = {
+    blue: 'from-blue-900/30 to-blue-800/20 border-blue-700',
+    green: 'from-green-900/30 to-green-800/20 border-green-700',
+    purple: 'from-purple-900/30 to-purple-800/20 border-purple-700',
+    orange: 'from-orange-900/30 to-orange-800/20 border-orange-700'
+  };
+
+  return (
+    <div className={`bg-gradient-to-br ${colorClasses[color]} border rounded-xl p-6`}>
+      <Icon className={`w-8 h-8 text-${color}-400 mb-2`} />
+      <p className="text-3xl font-bold text-white">{value}</p>
+      <p className="text-sm text-gray-400">{label}</p>
+    </div>
+  );
+};
+
+const IntentDashboard = () => {
+  const [stats, setStats] = useState(null);
+  const [brandOpportunities, setBrandOpportunities] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const statsRes = await fetch('http://localhost:8000/api/v1/intent/stats?clientId=zepto');
+        const statsData = await statsRes.json();
+        
+        const oppRes = await fetch('http://localhost:8000/api/v1/intent/brand-opportunities?clientId=zepto');
+        const oppData = await oppRes.json();
+        
+        setStats(statsData);
+        setBrandOpportunities(Array.isArray(oppData) ? oppData : []);
+        setLoading(false);
+      } catch (error) {
+        console.error('Failed to fetch data:', error);
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+    const interval = setInterval(fetchData, 30000);
+    return () => clearInterval(interval);
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-900 text-white p-8">
+        <div className="animate-pulse">Loading intent intelligence...</div>
+      </div>
+    );
+  }
+
+  if (!stats || stats.error) {
+    return (
+      <div className="min-h-screen bg-gray-900 text-white p-8">
+        <div className="text-red-400">Failed to load intent data: {stats?.error || 'Unknown error'}</div>
+      </div>
+    );
+  }
+
+  const formatNumber = (num) => {
+    if (!num && num !== 0) return '0';
+    return num.toLocaleString();
+  };
+
+  const formatCurrency = (value) => {
+    if (value >= 10000000) return `₹${(value / 10000000).toFixed(2)}Cr`;
+    if (value >= 100000) return `₹${(value / 100000).toFixed(2)}L`;
+    return `₹${formatNumber(Math.round(value))}`;
+  };
+
+  return (
+    <div className="min-h-screen bg-gray-900 text-white p-8">
+      <div className="max-w-7xl mx-auto space-y-8">
+        <div>
+          <h1 className="text-3xl font-bold mb-2">Intent Intelligence Dashboard</h1>
+          <p className="text-gray-400">Real-time user intent tracking with 20k users from 500k orders dataset</p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <StatCard icon={Users} label="Total Users Tracked" value={formatNumber(stats.total_users)} color="blue" />
+          <StatCard icon={TrendingUp} label="High Intent Users" value={formatNumber(stats.high_intent)} color="orange" />
+          <StatCard icon={Activity} label="Medium Intent Users" value={formatNumber(stats.medium_intent)} color="purple" />
+          <StatCard icon={Brain} label="Average Intent Score" value={`${(stats.avg_score * 100).toFixed(1)}%`} color="green" />
+        </div>
+
+        <div className="bg-gray-800 rounded-xl p-6 border border-gray-700">
+          <h2 className="text-xl font-bold text-white mb-6">Intent Level Distribution</h2>
+          <div className="grid grid-cols-3 gap-6">
+            <div className="bg-orange-900/20 border border-orange-700 rounded-lg p-6">
+              <Target className="w-8 h-8 text-orange-400 mb-2" />
+              <p className="text-3xl font-bold text-orange-400">{formatNumber(stats.high_intent)}</p>
+              <p className="text-sm text-gray-400 mt-2">High Intent</p>
+              <p className="text-xs text-gray-500 mt-1">{stats.total_users > 0 ? ((stats.high_intent / stats.total_users) * 100).toFixed(1) : 0}% of total</p>
+            </div>
+            <div className="bg-purple-900/20 border border-purple-700 rounded-lg p-6">
+              <Activity className="w-8 h-8 text-purple-400 mb-2" />
+              <p className="text-3xl font-bold text-purple-400">{formatNumber(stats.medium_intent)}</p>
+              <p className="text-sm text-gray-400 mt-2">Medium Intent</p>
+              <p className="text-xs text-gray-500 mt-1">{stats.total_users > 0 ? ((stats.medium_intent / stats.total_users) * 100).toFixed(1) : 0}% of total</p>
+            </div>
+            <div className="bg-blue-900/20 border border-blue-700 rounded-lg p-6">
+              <Users className="w-8 h-8 text-blue-400 mb-2" />
+              <p className="text-3xl font-bold text-blue-400">{formatNumber(stats.low_intent)}</p>
+              <p className="text-sm text-gray-400 mt-2">Low Intent</p>
+              <p className="text-xs text-gray-500 mt-1">{stats.total_users > 0 ? ((stats.low_intent / stats.total_users) * 100).toFixed(1) : 0}% of total</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-gradient-to-r from-orange-900/30 to-red-900/20 border border-orange-600 rounded-xl p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-xl font-bold text-orange-400 mb-2 flex items-center">
+                <Zap className="w-6 h-6 mr-2" />
+                {formatNumber(stats.high_intent)} High-Intent Users Ready for Premium Targeting
+              </h3>
+              <p className="text-gray-300">These users show strong purchase signals - {stats.total_users > 0 ? ((stats.high_intent / stats.total_users) * 100).toFixed(1) : 0}% of total tracked users</p>
+            </div>
+            <button className="bg-orange-600 hover:bg-orange-700 px-6 py-3 rounded-lg font-semibold whitespace-nowrap">Create Campaign →</button>
+          </div>
+        </div>
+
+        {brandOpportunities.length > 0 && (
+          <div className="bg-gray-800 rounded-xl p-6 border border-gray-700">
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h2 className="text-xl font-bold text-white flex items-center">
+                  <ShoppingBag className="w-6 h-6 mr-2 text-orange-400" />
+                  High-Intent Opportunities by Brand
+                </h2>
+                <p className="text-sm text-gray-400 mt-1">Real-time insights from 20k user cohort</p>
+              </div>
+            </div>
+
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="text-left text-sm text-gray-400 border-b border-gray-700">
+                    <th className="pb-3">Rank</th>
+                    <th className="pb-3">Brand</th>
+                    <th className="pb-3">Category</th>
+                    <th className="pb-3">High-Intent Users</th>
+                    <th className="pb-3">Avg Order Value</th>
+                    <th className="pb-3">Potential Revenue</th>
+                    <th className="pb-3">Conversion Prob</th>
+                    <th className="pb-3">Action</th>
+                  </tr>
+                </thead>
+                <tbody className="text-sm">
+                  {brandOpportunities.map((opp, idx) => (
+                    <tr key={idx} className="border-b border-gray-800 hover:bg-gray-700/30">
+                      <td className="py-4">
+                        <span className="bg-orange-900/30 text-orange-400 px-2 py-1 rounded font-bold">#{idx + 1}</span>
+                      </td>
+                      <td className="py-4 font-semibold text-white">{opp.brand}</td>
+                      <td className="py-4">
+                        <div className="flex items-center">
+                          <Package className="w-4 h-4 mr-2 text-purple-400" />
+                          <span className="text-gray-300">{opp.category}</span>
+                        </div>
+                      </td>
+                      <td className="py-4">
+                        <span className="text-orange-400 font-bold">{formatNumber(opp.high_intent_users)}</span>
+                        <span className="text-gray-500 text-xs ml-1">users</span>
+                      </td>
+                      <td className="py-4 text-green-400">₹{formatNumber(Math.round(opp.avg_order_value))}</td>
+                      <td className="py-4">
+                        <span className="text-green-400 font-semibold">{formatCurrency(opp.potential_revenue)}</span>
+                      </td>
+                      <td className="py-4">
+                        <span className="bg-green-900/30 text-green-400 px-2 py-1 rounded text-xs font-semibold">{(opp.conversion_lift * 100).toFixed(1)}%</span>
+                      </td>
+                      <td className="py-4">
+                        <button className="bg-orange-600 hover:bg-orange-700 px-3 py-1 rounded text-xs font-semibold">Target →</button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            <div className="mt-6 pt-4 border-t border-gray-700">
+              <div className="grid grid-cols-3 gap-4 text-center">
+                <div>
+                  <p className="text-2xl font-bold text-orange-400">{formatNumber(brandOpportunities.reduce((sum, b) => sum + b.high_intent_users, 0))}</p>
+                  <p className="text-xs text-gray-400 mt-1">Total High-Intent Users</p>
+                </div>
+                <div>
+                  <p className="text-2xl font-bold text-green-400">{formatCurrency(brandOpportunities.reduce((sum, b) => sum + b.potential_revenue, 0))}</p>
+                  <p className="text-xs text-gray-400 mt-1">Total Revenue Opportunity</p>
+                </div>
+                <div>
+                  <p className="text-2xl font-bold text-blue-400">{brandOpportunities.length}</p>
+                  <p className="text-xs text-gray-400 mt-1">Brands Ready for Activation</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        <div className="bg-gradient-to-r from-purple-900/20 to-blue-900/20 border border-purple-700/50 rounded-xl p-6">
+          <h3 className="text-lg font-bold mb-4 flex items-center">
+            <Brain className="w-5 h-5 mr-2 text-purple-400" />
+            Intelligence Model Status
+          </h3>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+            <div>
+              <p className="text-gray-400 mb-1">Training Data</p>
+              <p className="text-white font-semibold">1.1M+ records</p>
+              <p className="text-xs text-gray-500">500k Zepto + 600k cross-platform</p>
+            </div>
+            <div>
+              <p className="text-gray-400 mb-1">Active Modules</p>
+              <p className="text-green-400 font-semibold">1 of 4</p>
+              <p className="text-xs text-gray-500">Behavioral Intelligence ✓</p>
+            </div>
+            <div>
+              <p className="text-gray-400 mb-1">Intent Accuracy</p>
+              <p className="text-orange-400 font-semibold">{(stats.avg_score * 100).toFixed(1)}%</p>
+              <p className="text-xs text-gray-500">Avg intent score</p>
+            </div>
+            <div>
+              <p className="text-gray-400 mb-1">Data Sources</p>
+              <p className="text-blue-400 font-semibold">7 platforms</p>
+              <p className="text-xs text-gray-500">Real customer IDs</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default IntentDashboard;

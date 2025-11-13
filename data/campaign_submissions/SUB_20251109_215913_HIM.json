@@ -1,0 +1,71 @@
+{
+  "brand": "himalaya",
+  "products": [
+    "Himalaya Himalaya Cleaners 500g 100g"
+  ],
+  "campaign_name": "Clean in 10 Mins",
+  "objective": "conversions",
+  "budget": "50000",
+  "duration_days": "6",
+  "start_date": "2025-11-09",
+  "target_audience": {
+    "age_groups": [
+      "25-34",
+      "35-44",
+      "45-54"
+    ],
+    "locations": [
+      "Agra",
+      "Ajmer",
+      "Akola"
+    ],
+    "interests": []
+  },
+  "ad_copy": "clean",
+  "headline": "Clean in 10 mins",
+  "description": "",
+  "channels": [
+    "Zepto_App",
+    "Meta",
+    "Google"
+  ],
+  "call_to_action": "shop_now",
+  "ad_images": [],
+  "submission_id": "SUB_20251109_215913_HIM",
+  "submitted_at": "2025-11-09T21:59:13.381555",
+  "status": "approved",
+  "compliance_checks": {
+    "all_passed": true,
+    "checks": {
+      "image_text_ratio": {
+        "passed": true,
+        "rule": "Text should not exceed 20% of image area",
+        "details": "Ad copy length: 5 characters"
+      },
+      "content_moderation": {
+        "passed": true,
+        "rule": "No prohibited content (nudity, violence, hate speech)",
+        "details": "No issues detected"
+      },
+      "brand_safety": {
+        "passed": true,
+        "rule": "Campaign must be from verified brand",
+        "details": "Brand: himalaya - Verified"
+      },
+      "technical_specs": {
+        "passed": true,
+        "rule": "Must have valid channels, budget, and duration",
+        "details": "Channels: 3, Budget: \u20b950000.0, Duration: 6 days"
+      },
+      "legal_compliance": {
+        "passed": true,
+        "rule": "Exaggerated claims must have disclaimers",
+        "details": "No unsubstantiated claims detected"
+      }
+    },
+    "checked_at": "2025-11-09T21:59:13.391707"
+  },
+  "approved_by": "admin",
+  "approved_at": "2025-11-09T21:59:35.165489",
+  "approval_notes": ""
+}

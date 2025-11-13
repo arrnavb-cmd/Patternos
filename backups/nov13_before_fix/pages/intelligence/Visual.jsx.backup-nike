@@ -1,0 +1,149 @@
+import React from "react";
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import Header from '../../components/layout/Header';
+import { Eye, Camera, Image, Scan, ArrowRight, Play } from 'lucide-react';
+
+export default function VisualIntelligence() {
+  const shelfAnalytics = [
+    { location: 'Mumbai - Bandra Store', products: 45, visibility: 89, share: 32, sales: 280000 },
+    { location: 'Delhi - Connaught Place', products: 52, visibility: 92, share: 38, sales: 350000 },
+    { location: 'Bangalore - Koramangala', products: 48, visibility: 87, share: 35, sales: 310000 },
+    { location: 'Pune - Viman Nagar', products: 40, visibility: 85, share: 30, sales: 245000 }
+  ];
+
+  const productRecognition = [
+    { product: 'Nike Air Max 270', detected: 1250, accuracy: 98.5, engagement: 'High' },
+    { product: 'Jordan 1 Retro', detected: 980, accuracy: 97.2, engagement: 'High' },
+    { product: 'Nike Dri-FIT', detected: 850, accuracy: 99.1, engagement: 'Medium' },
+    { product: 'Nike Pro Leggings', detected: 720, accuracy: 96.8, engagement: 'High' }
+  ];
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 py-8">
+      <div className="max-w-7xl mx-auto px-4">
+        <div className="mb-8">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-pink-500 to-rose-500 flex items-center justify-center">
+              <Eye className="text-white" size={24} />
+            </div>
+            <div>
+              <h1 className="text-3xl font-bold text-white">Visual Intelligence</h1>
+              <p className="text-gray-400">Computer vision & in-store shelf analytics</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Key Metrics */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+          <div className="bg-gray-800 rounded-xl p-6">
+            <Camera className="text-pink-400 mb-3" size={24} />
+            <p className="text-gray-400 text-sm">Products Tracked</p>
+            <p className="text-3xl font-bold text-white mt-1">185</p>
+            <p className="text-pink-400 text-sm mt-2">Across 124 stores</p>
+          </div>
+
+          <div className="bg-gray-800 rounded-xl p-6">
+            <Scan className="text-purple-400 mb-3" size={24} />
+            <p className="text-gray-400 text-sm">Shelf Share</p>
+            <p className="text-3xl font-bold text-white mt-1">34.2%</p>
+            <p className="text-green-400 text-sm mt-2">+2.8% vs last month</p>
+          </div>
+
+          <div className="bg-gray-800 rounded-xl p-6">
+            <Image className="text-blue-400 mb-3" size={24} />
+            <p className="text-gray-400 text-sm">Visibility Score</p>
+            <p className="text-3xl font-bold text-white mt-1">88.3%</p>
+            <p className="text-blue-400 text-sm mt-2">Above category avg</p>
+          </div>
+
+          <div className="bg-gray-800 rounded-xl p-6">
+            <Eye className="text-green-400 mb-3" size={24} />
+            <p className="text-gray-400 text-sm">Recognition Accuracy</p>
+            <p className="text-3xl font-bold text-white mt-1">97.9%</p>
+            <p className="text-green-400 text-sm mt-2">High confidence</p>
+          </div>
+        </div>
+
+        {/* Shelf Analytics */}
+        <div className="bg-gray-800 rounded-xl p-6 mb-8">
+          <h2 className="text-xl font-bold text-white mb-6">Shelf Analytics by Location</h2>
+          <div className="space-y-4">
+            {shelfAnalytics.map((shelf, idx) => (
+              <div key={idx} className="bg-gray-700 rounded-lg p-4">
+                <div className="flex items-center justify-between mb-3">
+                  <div>
+                    <h3 className="font-bold text-white">{shelf.location}</h3>
+                    <p className="text-sm text-gray-400">{shelf.products} products tracked</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-white font-bold">₹{(shelf.sales / 1000).toFixed(0)}K</p>
+                    <p className="text-sm text-gray-400">Monthly sales</p>
+                  </div>
+                </div>
+                <div className="grid grid-cols-3 gap-4 mt-4">
+                  <div>
+                    <p className="text-xs text-gray-400">Visibility</p>
+                    <p className="text-lg font-bold text-blue-400">{shelf.visibility}%</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-400">Share of Shelf</p>
+                    <p className="text-lg font-bold text-purple-400">{shelf.share}%</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-400">Compliance</p>
+                    <p className="text-lg font-bold text-green-400">94%</p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Product Recognition */}
+        <div className="bg-gray-800 rounded-xl p-6">
+          <h2 className="text-xl font-bold text-white mb-6">Product Recognition Performance</h2>
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-gray-700">
+                  <th className="text-left text-gray-400 pb-3">Product</th>
+                  <th className="text-left text-gray-400 pb-3">Detections</th>
+                  <th className="text-left text-gray-400 pb-3">Accuracy</th>
+                  <th className="text-left text-gray-400 pb-3">Engagement</th>
+                </tr>
+              </thead>
+              <tbody>
+                {productRecognition.map((product, idx) => (
+                  <tr key={idx} className="border-b border-gray-700">
+                    <td className="py-4 text-white font-medium">{product.product}</td>
+                    <td className="py-4 text-gray-300">{product.detected.toLocaleString()}</td>
+                    <td className="py-4">
+                      <div className="flex items-center gap-2">
+                        <div className="w-24 bg-gray-700 rounded-full h-2">
+                          <div 
+                            className="bg-gradient-to-r from-green-500 to-emerald-500 h-2 rounded-full"
+                            style={{ width: `${product.accuracy}%` }}
+                          />
+                        </div>
+                        <span className="text-white font-medium">{product.accuracy}%</span>
+                      </div>
+                    </td>
+                    <td className="py-4">
+                      <span className={`px-3 py-1 rounded-full text-xs font-medium ${
+                        product.engagement === 'High' ? 'bg-green-500/20 text-green-400' :
+                        'bg-yellow-500/20 text-yellow-400'
+                      }`}>
+                        {product.engagement}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}

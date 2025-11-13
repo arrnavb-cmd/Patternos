@@ -1,0 +1,210 @@
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+import sqlite3
+import os
+
+app = FastAPI(title="PatternOS API")
+
+# Get absolute database path
+DB_PATH = os.path.join(os.getcwd(), "intent_intelligence.db")
+
+# CORS
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=False,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+@app.get("/")
+async def root():
+    return {"service": "PatternOS API", "status": "operational", "db_exists": os.path.exists(DB_PATH)}
+
+@app.get("/health")
+async def health():
+    return {"status": "healthy", "db": os.path.exists(DB_PATH)}
+
+@app.get("/api/master/dashboard-v2")
+async def master_dashboard_v2(clientId: str = "zepto"):
+    try:
+        conn = sqlite3.connect(DB_PATH, timeout=10)
+        cursor = conn.cursor()
+        
+        cursor.execute("SELECT COALESCE(SUM(total_amount), 0) FROM purchases WHERE attributed_to_ad = 1")
+        total_gmv = cursor.fetchone()[0]
+        
+        cursor.execute("SELECT COUNT(DISTINCT user_id) FROM user_events")
+        users_tracked = cursor.fetchone()[0]
+        
+        cursor.execute("SELECT COUNT(DISTINCT user_id) FROM intent_scores WHERE intent_score >= 0.7")
+        high_intent_users = cursor.fetchone()[0]
+        
+        conn.close()
+        
+        return {
+            "total_gmv": round(total_gmv, 2),
+            "attributed_revenue": round(total_gmv * 0.7, 2),
+            "users_tracked": users_tracked,
+            "high_intent_users": high_intent_users,
+            "platform_revenue": round(total_gmv * 0.7 * 0.07, 2)
+        }
+    except Exception as e:
+        return {"error": str(e), "total_gmv": 0}
+
+@app.get("/api/master/intent-stats")
+async def intent_stats():
+    return {"high": 100, "medium": 200, "low": 50}
+
+@app.get("/api/master/platform-revenue")
+async def platform_revenue():
+    return {"monthly_retainer": 300000, "total": 300000}
+
+@app.get("/api/master/revenue-opportunities")
+async def revenue_opportunities():
+    return {"opportunities": []}
+
+@app.get("/api/master/brand-performance-v2")
+async def brand_performance():
+    return {"brands": []}
+
+# Brand endpoints
+@app.get("/api/master/brand/{brand_name}/metrics")
+async def brand_metrics(brand_name: str):
+    return {
+        "revenue": 125000,
+        "impressions": 500000,
+        "clicks": 25000,
+        "roas": 3.5
+    }
+
+@app.get("/api/organizations/{org_name}")
+async def get_organization(org_name: str):
+    return {
+        "id": "nike",
+        "name": "Nike",
+        "status": "active"
+    }
+
+@app.get("/api/campaigns")
+async def get_campaigns(organization_id: str = None):
+    return {
+        "campaigns": [
+            {"id": 1, "name": "Summer Campaign", "status": "active", "budget": 50000},
+            {"id": 2, "name": "Winter Campaign", "status": "active", "budget": 75000}
+        ]
+    }
+
+@app.post("/api/auth/login")
+async def login():
+    return {"token": "dummy_token", "user": {"name": "Admin"}}
+
+# Override the brand performance endpoint with real data
+@app.get("/api/master/brand-performance-v2")
+async def brand_performance_v2_fixed(clientId: str = "zepto"):
+    try:
+        conn = sqlite3.connect(DB_PATH, timeout=10)
+        cursor = conn.cursor()
+        
+        # Get brand performance from ad_campaigns
+        cursor.execute("""
+            SELECT brand, 
+                   SUM(spent) as total_spent,
+                   SUM(spent) * 3.5 as revenue,
+                   COUNT(*) as campaigns
+            FROM ad_campaigns
+            GROUP BY brand
+            LIMIT 10
+        """)
+        
+        rows = cursor.fetchall()
+        brands = []
+        for row in rows:
+            brands.append({
+                "name": row[0],
+                "spent": round(row[1], 2),
+                "revenue": round(row[2], 2),
+                "roas": 3.5,
+                "campaigns": row[3]
+            })
+        
+        conn.close()
+        return {"brands": brands, "total_brands": len(brands)}
+    except Exception as e:
+        return {"brands": [], "total_brands": 0, "error": str(e)}
+
+# Override the brand performance endpoint with real data
+@app.get("/api/master/brand-performance-v2")
+async def brand_performance_v2_fixed(clientId: str = "zepto"):
+    try:
+        conn = sqlite3.connect(DB_PATH, timeout=10)
+        cursor = conn.cursor()
+        
+        # Get brand performance from ad_campaigns
+        cursor.execute("""
+            SELECT brand, 
+                   SUM(spent) as total_spent,
+                   SUM(spent) * 3.5 as revenue,
+                   COUNT(*) as campaigns
+            FROM ad_campaigns
+            GROUP BY brand
+            LIMIT 10
+        """)
+        
+        rows = cursor.fetchall()
+        brands = []
+        for row in rows:
+            brands.append({
+                "name": row[0],
+                "spent": round(row[1], 2),
+                "revenue": round(row[2], 2),
+                "roas": 3.5,
+                "campaigns": row[3]
+            })
+        
+        conn.close()
+        return {"brands": brands, "total_brands": len(brands)}
+    except Exception as e:
+        return {"brands": [], "total_brands": 0, "error": str(e)}
+
+# Fixed brand performance endpoint
+@app.get("/api/master/brand-performance-v2")
+async def brand_performance_v2_real(clientId: str = "zepto"):
+    try:
+        conn = sqlite3.connect(DB_PATH, timeout=10)
+        cursor = conn.cursor()
+        
+        # Get brand performance from ad_impressions and ad_campaigns
+        cursor.execute("""
+            SELECT 
+                ai.brand,
+                COUNT(DISTINCT ai.id) as impressions,
+                SUM(CASE WHEN ai.clicked = 1 THEN 1 ELSE 0 END) as clicks,
+                COALESCE(ac.spent, 50000) as spent
+            FROM ad_impressions ai
+            LEFT JOIN ad_campaigns ac ON ai.brand = ac.brand
+            WHERE ai.client_id = 'zepto'
+            GROUP BY ai.brand
+            ORDER BY impressions DESC
+            LIMIT 10
+        """)
+        
+        rows = cursor.fetchall()
+        brands = []
+        for row in rows:
+            spent = row[3]
+            revenue = spent * 3.2  # Assume 3.2x ROAS
+            brands.append({
+                "name": row[0],
+                "impressions": row[1],
+                "clicks": row[2],
+                "spent": round(spent, 2),
+                "revenue": round(revenue, 2),
+                "roas": 3.2,
+                "ctr": round((row[2] / row[1] * 100) if row[1] > 0 else 0, 2)
+            })
+        
+        conn.close()
+        return {"brands": brands, "total_brands": len(brands)}
+    except Exception as e:
+        return {"brands": [], "total_brands": 0, "error": str(e)}

@@ -1,0 +1,309 @@
+from fastapi import APIRouter, HTTPException, Depends
+from sqlalchemy.orm import Session
+from typing import List, Optional
+from pydantic import BaseModel
+from datetime import datetime, timedelta
+from app.database import get_db, UserEvent, IntentScore, Opportunity
+import sqlite3
+
+router = APIRouter(prefix="/api/v1/intent", tags=["Intent Intelligence"])
+
+def get_sqlite_db():
+    conn = sqlite3.connect('intent_intelligence.db')
+    conn.row_factory = sqlite3.Row
+    return conn
+
+# Request Models
+class UserEventRequest(BaseModel):
+    userId: str
+    eventType: str
+    category: str
+    productId: Optional[str] = None
+    searchQuery: Optional[str] = None
+    location: Optional[str] = None
+    timestamp: Optional[str] = None
+
+@router.get("/stats")
+async def get_stats(clientId: str = "zepto"):
+    """Get intent intelligence statistics"""
+    conn = get_sqlite_db()
+    cursor = conn.cursor()
+    
+    cursor.execute("""
+        SELECT 
+            COUNT(DISTINCT user_id) as total_users,
+            COUNT(*) as total_events,
+            COUNT(DISTINCT CASE WHEN intent_level = 'high' THEN user_id END) as high_users,
+            COUNT(DISTINCT CASE WHEN intent_level = 'medium' THEN user_id END) as medium_users,
+            COUNT(DISTINCT CASE WHEN intent_level = 'low' THEN user_id END) as low_users,
+            COUNT(DISTINCT CASE WHEN intent_level = 'minimal' THEN user_id END) as minimal_users
+        FROM intent_scores
+        WHERE client_id = ?
+    """, (clientId,))
+    
+    result = dict(cursor.fetchone())
+    conn.close()
+    
+    return {
+        'totalUsers': result['total_users'],
+        'totalEvents': result['total_events'],
+        'totalScores': result['total_users'],
+        'intentDistribution': {
+            'high': result['high_users'],
+            'medium': result['medium_users'],
+            'low': result['low_users'],
+            'minimal': result['minimal_users']
+        }
+    }
+
+@router.get("/high-intent/{category}")
+async def get_high_intent_users(
+    category: str,
+    clientId: str = "zepto",
+    minScore: float = 0.7,
+    limit: int = 100
+):
+    """Get high-intent users for a category"""
+    conn = get_sqlite_db()
+    cursor = conn.cursor()
+    
+    cursor.execute("""
+        SELECT user_id, intent_score, intent_level, last_activity
+        FROM intent_scores
+        WHERE client_id = ? AND category = ? AND intent_score >= ?
+        ORDER BY intent_score DESC
+        LIMIT ?
+    """, (clientId, category, minScore, limit))
+    
+    users = [dict(row) for row in cursor.fetchall()]
+    conn.close()
+    
+    return {
+        'category': category,
+        'count': len(users),
+        'users': users
+    }
+
+@router.get("/opportunities/by-category")
+async def get_opportunities_by_category(
+    clientId: str = "zepto",
+    minScore: float = 0.7
+):
+    """Get opportunities by category"""
+    conn = get_sqlite_db()
+    cursor = conn.cursor()
+    
+    categories = ['footwear', 'apparel', 'electronics', 'groceries', 'beauty', 'sports']
+    opportunities = []
+    
+    for category in categories:
+        cursor.execute("""
+            SELECT COUNT(*) as count, AVG(intent_score) as avg_score
+            FROM intent_scores
+            WHERE client_id = ? AND category = ? AND intent_score >= ?
+        """, (clientId, category, minScore))
+        
+        result = dict(cursor.fetchone())
+        
+        if result['count'] > 0:
+            brand_mapping = {
+                'footwear': ['Nike', 'Adidas', 'Puma'],
+                'apparel': ['Nike', 'Adidas', 'H&M'],
+                'electronics': ['Samsung', 'Apple', 'Sony'],
+                'groceries': ['Amul', 'Maggi', 'ITC'],
+                'beauty': ['Lakme', "Pond's", 'Maybelline'],
+                'sports': ['Nike', 'Puma', 'Decathlon']
+            }
+            
+            opportunities.append({
+                'category': category,
+                'userCount': result['count'],
+                'avgIntentScore': round(result['avg_score'], 2),
+                'revenueEstimate': int(result['count'] * 2000 * result['avg_score'] * 0.05),
+                'suggestedBrands': brand_mapping.get(category, [])
+            })
+    
+    conn.close()
+    opportunities.sort(key=lambda x: x['userCount'], reverse=True)
+    
+    return {
+        'clientId': clientId,
+        'opportunities': opportunities,
+        'totalHighIntentUsers': sum(o['userCount'] for o in opportunities)
+    }
+
+@router.get("/analytics/comparison")
+async def get_analytics_comparison(
+    clientId: str = "zepto",
+    compareBy: str = "location"
+):
+    """Get analytics comparison by location or category with products sold"""
+    import json
+    conn = get_sqlite_db()
+    cursor = conn.cursor()
+    
+    results = []
+    
+    if compareBy == "location":
+        # Get location stats
+        cursor.execute("""
+            SELECT 
+                location,
+                COUNT(*) as purchases,
+                SUM(total_amount) as revenue
+            FROM purchases
+            WHERE client_id = ? AND location IS NOT NULL
+            GROUP BY location
+            ORDER BY revenue DESC
+        """, (clientId,))
+        
+        for row in cursor.fetchall():
+            location = row[0]
+            
+            # Get top products in this location
+            cursor.execute("""
+                SELECT items, COUNT(*) as count
+                FROM purchases
+                WHERE client_id = ? AND location = ?
+                GROUP BY items
+                ORDER BY count DESC
+                LIMIT 5
+            """, (clientId, location))
+            
+            top_products = []
+            for prod_row in cursor.fetchall():
+                try:
+                    items = json.loads(prod_row[0])
+                    if items and len(items) > 0:
+                        top_products.append(items[0].get('product_name', 'Unknown'))
+                except:
+                    pass
+            
+            results.append({
+                'dimension': location,
+                'purchases': row[1],
+                'revenue': row[2],
+                'topProducts': top_products[:3]
+            })
+    
+    elif compareBy == "category":
+        # Get category stats
+        cursor.execute("""
+            SELECT 
+                category,
+                COUNT(*) as purchases,
+                SUM(total_amount) as revenue
+            FROM purchases
+            WHERE client_id = ? AND category IS NOT NULL
+            GROUP BY category
+            ORDER BY revenue DESC
+        """, (clientId,))
+        
+        for row in cursor.fetchall():
+            category = row[0]
+            
+            # Get top products in this category
+            cursor.execute("""
+                SELECT items, COUNT(*) as count
+                FROM purchases
+                WHERE client_id = ? AND category = ?
+                GROUP BY items
+                ORDER BY count DESC
+                LIMIT 5
+            """, (clientId, category))
+            
+            top_products = []
+            for prod_row in cursor.fetchall():
+                try:
+                    items = json.loads(prod_row[0])
+                    if items and len(items) > 0:
+                        top_products.append(items[0].get('product_name', 'Unknown'))
+                except:
+                    pass
+            
+            results.append({
+                'dimension': category,
+                'purchases': row[1],
+                'revenue': row[2],
+                'topProducts': top_products[:3]
+            })
+    
+    conn.close()
+    
+    return {
+        'compareBy': compareBy,
+        'data': results
+    }
+
+@router.post("/ingest")
+async def ingest_event(event: UserEventRequest, clientId: str = "zepto"):
+    """Ingest user event"""
+    # Implementation here
+    return {"status": "success"}
+
+@router.get("/audience")
+async def get_audience_users(
+    min_events: int = 20,
+    limit: int = 100,
+    category: str = None,
+    min_price: float = 0,
+    max_price: float = 1000000
+):
+    """Get high-intent users for audience targeting"""
+    import sqlite3
+    intent_db = sqlite3.connect('intent_intelligence.db')
+    cursor = intent_db.cursor()
+    
+    # Build query based on filters
+    query = """
+        SELECT DISTINCT
+            u.user_id,
+            u.category,
+            u.product_viewed,
+            u.total_events,
+            u.intent_score,
+            u.last_active,
+            p.total_amount as avg_product_price
+        FROM user_intent u
+        LEFT JOIN purchases p ON u.user_id = p.user_id
+        WHERE u.total_events >= ?
+        AND u.intent_score > 30
+    """
+    
+    params = [min_events]
+    
+    if category and category != 'All':
+        query += " AND u.category = ?"
+        params.append(category)
+    
+    if min_price > 0:
+        query += " AND p.total_amount >= ?"
+        params.append(min_price)
+    
+    if max_price < 1000000:
+        query += " AND p.total_amount <= ?"
+        params.append(max_price)
+    
+    query += " ORDER BY u.intent_score DESC LIMIT ?"
+    params.append(limit)
+    
+    cursor.execute(query, params)
+    
+    users = []
+    for row in cursor.fetchall():
+        users.append({
+            "user_id": row[0],
+            "category": row[1],
+            "product_viewed": row[2],
+            "total_events": row[3],
+            "intent_score": round(row[4], 1),
+            "last_active": row[5],
+            "avg_product_price": round(row[6], 2) if row[6] else 0
+        })
+    
+    intent_db.close()
+    
+    return {
+        "users": users,
+        "total": len(users)
+    }

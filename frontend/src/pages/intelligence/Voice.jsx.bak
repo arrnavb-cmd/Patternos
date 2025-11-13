@@ -1,0 +1,115 @@
+import { useState } from 'react';
+import { Mic, Globe, MessageCircle, TrendingUp, Languages } from 'lucide-react';
+
+export default function VoiceIntelligence() {
+  const languageData = [
+    { language: 'Hindi', queries: 145000, conversion: 3.8, growth: '+32%' },
+    { language: 'English', queries: 128000, conversion: 4.2, growth: '+18%' },
+    { language: 'Tamil', queries: 89000, conversion: 3.5, growth: '+45%' },
+    { language: 'Telugu', queries: 76000, conversion: 3.2, growth: '+38%' },
+    { language: 'Marathi', queries: 65000, conversion: 3.6, growth: '+28%' }
+  ];
+
+  const voiceQueries = [
+    { query: 'Nike ke running shoes dikhao', count: 8500, intent: 'product_search' },
+    { query: 'Best Nike shoes under 5000', count: 7200, intent: 'price_research' },
+    { query: 'Nike Air Max kahan milega', count: 6800, intent: 'location' },
+    { query: 'Nike ka sabse accha shoe', count: 5900, intent: 'recommendation' }
+  ];
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 py-8">
+      <div className="max-w-7xl mx-auto px-4">
+        <div className="mb-8">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-red-500 to-orange-500 flex items-center justify-center">
+              <Mic className="text-white" size={24} />
+            </div>
+            <div>
+              <h1 className="text-3xl font-bold text-white">Voice Intelligence</h1>
+              <p className="text-gray-400">50+ languages, conversational commerce insights</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Key Metrics */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+          <div className="bg-gray-800 rounded-xl p-6">
+            <Mic className="text-red-400 mb-3" size={24} />
+            <p className="text-gray-400 text-sm">Voice Queries</p>
+            <p className="text-3xl font-bold text-white mt-1">503K</p>
+            <p className="text-green-400 text-sm mt-2">+32% this month</p>
+          </div>
+
+          <div className="bg-gray-800 rounded-xl p-6">
+            <Languages className="text-orange-400 mb-3" size={24} />
+            <p className="text-gray-400 text-sm">Languages</p>
+            <p className="text-3xl font-bold text-white mt-1">12</p>
+            <p className="text-orange-400 text-sm mt-2">Active markets</p>
+          </div>
+
+          <div className="bg-gray-800 rounded-xl p-6">
+            <MessageCircle className="text-purple-400 mb-3" size={24} />
+            <p className="text-gray-400 text-sm">Avg Conversion</p>
+            <p className="text-3xl font-bold text-white mt-1">3.7%</p>
+            <p className="text-purple-400 text-sm mt-2">Voice-to-purchase</p>
+          </div>
+
+          <div className="bg-gray-800 rounded-xl p-6">
+            <Globe className="text-blue-400 mb-3" size={24} />
+            <p className="text-gray-400 text-sm">Market Reach</p>
+            <p className="text-3xl font-bold text-white mt-1">85%</p>
+            <p className="text-blue-400 text-sm mt-2">Of Indian shoppers</p>
+          </div>
+        </div>
+
+        {/* Language Performance */}
+        <div className="bg-gray-800 rounded-xl p-6 mb-8">
+          <h2 className="text-xl font-bold text-white mb-6">Performance by Language</h2>
+          <div className="space-y-4">
+            {languageData.map((lang, idx) => (
+              <div key={idx} className="bg-gray-700 rounded-lg p-4">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-orange-500 to-red-500 flex items-center justify-center text-white font-bold">
+                      {idx + 1}
+                    </div>
+                    <div>
+                      <h3 className="font-bold text-white">{lang.language}</h3>
+                      <p className="text-sm text-gray-400">{lang.queries.toLocaleString()} queries</p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-white font-bold">{lang.conversion}% CVR</p>
+                    <p className="text-green-400 text-sm">{lang.growth} growth</p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Top Voice Queries */}
+        <div className="bg-gray-800 rounded-xl p-6">
+          <h2 className="text-xl font-bold text-white mb-6">Top Voice Queries</h2>
+          <div className="space-y-3">
+            {voiceQueries.map((query, idx) => (
+              <div key={idx} className="bg-gray-700 rounded-lg p-4 flex items-center justify-between">
+                <div>
+                  <p className="text-white font-medium">"{query.query}"</p>
+                  <span className="inline-block mt-1 px-3 py-1 rounded-full text-xs font-medium bg-blue-500/20 text-blue-400">
+                    {query.intent.replace('_', ' ')}
+                  </span>
+                </div>
+                <div className="text-right">
+                  <p className="text-white font-bold">{query.count.toLocaleString()}</p>
+                  <p className="text-sm text-gray-400">queries</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}

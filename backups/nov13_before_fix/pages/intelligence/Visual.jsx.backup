@@ -1,0 +1,22 @@
+import React, { useState, useEffect } from 'react';
+import { Eye, Camera, Package } from 'lucide-react';
+
+export default function Visual() {
+  const user = JSON.parse(localStorage.getItem('user') || '{}');
+  const brand = user.username?.replace('@brand.com', '') || 'himalaya';
+
+  return (
+    <div className="min-h-screen bg-gray-900 p-8">
+      <div className="max-w-7xl mx-auto">
+        <h1 className="text-3xl font-bold text-white mb-2">Visual Intelligence</h1>
+        <p className="text-gray-400 mb-8">Computer vision & product detection for {brand.charAt(0).toUpperCase() + brand.slice(1)}</p>
+
+        <div className="bg-gray-800 rounded-xl p-8 border border-gray-700 text-center">
+          <Camera className="mx-auto text-gray-600 mb-4" size={64} />
+          <h3 className="text-xl font-bold text-white mb-2">Visual Intelligence Module</h3>
+          <p className="text-gray-400">Product image analysis and shelf detection coming soon</p>
+        </div>
+      </div>
+    </div>
+  );
+}

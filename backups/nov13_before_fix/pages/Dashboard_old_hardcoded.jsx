@@ -1,0 +1,285 @@
+import React, { useEffect, useState } from "react";
+import { DollarSign, TrendingUp, Users, Target } from "lucide-react";
+
+/**
+ * Updated Dashboard Component
+ * Now includes the monthly platform retainer fee of ₹3,00,000 (₹3 lakhs) in total revenue calculation
+ */
+
+const BACKEND = import.meta.env.VITE_BACKEND_URL ?? "";
+
+// Monthly retainer fee (in lakhs)
+const MONTHLY_RETAINER_FEE = 3.0; // ₹3 lakhs
+
+export default function Dashboard() {
+  const [analyticsData, setAnalyticsData] = useState(null);
+  
+  useEffect(() => {
+    const fetchAnalytics = async () => {
+      try {
+        const user = JSON.parse(localStorage.getItem('user') || '{}');
+        const brand = user.username?.replace('@brand.com', '') || 'himalaya';
+        const res = await fetch(`http://localhost:8000/api/v1/brand/analytics/${brand}`);
+        const data = await res.json();
+        if (!data.error) {
+          setAnalyticsData(data);
+        }
+      } catch (err) {
+        console.error('Failed to fetch analytics:', err);
+      }
+    };
+    fetchAnalytics();
+  }, []);
+
+  const [dashboardData, setDashboardData] = useState({
+    totalGMV: 1.2, // ₹1.2 Cr
+    attributedRevenue: 1.1, // ₹1.1 Cr
+    usersTracked: 100000,
+    highIntentUsers: 29941,
+    adPlatformFee: 16.0, // ₹16 lakhs
+    highIntentShare: 22.0, // ₹22 lakhs
+    monthlyRetainerFee: MONTHLY_RETAINER_FEE, // ₹3 lakhs
+  });
+
+  const [loading, setLoading] = useState(false);
+
+  // Calculate platform revenue including retainer fee
+  const totalPlatformRevenue = (
+    dashboardData.adPlatformFee + 
+    dashboardData.highIntentShare + 
+    dashboardData.monthlyRetainerFee
+  ).toFixed(2);
+
+  useEffect(() => {
+    // In a real implementation, you would fetch this data from the backend
+    // For now, we're using the data from your screenshot
+    fetchDashboardData();
+  }, []);
+
+  async function fetchDashboardData() {
+    setLoading(true);
+    try {
+      // This would be replaced with actual API calls
+      // For now, using the values from the screenshot
+      await new Promise(resolve => setTimeout(resolve, 500)); // Simulate API call
+      
+      setDashboardData({
+        totalGMV: 1.2,
+        attributedRevenue: 1.1,
+        usersTracked: 100000,
+        highIntentUsers: 29941,
+        adPlatformFee: 16.0,
+        highIntentShare: 22.0,
+        monthlyRetainerFee: MONTHLY_RETAINER_FEE,
+      });
+    } catch (error) {
+      console.error("Error fetching dashboard data:", error);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-8">
+      <div className="max-w-7xl mx-auto">
+        {/* Header */}
+        <div className="mb-8">
+          <div className="flex items-center gap-3 mb-2">
+            <div className="w-12 h-12 bg-yellow-500 rounded-lg flex items-center justify-center">
+              <span className="text-2xl">⚡</span>
+            </div>
+            <div>
+              <h1 className="text-3xl font-bold text-white">PatternOS</h1>
+              <p className="text-slate-400 text-sm">Zepto Master</p>
+            </div>
+          </div>
+          
+          <h2 className="text-4xl font-bold text-white mt-4">Zepto Master Dashboard</h2>
+          <p className="text-slate-400 text-lg mt-1">
+            Real-time commerce & advertising intelligence
+          </p>
+        </div>
+
+        {/* Main Metrics */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+          <MetricCard
+            icon={<DollarSign className="w-8 h-8" />}
+            label="Total GMV"
+            value={`₹${dashboardData.totalGMV}Cr`}
+            sublabel="All purchases"
+            color="blue"
+          />
+          <MetricCard
+            icon={<TrendingUp className="w-8 h-8" />}
+            label="Attributed Revenue"
+            value={`₹${dashboardData.attributedRevenue}Cr`}
+            sublabel="70% from ads"
+            color="green"
+          />
+          <MetricCard
+            icon={<Users className="w-8 h-8" />}
+            label="Users Tracked"
+            value={dashboardData.usersTracked.toLocaleString()}
+            sublabel="Active shoppers"
+            color="purple"
+          />
+          <MetricCard
+            icon={<Target className="w-8 h-8" />}
+            label="High Intent Users"
+            value={dashboardData.highIntentUsers.toLocaleString()}
+            sublabel="Ready to purchase"
+            color="orange"
+          />
+        </div>
+
+        {/* Platform Revenue Section - UPDATED WITH RETAINER FEE */}
+        <div className="bg-slate-800/50 backdrop-blur rounded-xl border border-slate-700 p-8">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="p-3 bg-purple-900/30 border border-purple-700 rounded-lg">
+              <DollarSign className="w-6 h-6 text-purple-400" />
+            </div>
+            <div>
+              <h3 className="text-2xl font-bold text-white">PatternOS Platform Revenue</h3>
+              <p className="text-slate-400">Zepto's earnings from advertising platform</p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+            {/* Ad Platform Fee */}
+            <RevenueComponent
+              label="Ad Platform Fee (10%)"
+              value={`₹${dashboardData.adPlatformFee}L`}
+              description={`From ₹${(dashboardData.adPlatformFee * 10).toFixed(1)}Cr ad spend`}
+              percentage={((dashboardData.adPlatformFee / parseFloat(totalPlatformRevenue)) * 100).toFixed(0)}
+            />
+
+            {/* High-Intent Revenue Share */}
+            <RevenueComponent
+              label="High-Intent Revenue Share (20%)"
+              value={`₹${dashboardData.highIntentShare}L`}
+              description={`From ₹${(dashboardData.highIntentShare * 5).toFixed(1)}Cr high-intent sales`}
+              percentage={((dashboardData.highIntentShare / parseFloat(totalPlatformRevenue)) * 100).toFixed(0)}
+            />
+
+            {/* Monthly Retainer Fee - NEW */}
+            <RevenueComponent
+              label="Monthly Platform Retainer"
+              value={`₹${dashboardData.monthlyRetainerFee}L`}
+              description="Fixed monthly subscription fee"
+              percentage={((dashboardData.monthlyRetainerFee / parseFloat(totalPlatformRevenue)) * 100).toFixed(0)}
+              isNew={true}
+            />
+          </div>
+
+          {/* Total Revenue */}
+          <div className="pt-6 border-t border-slate-700">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-slate-400 text-sm mb-1">Total Platform Revenue</p>
+                <h4 className="text-4xl font-bold text-white">₹{totalPlatformRevenue}L</h4>
+                <p className="text-green-400 text-sm mt-1">Per month</p>
+              </div>
+              <div className="text-right">
+                <div className="inline-flex items-center gap-2 px-4 py-2 bg-green-900/30 border border-green-700 rounded-lg">
+                  <span className="text-2xl">✓</span>
+                  <span className="text-green-300 font-semibold">Including Retainer</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Annual Projection */}
+          <div className="mt-6 p-4 bg-blue-900/20 border border-blue-700 rounded-lg">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-blue-300 text-sm font-semibold mb-1">Annual Projection</p>
+                <p className="text-2xl font-bold text-white">
+                  ₹{(parseFloat(totalPlatformRevenue) * 12 / 100).toFixed(2)}Cr
+                </p>
+              </div>
+              <div className="text-blue-400">
+                <TrendingUp className="w-8 h-8" />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Revenue Breakdown Explanation */}
+        <div className="mt-8 bg-slate-800/50 backdrop-blur rounded-xl border border-slate-700 p-6">
+          <h3 className="text-xl font-bold text-white mb-4">Revenue Components Explained</h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <ExplanationCard
+              title="Ad Platform Fee"
+              description="10% commission on total ad spend by brands advertising on Zepto's platform through PatternOS."
+            />
+            <ExplanationCard
+              title="High-Intent Revenue Share"
+              description="20% share of revenue generated from high-intent user purchases identified by PatternOS's Predictive Purchase Engine."
+            />
+            <ExplanationCard
+              title="Monthly Retainer"
+              description="Fixed monthly subscription fee of ₹3 lakhs for access to PatternOS platform features and intelligence modules."
+              isNew={true}
+            />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Helper Components
+function MetricCard({ icon, label, value, sublabel, color }) {
+  const colorClasses = {
+    blue: "bg-blue-900/30 border-blue-700 text-blue-400",
+    green: "bg-green-900/30 border-green-700 text-green-400",
+    purple: "bg-purple-900/30 border-purple-700 text-purple-400",
+    orange: "bg-orange-900/30 border-orange-700 text-orange-400"
+  };
+
+  return (
+    <div className={`${colorClasses[color]} border rounded-xl p-6 transition hover:scale-105`}>
+      <div className="mb-3">{icon}</div>
+      <div className="text-sm text-slate-400 mb-1">{label}</div>
+      <div className="text-3xl font-bold text-white mb-1">{value}</div>
+      <div className="text-xs text-slate-500">{sublabel}</div>
+    </div>
+  );
+}
+
+function RevenueComponent({ label, value, description, percentage, isNew }) {
+  return (
+    <div className="relative bg-slate-700/30 border border-slate-600 rounded-lg p-5 hover:border-slate-500 transition">
+      {isNew && (
+        <div className="absolute -top-3 -right-3 px-3 py-1 bg-green-600 text-white text-xs font-bold rounded-full animate-pulse">
+          NEW
+        </div>
+      )}
+      <div className="mb-3">
+        <div className="flex items-center justify-between mb-2">
+          <p className="text-slate-300 text-sm font-medium">{label}</p>
+          <span className="text-xs text-slate-500 bg-slate-800 px-2 py-1 rounded">
+            {percentage}%
+          </span>
+        </div>
+        <h4 className="text-3xl font-bold text-white">{value}</h4>
+      </div>
+      <p className="text-xs text-slate-400">{description}</p>
+    </div>
+  );
+}
+
+function ExplanationCard({ title, description, isNew }) {
+  return (
+    <div className="relative p-4 bg-slate-700/20 border border-slate-600 rounded-lg">
+      {isNew && (
+        <div className="absolute -top-2 -right-2 w-4 h-4 bg-green-500 rounded-full animate-ping" />
+      )}
+      <h4 className="text-white font-semibold mb-2 flex items-center gap-2">
+        {title}
+        {isNew && <span className="text-xs text-green-400">(New)</span>}
+      </h4>
+      <p className="text-slate-400 text-sm leading-relaxed">{description}</p>
+    </div>
+  );
+}

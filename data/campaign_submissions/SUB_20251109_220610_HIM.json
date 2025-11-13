@@ -1,0 +1,73 @@
+{
+  "brand": "himalaya",
+  "products": [
+    "Himalaya Himalaya Cleaners 500g 100g"
+  ],
+  "campaign_name": "Clean",
+  "objective": "conversions",
+  "budget": "50000",
+  "duration_days": "3",
+  "start_date": "2025-11-09",
+  "target_audience": {
+    "age_groups": [
+      "25-34",
+      "35-44"
+    ],
+    "locations": [
+      "Ahmedabad",
+      "Ajmer",
+      "Coimbatore",
+      "Cuttack",
+      "Firozabad",
+      "Gaya"
+    ],
+    "interests": []
+  },
+  "ad_copy": "clean",
+  "headline": "clean",
+  "description": "",
+  "channels": [
+    "Zepto_App",
+    "Meta",
+    "Google"
+  ],
+  "call_to_action": "shop_now",
+  "ad_images": [],
+  "submission_id": "SUB_20251109_220610_HIM",
+  "submitted_at": "2025-11-09T22:06:10.636213",
+  "status": "approved",
+  "compliance_checks": {
+    "all_passed": true,
+    "checks": {
+      "image_text_ratio": {
+        "passed": true,
+        "rule": "Text should not exceed 20% of image area",
+        "details": "Ad copy length: 5 characters"
+      },
+      "content_moderation": {
+        "passed": true,
+        "rule": "No prohibited content (nudity, violence, hate speech)",
+        "details": "No issues detected"
+      },
+      "brand_safety": {
+        "passed": true,
+        "rule": "Campaign must be from verified brand",
+        "details": "Brand: himalaya - Verified"
+      },
+      "technical_specs": {
+        "passed": true,
+        "rule": "Must have valid channels, budget, and duration",
+        "details": "Channels: 3, Budget: \u20b950000.0, Duration: 3 days"
+      },
+      "legal_compliance": {
+        "passed": true,
+        "rule": "Exaggerated claims must have disclaimers",
+        "details": "No unsubstantiated claims detected"
+      }
+    },
+    "checked_at": "2025-11-09T22:06:10.643207"
+  },
+  "approved_by": "admin",
+  "approved_at": "2025-11-09T22:06:30.081902",
+  "approval_notes": ""
+}

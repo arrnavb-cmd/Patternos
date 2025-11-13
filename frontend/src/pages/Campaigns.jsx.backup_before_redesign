@@ -1,0 +1,274 @@
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import AggregatorCampaigns from './AggregatorCampaigns';
+import { Play, Pause, BarChart3, Calendar, DollarSign, TrendingUp, Package } from 'lucide-react';
+import { getCurrentBrand } from '../utils/brandUtils';
+
+export default function Campaigns() {
+  const navigate = useNavigate();
+  const userCheck = JSON.parse(localStorage.getItem('user') || '{}');
+  const isAggregator = userCheck?.username === 'zepto' || userCheck?.username === 'admin' || userCheck?.role === 'platform_admin';
+  
+  if (isAggregator) {
+    return <AggregatorCampaigns />;
+  }
+
+  const [campaigns, setCampaigns] = useState([]);
+  const [approvedCampaigns, setApprovedCampaigns] = useState([]);
+  const [loading, setLoading] = useState(true);
+  
+  const user = JSON.parse(localStorage.getItem('user') || '{}');
+  const brand = user.username?.replace('@brand.com', '') || 'himalaya';
+
+  // Fetch campaign analytics
+  useEffect(() => {
+    const fetchCampaigns = async () => {
+      try {
+        const res = await fetch(`http://localhost:8000/api/v1/brand/analytics/${brand}`);
+        const data = await res.json();
+        if (!data.error && data.all_campaigns) {
+          setCampaigns(data.all_campaigns);
+        }
+        setLoading(false);
+      } catch (err) {
+        console.error('Failed to fetch campaigns:', err);
+        setLoading(false);
+      }
+    };
+    fetchCampaigns();
+  }, [brand]);
+
+  // Fetch approved campaigns
+  useEffect(() => {
+    const fetchApprovedCampaigns = async () => {
+      try {
+        console.log('🔍 Fetching approved campaigns for brand:', brand);
+        const res = await fetch(`http://localhost:8000/api/v1/campaigns/approved?brand=${brand}`);
+        const data = await res.json();
+        console.log('📦 Approved campaigns response:', data);
+        
+        if (data.campaigns && data.campaigns.length > 0) {
+          console.log('✅ Setting approved campaigns:', data.campaigns.length);
+          setApprovedCampaigns(data.campaigns);
+        } else {
+          console.log('⚠️ No approved campaigns found');
+        }
+      } catch (err) {
+        console.error('❌ Failed to fetch approved campaigns:', err);
+      }
+    };
+    fetchApprovedCampaigns();
+  }, [brand]);
+
+  console.log('🎯 Current approved campaigns state:', approvedCampaigns);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-900 flex items-center justify-center">
+        <div className="text-white text-xl">Loading campaigns...</div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-900 p-8">
+      <div className="max-w-7xl mx-auto">
+        {/* Header */}
+        <div className="flex items-center justify-between mb-8">
+          <div>
+            <h1 className="text-3xl font-bold text-white mb-2">Campaign Management</h1>
+            <p className="text-gray-400">{brand.charAt(0).toUpperCase() + brand.slice(1)} Campaigns</p>
+          </div>
+          <button 
+            onClick={() => navigate('/campaigns/create')} 
+            className="bg-orange-600 hover:bg-orange-700 text-white px-6 py-3 rounded-lg font-semibold"
+          >
+            + Create Campaign
+          </button>
+        </div>
+
+        {/* Live Campaigns Section */}
+        {approvedCampaigns.length > 0 && (
+          <div className="mb-8">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-2xl font-bold text-white">🟢 Live Campaigns</h2>
+              <span className="px-4 py-2 bg-green-900/30 text-green-400 rounded-lg font-semibold">
+                {approvedCampaigns.length} Active
+              </span>
+            </div>
+            <div className="grid grid-cols-1 gap-6">
+              {approvedCampaigns.map((campaign, idx) => (
+                <div key={idx} className="bg-gray-800 rounded-xl p-6 border-2 border-green-600">
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-3 mb-2">
+                        <h3 className="text-2xl font-bold text-white">{campaign.campaign_name}</h3>
+                        <span className="px-3 py-1 bg-green-600 text-white text-sm rounded-full font-semibold">
+                          ✓ LIVE
+                        </span>
+                      </div>
+                      <p className="text-gray-400 text-sm">
+                        Approved on {new Date(campaign.approved_at).toLocaleDateString('en-US', { 
+                          month: 'long', 
+                          day: 'numeric', 
+                          year: 'numeric' 
+                        })}
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-gray-400 text-sm mb-1">Total Budget</p>
+                      <p className="text-3xl font-bold text-green-400">₹{parseInt(campaign.budget).toLocaleString()}</p>
+                      <p className="text-gray-500 text-sm mt-1">
+                        ₹{Math.round(campaign.budget / campaign.duration_days).toLocaleString()}/day
+                      </p>
+                    </div>
+                  </div>
+                  
+                  {/* Campaign Stats Grid */}
+                  <div className="grid grid-cols-4 gap-4 mb-6">
+                    <div className="bg-gray-900/50 rounded-lg p-4">
+                      <Calendar className="text-blue-400 mb-2" size={20} />
+                      <p className="text-gray-500 text-xs mb-1">Duration</p>
+                      <p className="text-white font-bold text-lg">{campaign.duration_days} days</p>
+                    </div>
+                    <div className="bg-gray-900/50 rounded-lg p-4">
+                      <Calendar className="text-green-400 mb-2" size={20} />
+                      <p className="text-gray-500 text-xs mb-1">Start Date</p>
+                      <p className="text-white font-bold text-lg">{campaign.start_date}</p>
+                    </div>
+                    <div className="bg-gray-900/50 rounded-lg p-4">
+                      <Package className="text-purple-400 mb-2" size={20} />
+                      <p className="text-gray-500 text-xs mb-1">Products</p>
+                      <p className="text-white font-bold text-lg">{campaign.products?.length || 0}</p>
+                    </div>
+                    <div className="bg-gray-900/50 rounded-lg p-4">
+                      <TrendingUp className="text-orange-400 mb-2" size={20} />
+                      <p className="text-gray-500 text-xs mb-1">Channels</p>
+                      <p className="text-white font-bold text-lg">{campaign.channels?.length || 0}</p>
+                    </div>
+                  </div>
+
+                  {/* Ad Creative */}
+                  <div className="bg-gradient-to-r from-blue-900/20 to-purple-900/20 rounded-lg p-5 border border-blue-700/30 mb-4">
+                    <p className="text-blue-400 text-xs font-semibold mb-2">AD CREATIVE</p>
+                    <h4 className="text-white font-bold text-xl mb-2">{campaign.headline}</h4>
+                    <p className="text-gray-300">{campaign.ad_copy}</p>
+                  </div>
+
+                  {/* Products */}
+                  {campaign.products && campaign.products.length > 0 && (
+                    <div className="mb-4">
+                      <p className="text-gray-400 text-sm font-semibold mb-3">🎯 PROMOTED PRODUCTS</p>
+                      <div className="flex flex-wrap gap-2">
+                        {campaign.products.map((product, i) => (
+                          <span key={i} className="px-4 py-2 bg-blue-900/40 text-blue-300 rounded-lg text-sm font-medium border border-blue-700/30">
+                            {product}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Channels */}
+                  <div>
+                    <p className="text-gray-400 text-sm font-semibold mb-3">📺 CHANNELS</p>
+                    <div className="flex flex-wrap gap-2">
+                      {campaign.channels?.map((channel, i) => (
+                        <span key={i} className="px-4 py-2 bg-orange-900/40 text-orange-300 rounded-lg text-sm font-medium border border-orange-700/30">
+                          {channel.replace('_', ' ')}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Target Locations */}
+                  {campaign.target_audience?.locations && campaign.target_audience.locations.length > 0 && (
+                    <div className="mt-4 pt-4 border-t border-gray-700">
+                      <p className="text-gray-400 text-sm font-semibold mb-2">
+                        📍 TARGET CITIES ({campaign.target_audience.locations.length})
+                      </p>
+                      <p className="text-gray-500 text-sm">
+                        {campaign.target_audience.locations.slice(0, 5).join(', ')}
+                        {campaign.target_audience.locations.length > 5 && ` +${campaign.target_audience.locations.length - 5} more`}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Campaign Stats */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+          <div className="bg-gray-800 rounded-xl p-6 border border-gray-700">
+            <BarChart3 className="text-blue-400 mb-2" size={24} />
+            <p className="text-gray-400 text-sm">Total Campaigns</p>
+            <p className="text-2xl font-bold text-white">{campaigns.length}</p>
+          </div>
+          <div className="bg-gray-800 rounded-xl p-6 border border-gray-700">
+            <TrendingUp className="text-green-400 mb-2" size={24} />
+            <p className="text-gray-400 text-sm">Active</p>
+            <p className="text-2xl font-bold text-white">{approvedCampaigns.length}</p>
+          </div>
+          <div className="bg-gray-800 rounded-xl p-6 border border-gray-700">
+            <DollarSign className="text-orange-400 mb-2" size={24} />
+            <p className="text-gray-400 text-sm">Total Spend</p>
+            <p className="text-2xl font-bold text-white">
+              ₹{campaigns.reduce((sum, c) => sum + (c.spend || 0), 0).toLocaleString()}
+            </p>
+          </div>
+          <div className="bg-gray-800 rounded-xl p-6 border border-gray-700">
+            <Calendar className="text-purple-400 mb-2" size={24} />
+            <p className="text-gray-400 text-sm">This Month</p>
+            <p className="text-2xl font-bold text-white">
+              {campaigns.filter(c => {
+                const date = new Date(c.start_date || Date.now());
+                return date.getMonth() === new Date().getMonth();
+              }).length}
+            </p>
+          </div>
+        </div>
+
+        {/* Campaign List */}
+        <div>
+          <h2 className="text-2xl font-bold text-white mb-4">Campaign History</h2>
+          {campaigns.length === 0 ? (
+            <div className="bg-gray-800 rounded-xl p-12 border border-gray-700 text-center">
+              <BarChart3 className="mx-auto text-gray-600 mb-4" size={48} />
+              <p className="text-gray-400 mb-4">No campaign history yet</p>
+              <button
+                onClick={() => navigate('/campaigns/create')}
+                className="bg-orange-600 hover:bg-orange-700 text-white px-6 py-3 rounded-lg font-semibold"
+              >
+                Create Your First Campaign
+              </button>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 gap-4">
+              {campaigns.map((campaign, idx) => (
+                <div key={idx} className="bg-gray-800 rounded-xl p-6 border border-gray-700">
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <h3 className="text-lg font-semibold text-white mb-2">{campaign.name}</h3>
+                      <div className="flex items-center gap-4 text-sm text-gray-400">
+                        <span>Budget: ₹{(campaign.budget || 0).toLocaleString()}</span>
+                        <span>Spend: ₹{(campaign.spend || 0).toLocaleString()}</span>
+                        <span>Status: {campaign.status}</span>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <button className="p-2 bg-gray-700 hover:bg-gray-600 rounded-lg">
+                        {campaign.status === 'active' ? <Pause size={16} /> : <Play size={16} />}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}

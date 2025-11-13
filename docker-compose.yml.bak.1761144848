@@ -1,0 +1,90 @@
+services:
+  app:
+    build: .
+    container_name: patternos_app
+    env_file:
+      - .env
+    environment:
+      - DATABASE_URL=${DATABASE_URL}
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+    
+  frontend:
+    build:
+      context: ./frontend
+    container_name: patternos_frontend
+    ports:
+      - "3000:3000"
+    depends_on:
+      - app
+
+volumes:
+      - ./:/usr/src/app
+    command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+
+  db:
+    image: postgres:15
+    container_name: patternos_db
+    restart: always
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    
+  frontend:
+    build:
+      context: ./frontend
+    container_name: patternos_frontend
+    ports:
+      - "3000:3000"
+    depends_on:
+      - app
+
+volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+  adminer:
+    image: adminer
+    container_name: patternos_adminer
+    restart: always
+    ports:
+      - "8080:8080"
+    depends_on:
+      - db
+
+# Optional Kafka (uncomment to use)
+#  zookeeper:
+#    image: confluentinc/cp-zookeeper:latest
+#    environment:
+#      ZOOKEEPER_CLIENT_PORT: 2181
+#    ports:
+#      - "2181:2181"
+#
+#  kafka:
+#    image: confluentinc/cp-kafka:latest
+#    depends_on:
+#      - zookeeper
+#    environment:
+#      KAFKA_BROKER_ID: 1
+#      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+#      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+#      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+#    ports:
+#      - "9092:9092"
+
+
+  frontend:
+    build:
+      context: ./frontend
+    container_name: patternos_frontend
+    ports:
+      - "3000:3000"
+    depends_on:
+      - app
+
+volumes:
+  pgdata:

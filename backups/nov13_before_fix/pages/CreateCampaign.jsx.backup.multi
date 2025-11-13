@@ -1,0 +1,636 @@
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Check, ArrowLeft, Upload, Sparkles, AlertCircle, Eye, Zap, Image as ImageIcon } from 'lucide-react';
+import AIAdGenerator from '../components/AIAdGenerator';
+
+export default function CreateCampaign() {
+  const navigate = useNavigate();
+  const [step, setStep] = useState(1);
+  const [showPreview, setShowPreview] = useState(false);
+  const [campaign, setCampaign] = useState({
+    name: '',
+    objective: 'conversions',
+    budget: '',
+    platform: '',
+    placementStrategy: '',
+    placements: [],
+    products: [],
+    adType: '',
+    creativeMethod: '',
+    adCopy: { headline: '', description: '', cta: 'Shop Now' },
+    creatives: []
+  });
+
+  const objectives = [
+    { id: 'awareness', name: 'Brand Awareness', icon: '👁️', desc: 'Reach new audiences' },
+    { id: 'consideration', name: 'Consideration', icon: '🤔', desc: 'Drive engagement' },
+    { id: 'conversions', name: 'Conversions', icon: '��', desc: 'Drive sales' }
+  ];
+
+  // Platform logos as SVG components
+  const ZeptoLogo = () => (
+    <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect width="48" height="48" rx="12" fill="#E63946"/>
+      <path d="M14 18L24 10L34 18L24 38L14 18Z" fill="white"/>
+      <path d="M24 10L34 18L24 26L14 18L24 10Z" fill="#FFD93D"/>
+    </svg>
+  );
+
+  const FacebookLogo = () => (
+    <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect width="48" height="48" rx="24" fill="#1877F2"/>
+      <path d="M32 24C32 19.6 28.4 16 24 16C19.6 16 16 19.6 16 24C16 27.9 18.9 31.2 22.6 31.9V26.4H20.6V24H22.6V22.2C22.6 20.2 23.9 19 25.7 19C26.6 19 27.5 19.2 27.5 19.2V21.1H26.5C25.5 21.1 25.2 21.7 25.2 22.3V24H27.4L27 26.4H25.2V31.9C28.9 31.2 32 27.9 32 24Z" fill="white"/>
+    </svg>
+  );
+
+  const InstagramLogo = () => (
+    <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect width="48" height="48" rx="12" fill="url(#instagram-gradient)"/>
+      <defs>
+        <linearGradient id="instagram-gradient" x1="0" y1="48" x2="48" y2="0">
+          <stop offset="0%" stopColor="#FD5949"/>
+          <stop offset="50%" stopColor="#D6249F"/>
+          <stop offset="100%" stopColor="#285AEB"/>
+        </linearGradient>
+      </defs>
+      <rect x="14" y="14" width="20" height="20" rx="5" stroke="white" strokeWidth="2" fill="none"/>
+      <circle cx="24" cy="24" r="5" stroke="white" strokeWidth="2" fill="none"/>
+      <circle cx="30" cy="18" r="1.5" fill="white"/>
+    </svg>
+  );
+
+  const adTypesByPlatform = {
+    zepto: [
+      { id: 'sponsored_product', name: 'Sponsored Products', icon: '🏆', desc: 'Top of search results' },
+      { id: 'banner', name: 'Banner Ads', icon: '🖼️', desc: 'Homepage & category pages' },
+      { id: 'video', name: 'Video Ads', icon: '🎬', desc: 'Engaging video content' },
+      { id: 'brand_of_day', name: 'Brand of the Day', icon: '⭐', desc: 'Premium homepage placement', tag: 'Premium' },
+      { id: 'story', name: 'Story Ads', icon: '📱', desc: 'Stories & highlights' },
+      { id: 'splash', name: 'Splash Screen', icon: '💥', desc: 'Full-screen app open', tag: 'High Impact' }
+    ],
+    facebook: [
+      { id: 'fb_feed_image', name: 'Feed Image', icon: '📘', desc: 'Photo in news feed' },
+      { id: 'fb_feed_video', name: 'Feed Video', icon: '🎬', desc: 'Video in news feed', format: 'video' },
+      { id: 'fb_stories', name: 'Stories', icon: '📱', desc: 'Full-screen vertical stories' },
+      { id: 'fb_reels', name: 'Reels', icon: '🎥', desc: 'Short-form video', format: 'video' },
+      { id: 'fb_carousel', name: 'Carousel', icon: '🎠', desc: 'Multiple images/products', tag: 'Popular' },
+      { id: 'fb_marketplace', name: 'Marketplace', icon: '🛍️', desc: 'Shopping section' }
+    ],
+    instagram: [
+      { id: 'ig_feed_image', name: 'Feed Image', icon: '📸', desc: 'Photo in feed' },
+      { id: 'ig_feed_video', name: 'Feed Video', icon: '🎬', desc: 'Video in feed', format: 'video' },
+      { id: 'ig_stories', name: 'Stories', icon: '��', desc: 'Full-screen vertical stories' },
+      { id: 'ig_reels', name: 'Reels', icon: '🎥', desc: 'Short-form video', format: 'video', tag: 'Trending' },
+      { id: 'ig_carousel', name: 'Carousel', icon: '🎠', desc: 'Multiple images/products' },
+      { id: 'ig_explore', name: 'Explore', icon: '🔍', desc: 'Discovery section' }
+    ]
+  };
+
+  const platforms = [
+    { 
+      id: 'zepto', 
+      name: 'Zepto', 
+      logo: ZeptoLogo,
+      desc: 'Quick commerce retail media',
+      color: 'from-red-500 to-orange-500',
+      placements: [
+        { id: 'search_top', name: 'Search - Top of Results', desc: 'Sponsored product at top of search', price: '₹15/CPM', category: 'Search' },
+        { id: 'search_grid', name: 'Search - Product Grid', desc: 'Within search results grid', price: '₹10/CPM', category: 'Search' },
+        { id: 'homepage_banner', name: 'Homepage Banner Carousel', desc: '6-8 rotating banner slots', price: '₹20/CPM', category: 'Homepage' },
+        { id: 'homepage_featured', name: 'Homepage Featured Banner', desc: 'Static premium banner', price: '₹25/CPM', category: 'Homepage' },
+        { id: 'homepage_trending', name: 'Trending Products Widget', desc: 'Sponsored product slots', price: '₹12/CPM', category: 'Homepage' },
+        { id: 'homepage_video', name: 'Homepage Video', desc: 'Video storytelling placement', price: '₹30/CPM', category: 'Homepage', video: true },
+        { id: 'category_banner', name: 'Category Top Banner', desc: 'Above category products', price: '₹14/CPM', category: 'Category' },
+        { id: 'category_sponsored', name: 'Category Sponsored Products', desc: 'Within category listings', price: '₹11/CPM', category: 'Category' },
+        { id: 'product_related', name: 'Product Page Related Items', desc: 'Below product description', price: '₹13/CPM', category: 'Product Page' },
+        { id: 'cart_injection', name: 'Cart Recommendations', desc: 'Checkout page recommendations', price: '₹16/CPM', category: 'Cart' },
+        { id: 'splash_screen', name: 'Splash Screen Takeover', desc: 'Full-screen on app open', price: '₹50/CPM', category: 'Premium', tag: 'Premium' },
+        { id: 'brand_of_day', name: 'Brand of the Day', desc: 'Exclusive full-day homepage', price: '₹100/CPM', category: 'Premium', tag: 'Premium' }
+      ]
+    },
+    { 
+      id: 'facebook', 
+      name: 'Facebook', 
+      logo: FacebookLogo,
+      desc: 'Social media platform',
+      color: 'from-blue-500 to-blue-600',
+      placements: [
+        { id: 'fb_feed', name: 'Feed', desc: 'Main news feed', price: '₹10/CPM', size: '1080x1080', ratio: '1:1 or 4:5' },
+        { id: 'fb_stories', name: 'Stories', desc: 'Full-screen vertical', price: '₹13/CPM', size: '1080x1920', ratio: '9:16' },
+        { id: 'fb_reels', name: 'Reels', desc: 'Short video format', price: '₹14/CPM', size: '1080x1920', ratio: '9:16', video: true },
+        { id: 'fb_marketplace', name: 'Marketplace', desc: 'Shopping section', price: '₹11/CPM', size: '1080x1080', ratio: '1:1' },
+        { id: 'fb_right_column', name: 'Right Column (Desktop)', desc: 'Desktop sidebar', price: '₹5/CPM', size: '1080x1080', ratio: '1:1' },
+        { id: 'fb_instream', name: 'In-Stream Video', desc: 'During video content', price: '₹12/CPM', size: '1280x720', video: true }
+      ]
+    },
+    { 
+      id: 'instagram', 
+      name: 'Instagram', 
+      logo: InstagramLogo,
+      desc: 'Visual social platform',
+      color: 'from-pink-500 to-purple-500',
+      placements: [
+        { id: 'ig_feed', name: 'Feed', desc: 'Main Instagram feed', price: '₹11/CPM', size: '1080x1080', ratio: '1:1 or 4:5' },
+        { id: 'ig_stories', name: 'Stories', desc: 'Full-screen vertical', price: '₹13/CPM', size: '1080x1920', ratio: '9:16' },
+        { id: 'ig_reels', name: 'Reels', desc: 'Short-form video', price: '₹15/CPM', size: '1080x1920', ratio: '9:16', video: true },
+        { id: 'ig_explore', name: 'Explore', desc: 'Discovery section', price: '₹12/CPM', size: '1080x1080', ratio: '1:1' },
+        { id: 'ig_shop', name: 'Shopping Tab', desc: 'Product catalog', price: '₹10/CPM', size: '1080x1080', ratio: '1:1' }
+      ]
+    }
+  ];
+
+  const products = [
+    { id: '1', name: 'Nike Air Max 270', price: 12995, category: 'Footwear' },
+    { id: '2', name: 'Jordan 1 Retro High', price: 14995, category: 'Footwear' },
+    { id: '3', name: 'Nike Dri-FIT T-Shirt', price: 1999, category: 'Apparel' },
+    { id: '4', name: 'Nike React Infinity Run', price: 13995, category: 'Footwear' }
+  ];
+
+  const getSelectedPlatform = () => platforms.find(p => p.id === campaign.platform);
+  const getAdTypes = () => campaign.platform ? adTypesByPlatform[campaign.platform] : [];
+  const getAdTypeInfo = () => getAdTypes().find(t => t.id === campaign.adType);
+  
+  const getPlacements = () => {
+    const platform = getSelectedPlatform();
+    if (!platform) return [];
+    return platform.placements;
+  };
+
+  const getCompatiblePlacements = () => {
+    const placements = getPlacements();
+    const adType = getAdTypeInfo();
+    if (!adType) return placements;
+    
+    if (adType.format === 'video' || adType.id.includes('video')) {
+      return placements.filter(p => p.video);
+    }
+    return placements;
+  };
+
+  const getPlacementsByCategory = () => {
+    const placements = getCompatiblePlacements();
+    const categories = {};
+    
+    placements.forEach(p => {
+      const cat = p.category || 'Other';
+      if (!categories[cat]) {
+        categories[cat] = [];
+      }
+      categories[cat].push(p);
+    });
+    
+    return categories;
+  };
+
+  const handleSelectAd = (ad) => {
+    setCampaign({
+      ...campaign,
+      adCopy: { headline: ad.headline, description: ad.description, cta: ad.cta },
+      creatives: [{ type: 'ai-generated', data: ad }]
+    });
+  };
+
+  const handleFileUpload = (e) => {
+    const files = Array.from(e.target.files);
+    const newCreatives = files.map(file => ({
+      type: 'uploaded',
+      file: file,
+      preview: URL.createObjectURL(file),
+      name: file.name
+    }));
+    setCampaign({
+      ...campaign,
+      creatives: [...campaign.creatives, ...newCreatives]
+    });
+  };
+
+  const canCreateCampaign = () => {
+    return campaign.adCopy.headline && 
+           campaign.adCopy.description && 
+           campaign.creatives.length > 0;
+  };
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 py-8">
+      <div className="max-w-5xl mx-auto px-4">
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-white">Create Campaign</h1>
+          <p className="text-gray-400">Step {step} of 6 • Nike India</p>
+        </div>
+
+        {/* Step 1: Campaign Details */}
+        {step === 1 && (
+          <div className="bg-gray-800 rounded-xl p-6">
+            <h2 className="text-2xl font-bold text-white mb-6">Campaign Details</h2>
+            <div className="space-y-4 mb-6">
+              <div>
+                <label className="text-sm text-gray-400 mb-2 block">Campaign Name</label>
+                <input type="text" value={campaign.name} onChange={(e) => setCampaign({...campaign, name: e.target.value})} placeholder="e.g. Diwali Sale - Air Max Collection" className="w-full bg-gray-700 text-white rounded-lg p-3" />
+              </div>
+              <div>
+                <label className="text-sm text-gray-400 mb-2 block">Campaign Objective</label>
+                <div className="grid grid-cols-3 gap-4">
+                  {objectives.map((obj) => (
+                    <div
+                      key={obj.id}
+                      onClick={() => setCampaign({...campaign, objective: obj.id})}
+                      className={`p-4 rounded-lg border-2 cursor-pointer ${campaign.objective === obj.id ? 'border-blue-500 bg-blue-500/10' : 'border-gray-700 bg-gray-700'}`}
+                    >
+                      <div className="text-3xl mb-2">{obj.icon}</div>
+                      <h3 className="font-bold text-white text-sm">{obj.name}</h3>
+                      <p className="text-xs text-gray-400 mt-1">{obj.desc}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <label className="text-sm text-gray-400 mb-2 block">Daily Budget (₹)</label>
+                <input type="number" value={campaign.budget} onChange={(e) => setCampaign({...campaign, budget: e.target.value})} placeholder="5000" className="w-full bg-gray-700 text-white rounded-lg p-3" />
+              </div>
+            </div>
+            <button onClick={() => setStep(2)} disabled={!campaign.name || !campaign.budget} className="w-full bg-blue-600 disabled:bg-gray-700 text-white py-3 rounded-lg">
+              Next: Select Platform
+            </button>
+          </div>
+        )}
+
+        {/* Step 2: Platform Selection WITH LOGOS */}
+        {step === 2 && (
+          <div className="bg-gray-800 rounded-xl p-6">
+            <h2 className="text-2xl font-bold text-white mb-2">Select Platform</h2>
+            <p className="text-gray-400 text-sm mb-6">Choose ONE platform for this campaign</p>
+            <div className="space-y-4 mb-6">
+              {platforms.map((p) => {
+                const LogoComponent = p.logo;
+                return (
+                  <div
+                    key={p.id}
+                    onClick={() => setCampaign({...campaign, platform: p.id, adType: '', placements: [], placementStrategy: ''})}
+                    className={`p-6 rounded-xl border-2 cursor-pointer transition-all ${
+                      campaign.platform === p.id 
+                        ? `border-blue-500 bg-gradient-to-r ${p.color} bg-opacity-10` 
+                        : 'border-gray-700 bg-gray-700 hover:border-gray-600'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-4">
+                        <LogoComponent />
+                        <div>
+                          <h3 className="font-bold text-white text-xl">{p.name}</h3>
+                          <p className="text-gray-400 text-sm">{p.desc}</p>
+                          <p className="text-gray-500 text-xs mt-1">{p.placements.length} placement options</p>
+                        </div>
+                      </div>
+                      {campaign.platform === p.id && <Check className="text-blue-400" size={32} />}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+            <div className="flex gap-4">
+              <button onClick={() => setStep(1)} className="flex-1 bg-gray-700 text-white py-3 rounded-lg">Back</button>
+              <button onClick={() => setStep(3)} disabled={!campaign.platform} className="flex-1 bg-blue-600 disabled:bg-gray-700 text-white py-3 rounded-lg">Next: Select Ad Type</button>
+            </div>
+          </div>
+        )}
+
+        {/* Steps 3-6 remain the same as before */}
+        {step === 3 && (
+          <div className="bg-gray-800 rounded-xl p-6">
+            <h2 className="text-2xl font-bold text-white mb-2">Select Ad Type</h2>
+            <p className="text-gray-400 text-sm mb-6">Available ad formats on {getSelectedPlatform()?.name}</p>
+            <div className="grid grid-cols-2 gap-4 mb-6">
+              {getAdTypes().map((type) => (
+                <div
+                  key={type.id}
+                  onClick={() => setCampaign({...campaign, adType: type.id})}
+                  className={`p-6 rounded-lg border-2 cursor-pointer relative ${campaign.adType === type.id ? 'border-purple-500 bg-purple-500/10' : 'border-gray-700 bg-gray-700'}`}
+                >
+                  {type.tag && <span className="absolute top-2 right-2 px-2 py-1 bg-pink-500 text-white text-xs rounded">{type.tag}</span>}
+                  <div className="text-4xl mb-3">{type.icon}</div>
+                  <h3 className="font-bold text-white text-lg mb-1">{type.name}</h3>
+                  <p className="text-sm text-gray-400">{type.desc}</p>
+                </div>
+              ))}
+            </div>
+            <div className="flex gap-4">
+              <button onClick={() => setStep(2)} className="flex-1 bg-gray-700 text-white py-3 rounded-lg">Back</button>
+              <button onClick={() => setStep(4)} disabled={!campaign.adType} className="flex-1 bg-blue-600 disabled:bg-gray-700 text-white py-3 rounded-lg">Next</button>
+            </div>
+          </div>
+        )}
+
+        {step === 4 && (
+          <div className="bg-gray-800 rounded-xl p-6">
+            <h2 className="text-2xl font-bold text-white mb-2">Configure Ad Placements</h2>
+            <p className="text-gray-400 text-sm mb-6">Manage placements on {getSelectedPlatform()?.name}</p>
+            
+            <div className="grid grid-cols-2 gap-6 mb-6">
+              <div
+                onClick={() => setCampaign({...campaign, placementStrategy: 'automatic', placements: []})}
+                className={`p-6 border-2 rounded-xl cursor-pointer ${
+                  campaign.placementStrategy === 'automatic' ? 'border-green-500 bg-green-500/10' : 'border-gray-700 bg-gray-700'
+                }`}
+              >
+                <Zap className={`mb-3 ${campaign.placementStrategy === 'automatic' ? 'text-green-400' : 'text-gray-400'}`} size={40} />
+                <h3 className="text-xl font-bold text-white mb-2">Automatic Placements</h3>
+                <p className="text-gray-300 text-sm mb-3">Recommended</p>
+                <ul className="space-y-1 text-xs text-gray-400">
+                  <li>✓ AI optimizes delivery</li>
+                  <li>✓ Best ROI</li>
+                  <li>✓ One creative adapts</li>
+                  <li>✓ Lower cost</li>
+                </ul>
+              </div>
+
+              <div
+                onClick={() => setCampaign({...campaign, placementStrategy: 'manual', placements: []})}
+                className={`p-6 border-2 rounded-xl cursor-pointer ${
+                  campaign.placementStrategy === 'manual' ? 'border-blue-500 bg-blue-500/10' : 'border-gray-700 bg-gray-700'
+                }`}
+              >
+                <Eye className={`mb-3 ${campaign.placementStrategy === 'manual' ? 'text-blue-400' : 'text-gray-400'}`} size={40} />
+                <h3 className="text-xl font-bold text-white mb-2">Manual Placements</h3>
+                <p className="text-gray-300 text-sm mb-3">Choose specific</p>
+                <ul className="space-y-1 text-xs text-gray-400">
+                  <li>✓ Full control</li>
+                  <li>✓ Select multiple</li>
+                  <li>✓ Exclude specific</li>
+                  <li>✓ Advanced strategy</li>
+                </ul>
+              </div>
+            </div>
+
+            {campaign.placementStrategy === 'manual' && (
+              <div className="bg-gray-900 rounded-lg p-6 mb-6 max-h-96 overflow-y-auto">
+                <h4 className="text-lg font-bold text-white mb-4">Select Placements (Multiple)</h4>
+                
+                {Object.entries(getPlacementsByCategory()).map(([category, placements]) => (
+                  <div key={category} className="mb-6 last:mb-0">
+                    <h5 className="text-md font-bold text-purple-300 mb-3">{category}</h5>
+                    <div className="space-y-3">
+                      {placements.map((placement) => (
+                        <div
+                          key={placement.id}
+                          onClick={() => {
+                            const isSelected = campaign.placements.includes(placement.id);
+                            setCampaign({
+                              ...campaign,
+                              placements: isSelected 
+                                ? campaign.placements.filter(p => p !== placement.id)
+                                : [...campaign.placements, placement.id]
+                            });
+                          }}
+                          className={`p-4 rounded-lg border-2 cursor-pointer ${
+                            campaign.placements.includes(placement.id) ? 'border-green-500 bg-green-500/10' : 'border-gray-700 bg-gray-700'
+                          }`}
+                        >
+                          <div className="flex justify-between items-start">
+                            <div className="flex-1">
+                              <div className="flex items-center gap-2 mb-1">
+                                <h5 className="font-bold text-white">{placement.name}</h5>
+                                {placement.tag && <span className="px-2 py-0.5 bg-pink-500 text-white text-xs rounded">{placement.tag}</span>}
+                              </div>
+                              <p className="text-sm text-gray-400 mb-2">{placement.desc}</p>
+                              <div className="flex gap-4 text-xs">
+                                {placement.size && <span className="text-blue-400">Size: {placement.size}</span>}
+                                {placement.ratio && <span className="text-purple-400">Ratio: {placement.ratio}</span>}
+                              </div>
+                            </div>
+                            <div className="text-right ml-4">
+                              <p className="text-white font-bold">{placement.price}</p>
+                              {campaign.placements.includes(placement.id) && <Check className="text-green-400 ml-auto mt-1" size={20} />}
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+            
+            <div className="flex gap-4">
+              <button onClick={() => setStep(3)} className="flex-1 bg-gray-700 text-white py-3 rounded-lg">Back</button>
+              <button 
+                onClick={() => setStep(5)} 
+                disabled={campaign.placementStrategy === 'manual' && campaign.placements.length === 0}
+                className="flex-1 bg-blue-600 disabled:bg-gray-700 text-white py-3 rounded-lg"
+              >
+                Next
+              </button>
+            </div>
+          </div>
+        )}
+
+        {step === 5 && (
+          <div className="bg-gray-800 rounded-xl p-6">
+            <h2 className="text-2xl font-bold text-white mb-6">Select Nike Products</h2>
+            <div className="space-y-3 mb-6">
+              {products.map((p) => (
+                <div 
+                  key={p.id} 
+                  onClick={() => setCampaign({...campaign, products: campaign.products.includes(p.id) ? campaign.products.filter(x => x !== p.id) : [...campaign.products, p.id]})} 
+                  className={`p-4 rounded-lg border-2 cursor-pointer flex items-center justify-between ${campaign.products.includes(p.id) ? 'border-blue-500 bg-blue-500/10' : 'border-gray-700 bg-gray-700'}`}
+                >
+                  <div className="flex items-center gap-4">
+                    <div className="text-4xl">👟</div>
+                    <div>
+                      <h3 className="font-bold text-white">{p.name}</h3>
+                      <p className="text-gray-400 text-sm">{p.category} • ₹{p.price.toLocaleString()}</p>
+                    </div>
+                  </div>
+                  {campaign.products.includes(p.id) && <Check className="text-blue-400" size={24} />}
+                </div>
+              ))}
+            </div>
+            <div className="flex gap-4">
+              <button onClick={() => setStep(4)} className="flex-1 bg-gray-700 text-white py-3 rounded-lg">Back</button>
+              <button onClick={() => setStep(6)} disabled={!campaign.products.length} className="flex-1 bg-blue-600 disabled:bg-gray-700 text-white py-3 rounded-lg">Next</button>
+            </div>
+          </div>
+        )}
+
+        {step === 6 && !campaign.creativeMethod && !showPreview && (
+          <div className="bg-gray-800 rounded-xl p-6">
+            <h2 className="text-2xl font-bold text-white mb-2">Create Your Ad Creative</h2>
+            <p className="text-gray-400 text-sm mb-4">
+              Platform: {getSelectedPlatform()?.name} | Strategy: {campaign.placementStrategy === 'automatic' ? 'Automatic' : `Manual (${campaign.placements.length})`}
+            </p>
+            
+            <div className="grid grid-cols-2 gap-6">
+              <div onClick={() => setCampaign({...campaign, creativeMethod: 'ai'})} className="p-8 border-2 border-gray-700 rounded-xl hover:border-purple-500 cursor-pointer bg-gradient-to-br from-purple-500/10 to-pink-500/10">
+                <Sparkles className="text-purple-400 mb-4" size={48} />
+                <h3 className="text-2xl font-bold text-white mb-2">AI Generator</h3>
+                <p className="text-gray-300">Generate creative automatically</p>
+              </div>
+              <div onClick={() => setCampaign({...campaign, creativeMethod: 'manual'})} className="p-8 border-2 border-gray-700 rounded-xl hover:border-blue-500 cursor-pointer bg-gradient-to-br from-blue-500/10 to-cyan-500/10">
+                <Upload className="text-blue-400 mb-4" size={48} />
+                <h3 className="text-2xl font-bold text-white mb-2">Manual Upload</h3>
+                <p className="text-gray-300">Upload your own assets</p>
+              </div>
+            </div>
+            <button onClick={() => setStep(5)} className="w-full mt-6 bg-gray-700 text-white py-3 rounded-lg">Back</button>
+          </div>
+        )}
+
+        {step === 6 && campaign.creativeMethod === 'ai' && !showPreview && (
+          <div>
+            <button onClick={() => setCampaign({...campaign, creativeMethod: '', creatives: []})} className="text-gray-400 hover:text-white flex items-center gap-2 mb-4">
+              <ArrowLeft size={20} />Change Method
+            </button>
+            
+            <AIAdGenerator 
+              products={products.filter(p => campaign.products.includes(p.id))}
+              targeting={{ locations: ['Mumbai'] }}
+              onSelectAd={handleSelectAd}
+              adType={campaign.adType}
+            />
+            
+            {campaign.creatives.length > 0 && (
+              <div className="bg-gray-800 rounded-xl p-6 mt-6">
+                <h3 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
+                  <Check className="text-green-400" size={24} />
+                  Creative Ready
+                </h3>
+                <button 
+                  onClick={() => setShowPreview(true)} 
+                  className="w-full bg-purple-600 hover:bg-purple-700 text-white py-3 rounded-lg flex items-center justify-center gap-2"
+                >
+                  <Eye size={20} />Preview Campaign
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+
+        {step === 6 && campaign.creativeMethod === 'manual' && !showPreview && (
+          <div className="bg-gray-800 rounded-xl p-6">
+            <button onClick={() => setCampaign({...campaign, creativeMethod: '', creatives: []})} className="text-gray-400 hover:text-white flex items-center gap-2 mb-4">
+              <ArrowLeft size={20} />Change Method
+            </button>
+            
+            <h2 className="text-2xl font-bold text-white mb-6">Upload Creative Assets</h2>
+            
+            <div className="space-y-4 mb-6">
+              <div className="border-2 border-dashed border-gray-700 rounded-xl p-12 text-center hover:border-blue-500 cursor-pointer">
+                <input type="file" multiple accept="image/*,video/*" onChange={handleFileUpload} className="hidden" id="file-upload" />
+                <label htmlFor="file-upload" className="cursor-pointer">
+                  <ImageIcon className="mx-auto text-gray-400 mb-4" size={48} />
+                  <p className="text-white font-medium">Click to Upload</p>
+                  <p className="text-gray-400 text-sm mt-2">PNG, JPG up to 10MB</p>
+                </label>
+              </div>
+
+              {campaign.creatives.length > 0 && (
+                <div className="bg-gray-700 rounded-lg p-4">
+                  <p className="text-white font-medium mb-3">Uploaded ({campaign.creatives.length}):</p>
+                  <div className="grid grid-cols-2 gap-3">
+                    {campaign.creatives.map((creative, idx) => (
+                      <div key={idx} className="bg-gray-800 rounded-lg overflow-hidden">
+                        <img src={creative.preview} alt="Preview" className="w-full h-32 object-cover" />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <input type="text" placeholder="Headline" value={campaign.adCopy.headline} onChange={(e) => setCampaign({...campaign, adCopy: {...campaign.adCopy, headline: e.target.value}})} className="w-full bg-gray-700 text-white rounded-lg p-3" />
+              <textarea placeholder="Description" value={campaign.adCopy.description} onChange={(e) => setCampaign({...campaign, adCopy: {...campaign.adCopy, description: e.target.value}})} rows={4} className="w-full bg-gray-700 text-white rounded-lg p-3" />
+            </div>
+
+            {!canCreateCampaign() && (
+              <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-4 mb-4">
+                <p className="text-red-300 text-sm flex items-center gap-2">
+                  <AlertCircle size={16} />
+                  Upload at least one image and add headline/description
+                </p>
+              </div>
+            )}
+
+            <button 
+              onClick={() => setShowPreview(true)} 
+              disabled={!canCreateCampaign()}
+              className="w-full bg-purple-600 hover:bg-purple-700 disabled:bg-gray-700 text-white py-3 rounded-lg flex items-center justify-center gap-2"
+            >
+              <Eye size={20} />Preview Campaign
+            </button>
+          </div>
+        )}
+
+        {showPreview && (
+          <div className="space-y-6">
+            <div className="bg-gradient-to-r from-purple-600 to-blue-600 rounded-xl p-6">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <Eye className="text-white" size={32} />
+                  <div>
+                    <h2 className="text-2xl font-bold text-white">Campaign Preview</h2>
+                    <p className="text-purple-100 text-sm">Nike on {getSelectedPlatform()?.name}</p>
+                  </div>
+                </div>
+                <button onClick={() => setShowPreview(false)} className="px-4 py-2 bg-white/20 hover:bg-white/30 rounded-lg text-white text-sm">
+                  Edit
+                </button>
+              </div>
+            </div>
+
+            <div className="bg-gray-800 rounded-xl p-6">
+              <h3 className="text-xl font-bold text-white mb-4">Campaign Summary</h3>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-gray-400 text-sm">Name</p>
+                  <p className="text-white font-medium">{campaign.name}</p>
+                </div>
+                <div>
+                  <p className="text-gray-400 text-sm">Budget</p>
+                  <p className="text-white font-medium">₹{parseInt(campaign.budget).toLocaleString()}/day</p>
+                </div>
+                <div>
+                  <p className="text-gray-400 text-sm">Platform</p>
+                  <p className="text-white font-medium">{getSelectedPlatform()?.name}</p>
+                </div>
+                <div>
+                  <p className="text-gray-400 text-sm">Strategy</p>
+                  <p className="text-white font-medium">{campaign.placementStrategy === 'automatic' ? 'Automatic' : `${campaign.placements.length} placements`}</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-gray-800 rounded-xl p-6">
+              <h3 className="text-xl font-bold text-white mb-4">Ad Preview</h3>
+              <div className="bg-gray-900 rounded-xl p-6 max-w-md mx-auto">
+                {campaign.creatives[0]?.preview && (
+                  <img src={campaign.creatives[0].preview} alt="Ad" className="w-full rounded-lg mb-4" />
+                )}
+                <h4 className="text-xl font-bold text-white mb-3">{campaign.adCopy.headline}</h4>
+                <p className="text-gray-300 text-sm mb-4">{campaign.adCopy.description}</p>
+                <button className="w-full bg-blue-600 text-white py-3 rounded-lg font-medium">
+                  {campaign.adCopy.cta}
+                </button>
+              </div>
+            </div>
+
+            <div className="flex gap-4">
+              <button 
+                onClick={() => setShowPreview(false)}
+                className="flex-1 bg-gray-700 hover:bg-gray-600 text-white py-4 rounded-lg"
+              >
+                Edit Campaign
+              </button>
+              <button 
+                onClick={() => { 
+                  alert(`🎉 Campaign created on ${getSelectedPlatform()?.name} successfully!`);
+                  navigate('/campaigns');
+                }}
+                className="flex-1 bg-green-600 hover:bg-green-700 text-white py-4 rounded-lg flex items-center justify-center gap-2"
+              >
+                <Check size={20} />Launch Campaign
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}

@@ -1,0 +1,75 @@
+{
+  "brand": "zepto",
+  "products": [
+    "Zepto Zepto Bath 1kg 250g"
+  ],
+  "campaign_name": "get fresh",
+  "objective": "conversions",
+  "budget": "40000",
+  "duration_days": "4",
+  "start_date": "2025-11-11",
+  "target_audience": {
+    "age_groups": [
+      "25-34",
+      "18-24"
+    ],
+    "locations": [
+      "Durgapur",
+      "Erode",
+      "Faridabad",
+      "Gulbarga",
+      "Gurgaon",
+      "Guwahati",
+      "Jamnagar",
+      "Jhansi"
+    ],
+    "interests": []
+  },
+  "ad_copy": "feel fresh in 10 mins",
+  "headline": "Feel Fresh",
+  "description": "",
+  "channels": [
+    "Zepto_App",
+    "YouTube",
+    "OTT"
+  ],
+  "call_to_action": "shop_now",
+  "ad_images": [],
+  "submission_id": "SUB_20251109_212142_ZEP",
+  "submitted_at": "2025-11-09T21:21:42.571246",
+  "status": "approved",
+  "compliance_checks": {
+    "all_passed": true,
+    "checks": {
+      "image_text_ratio": {
+        "passed": true,
+        "rule": "Text should not exceed 20% of image area",
+        "details": "Ad copy length: 21 characters"
+      },
+      "content_moderation": {
+        "passed": true,
+        "rule": "No prohibited content (nudity, violence, hate speech)",
+        "details": "No issues detected"
+      },
+      "brand_safety": {
+        "passed": true,
+        "rule": "Campaign must be from verified brand",
+        "details": "Brand: zepto - Verified"
+      },
+      "technical_specs": {
+        "passed": true,
+        "rule": "Must have valid channels, budget, and duration",
+        "details": "Channels: 3, Budget: \u20b940000.0, Duration: 4 days"
+      },
+      "legal_compliance": {
+        "passed": true,
+        "rule": "Exaggerated claims must have disclaimers",
+        "details": "No unsubstantiated claims detected"
+      }
+    },
+    "checked_at": "2025-11-09T21:21:42.592573"
+  },
+  "approved_by": "admin",
+  "approved_at": "2025-11-09T21:22:11.296347",
+  "approval_notes": ""
+}

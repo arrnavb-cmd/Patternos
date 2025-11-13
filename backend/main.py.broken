@@ -1,0 +1,578 @@
+from fastapi import FastAPI, HTTPException, Depends
+from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
+from typing import Optional, List, Dict
+from datetime import datetime, timedelta
+import json
+import hashlib
+from jose import JWTError, jwt
+from passlib.context import CryptContext
+
+app = FastAPI(title="PatternOS API", version="2.0")
+
+# CORS configuration
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# Security
+SECRET_KEY = "patternos-secret-key-change-in-production"
+ALGORITHM = "HS256"
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
+# In-memory database (replace with PostgreSQL in production)
+users_db = {}
+events_db = []
+visual_profiles_db = {}
+intent_scores_db = {}
+
+# ============================================
+# MODELS
+# ============================================
+
+class User(BaseModel):
+    email: str
+    password: str
+    company_name: Optional[str] = None
+    role: str = "advertiser"
+
+class UserLogin(BaseModel):
+    email: str
+    password: str
+
+class Event(BaseModel):
+    event_type: str
+    user_id: str
+    platform: Optional[str] = "web"
+    product_id: Optional[str] = None
+    category: Optional[str] = None
+    metadata: Optional[Dict] = {}
+
+class VisualAnalysis(BaseModel):
+    user_id: str
+    image_url: str
+    product_id: Optional[str] = None
+    category: Optional[str] = None
+
+class ConsentUpdate(BaseModel):
+    user_id: str
+    analytics: bool = False
+    marketing: bool = False
+    social_media: bool = False
+    location: bool = False
+
+# ============================================
+# AUTH FUNCTIONS
+# ============================================
+
+def create_access_token(data: dict):
+    to_encode = data.copy()
+    expire = datetime.utcnow() + timedelta(days=7)
+    to_encode.update({"exp": expire})
+    encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+    return encoded_jwt
+
+def hash_password(password: str):
+    return pwd_context.hash(password)
+
+def verify_password(plain_password, hashed_password):
+    return pwd_context.verify(plain_password, hashed_password)
+
+# ============================================
+# AUTH ENDPOINTS
+# ============================================
+
+
+@app.post("/api/auth/register")
+async def register(user: User):
+    if user.email in users_db:
+        raise HTTPException(status_code=400, detail="Email already registered")
+    
+    user_id = hashlib.md5(user.email.encode()).hexdigest()[:12]
+    
+    users_db[user.email] = {
+        "user_id": user_id,
+        "email": user.email,
+        "password": hash_password(user.password),
+        "company_name": user.company_name,
+        "role": user.role,
+        "created_at": datetime.utcnow().isoformat(),
+        "consents": {
+            "essential": True,
+            "analytics": False,
+            "marketing": False,
+            "social_media": False,
+            "location": False
+        }
+    }
+    
+    token = create_access_token({"sub": user.email, "user_id": user_id})
+    
+    return {
+        "access_token": token,
+        "token_type": "bearer",
+        "user": {
+            "user_id": user_id,
+            "email": user.email,
+            "company_name": user.company_name,
+            "role": user.role
+        }
+    }
+
+
+@app.post("/api/auth/login")
+async def login(credentials: UserLogin):
+    user = users_db.get(credentials.email)
+    
+    if not user or not verify_password(credentials.password, user["password"]):
+        raise HTTPException(status_code=401, detail="Invalid credentials")
+    
+    token = create_access_token({"sub": credentials.email, "user_id": user["user_id"]})
+    
+    return {
+        "access_token": token,
+        "token_type": "bearer",
+        "user": {
+            "user_id": user["user_id"],
+            "email": user["email"],
+            "company_name": user["company_name"],
+            "role": user["role"]
+        }
+    }
+
+# ============================================
+# EVENT TRACKING ENDPOINTS
+# ============================================
+
+
+@app.post("/api/v1/events/track")
+async def track_event(event: Event):
+    """Track any user event (search, view, click, purchase)"""
+    event_data = {
+        "event_id": len(events_db) + 1,
+        "event_type": event.event_type,
+        "user_id": event.user_id,
+        "platform": event.platform,
+        "product_id": event.product_id,
+        "category": event.category,
+        "metadata": event.metadata,
+        "timestamp": datetime.utcnow().isoformat()
+    }
+    
+    events_db.append(event_data)
+    
+    # Update intent score in background
+    update_intent_score(event.user_id, event)
+    
+    return {"status": "tracked", "event_id": event_data["event_id"]}
+
+
+@app.post("/api/v1/events/batch")
+async def track_batch_events(events: List[Event]):
+    """Track multiple events at once"""
+    tracked = []
+    for event in events:
+        result = await track_event(event)
+        tracked.append(result)
+    
+    return {"status": "batch_tracked", "count": len(tracked)}
+
+# ============================================
+# VISUAL INTELLIGENCE ENDPOINTS
+# ============================================
+
+
+@app.post("/api/v1/intelligence/visual/analyze")
+async def analyze_visual(data: VisualAnalysis):
+    """Analyze image engagement (NO IMAGE STORAGE)"""
+    
+    # Simulate visual analysis
+    visual_metadata = {
+        "dominant_colors": ["#000000", "#001f3f", "#8B4513"],
+        "style_tags": ["minimalist", "modern", "tech-savvy"],
+        "category": data.category or "electronics"
+    }
+    
+    # Store only metadata
+    if data.user_id not in visual_profiles_db:
+        visual_profiles_db[data.user_id] = {
+            "user_id": data.user_id,
+            "color_preferences": {},
+            "style_tags": [],
+            "category_engagement": {},
+            "updated_at": datetime.utcnow().isoformat()
+        }
+    
+    profile = visual_profiles_db[data.user_id]
+    
+    # Update color preferences
+    for color in visual_metadata["dominant_colors"]:
+        profile["color_preferences"][color] = profile["color_preferences"].get(color, 0) + 1
+    
+    # Update style tags
+    for tag in visual_metadata["style_tags"]:
+        if tag not in profile["style_tags"]:
+            profile["style_tags"].append(tag)
+    
+    # Update category engagement
+    category = visual_metadata["category"]
+    profile["category_engagement"][category] = profile["category_engagement"].get(category, 0) + 1
+    
+    profile["updated_at"] = datetime.utcnow().isoformat()
+    
+    return {
+        "status": "analyzed",
+        "metadata": visual_metadata,
+        "privacy_note": "No images stored, only metadata"
+    }
+
+
+@app.get("/api/v1/intelligence/visual/profile/{user_id}")
+async def get_visual_profile(user_id: str):
+    """Get user's visual preference profile"""
+    profile = visual_profiles_db.get(user_id)
+    
+    if not profile:
+        raise HTTPException(status_code=404, detail="Profile not found")
+    
+    # Calculate top colors
+    sorted_colors = sorted(
+        profile["color_preferences"].items(),
+        key=lambda x: x[1],
+        reverse=True
+    )[:3]
+    
+    total_interactions = sum(profile["color_preferences"].values())
+    top_colors = [
+        {
+            "color": color,
+            "percentage": round((count / total_interactions) * 100, 1),
+            "hex": color
+        }
+        for color, count in sorted_colors
+    ]
+    
+    return {
+        "user_id": user_id,
+        "style_profile": profile["style_tags"][0] if profile["style_tags"] else "Contemporary Casual",
+        "top_colors": top_colors,
+        "category_engagement": profile["category_engagement"],
+        "total_interactions": total_interactions
+    }
+
+# ============================================
+# BEHAVIORAL INTELLIGENCE ENDPOINTS
+# ============================================
+
+
+@app.get("/api/v1/intelligence/behavioral/user-journey/{user_id}")
+async def get_user_journey(user_id: str):
+    """Get user's behavioral journey"""
+    user_events = [e for e in events_db if e["user_id"] == user_id]
+    
+    search_queries = [e for e in user_events if e["event_type"] == "search"]
+    product_views = [e for e in user_events if e["event_type"] == "product_view"]
+    
+    return {
+        "user_id": user_id,
+        "total_events": len(user_events),
+        "search_queries": len(search_queries),
+        "product_views": len(product_views),
+        "recent_searches": [e["metadata"].get("query") for e in search_queries[-5:]],
+        "recent_products": [e["product_id"] for e in product_views[-5:]]
+    }
+
+# ============================================
+# PREDICTIVE AI ENDPOINTS
+# ============================================
+
+def update_intent_score(user_id: str, event: Event):
+    """Update user's purchase intent score"""
+    if user_id not in intent_scores_db:
+        intent_scores_db[user_id] = {
+            "user_id": user_id,
+            "scores": {},
+            "updated_at": datetime.utcnow().isoformat()
+        }
+    
+    category = event.category or "general"
+    current_score = intent_scores_db[user_id]["scores"].get(category, 0)
+    
+    # Simple scoring logic
+    score_increments = {
+        "search": 5,
+        "product_view": 10,
+        "add_to_cart": 25,
+        "purchase": 50
+    }
+    
+    increment = score_increments.get(event.event_type, 1)
+    new_score = min(100, current_score + increment)
+    
+    intent_scores_db[user_id]["scores"][category] = new_score
+    intent_scores_db[user_id]["updated_at"] = datetime.utcnow().isoformat()
+
+
+@app.get("/api/v1/intelligence/predictive/intent/{user_id}")
+async def get_purchase_intent(user_id: str):
+    """Get user's purchase intent score"""
+    intent_data = intent_scores_db.get(user_id)
+    
+    if not intent_data:
+        return {
+            "user_id": user_id,
+            "intent_score": 0,
+            "ready_to_buy": False,
+            "top_category": None
+        }
+    
+    # Get highest scoring category
+    top_category = max(intent_data["scores"].items(), key=lambda x: x[1])
+    
+    return {
+        "user_id": user_id,
+        "intent_score": top_category[1],
+        "ready_to_buy": top_category[1] > 70,
+        "top_category": top_category[0],
+        "all_scores": intent_data["scores"]
+    }
+
+
+@app.get("/api/v1/intelligence/predictive/recommendations/{user_id}")
+async def get_recommendations(user_id: str, limit: int = 10):
+    """Get AI product recommendations"""
+    visual_profile = visual_profiles_db.get(user_id, {})
+    intent = intent_scores_db.get(user_id, {})
+    
+    # Mock recommendations based on profile
+    recommendations = [
+        {
+            "product_id": f"PROD_{i:03d}",
+            "name": f"Recommended Product {i}",
+            "category": list(visual_profile.get("category_engagement", {"electronics": 1}).keys())[0],
+            "match_score": 95 - i * 3,
+            "visual_similarity": 92 - i * 2,
+            "predicted_conversion": 78 - i * 2
+        }
+        for i in range(1, limit + 1)
+    ]
+    
+    return {
+        "user_id": user_id,
+        "recommendations": recommendations,
+        "based_on": {
+            "visual_preferences": bool(visual_profile),
+            "behavioral_signals": len([e for e in events_db if e["user_id"] == user_id]),
+            "intent_score": max(intent.get("scores", {}).values()) if intent.get("scores") else 0
+        }
+    }
+
+# ============================================
+# GDPR COMPLIANCE ENDPOINTS
+# ============================================
+
+
+@app.post("/api/v1/gdpr/consent")
+async def update_consent(consent: ConsentUpdate):
+    """Update user consent preferences"""
+    user = next((u for u in users_db.values() if u["user_id"] == consent.user_id), None)
+    
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    user["consents"].update({
+        "analytics": consent.analytics,
+        "marketing": consent.marketing,
+        "social_media": consent.social_media,
+        "location": consent.location
+    })
+    
+    return {"status": "consent_updated", "consents": user["consents"]}
+
+
+@app.get("/api/v1/gdpr/export/{user_id}")
+async def export_user_data(user_id: str):
+    """Export all user data (GDPR Right to Access)"""
+    user = next((u for u in users_db.values() if u["user_id"] == user_id), None)
+    
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    user_events = [e for e in events_db if e["user_id"] == user_id]
+    visual_profile = visual_profiles_db.get(user_id, {})
+    intent = intent_scores_db.get(user_id, {})
+    
+    return {
+        "user_id": user_id,
+        "profile": {
+            "email": user["email"],
+            "company_name": user["company_name"],
+            "role": user["role"],
+            "created_at": user["created_at"]
+        },
+        "events": user_events,
+        "visual_profile": visual_profile,
+        "intent_scores": intent,
+        "consents": user["consents"],
+        "exported_at": datetime.utcnow().isoformat()
+    }
+
+
+@app.delete("/api/v1/gdpr/delete/{user_id}")
+async def delete_user_data(user_id: str):
+    """Delete all user data (GDPR Right to be Forgotten)"""
+    # Find and delete user
+    user_email = None
+    for email, user in users_db.items():
+        if user["user_id"] == user_id:
+            user_email = email
+            break
+    
+    if user_email:
+        del users_db[user_email]
+    
+    # Delete events
+    global events_db
+    events_db = [e for e in events_db if e["user_id"] != user_id]
+    
+    # Delete profiles
+    if user_id in visual_profiles_db:
+        del visual_profiles_db[user_id]
+    
+    if user_id in intent_scores_db:
+        del intent_scores_db[user_id]
+    
+    return {
+        "status": "deleted",
+        "user_id": user_id,
+        "deleted_at": datetime.utcnow().isoformat()
+    }
+
+# ============================================
+# HEALTH CHECK
+# ============================================
+
+
+@app.get("/")
+async def root():
+    return {
+        "service": "PatternOS API",
+        "version": "2.0",
+        "status": "running",
+        "endpoints": {
+            "auth": "/api/auth/register, /api/auth/login",
+            "events": "/api/v1/events/track",
+            "visual": "/api/v1/intelligence/visual/analyze",
+            "behavioral": "/api/v1/intelligence/behavioral/user-journey/{user_id}",
+            "predictive": "/api/v1/intelligence/predictive/intent/{user_id}",
+            "gdpr": "/api/v1/gdpr/consent, /api/v1/gdpr/export/{user_id}"
+        }
+    }
+
+
+@app.get("/health")
+async def health_check():
+    return {
+        "status": "healthy",
+        "users": len(users_db),
+        "events": len(events_db),
+        "visual_profiles": len(visual_profiles_db)
+    }
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=8001)
+
+# Import RTB Engine
+from rtb_engine import rtb_engine
+
+# ============================================
+# RTB ENDPOINTS
+# ============================================
+
+
+@app.post("/api/v1/rtb/request-ads")
+async def request_ads(request: dict):
+    """
+    Request ads for a page (Real-Time Bidding)
+    Response time: <100ms
+    """
+    result = await rtb_engine.handle_ad_request(request)
+    return result
+
+
+@app.get("/api/v1/rtb/auction-stats/{campaign_id}")
+async def get_auction_stats(campaign_id: str):
+    """Get auction statistics for a campaign"""
+    stats = await rtb_engine.get_auction_stats(campaign_id)
+    return stats
+
+
+@app.get("/api/v1/rtb/auction-stats")
+async def get_all_auction_stats():
+    """Get overall auction statistics"""
+    stats = await rtb_engine.get_auction_stats()
+    return stats
+
+
+@app.post("/api/v1/campaigns/create")
+async def create_campaign(campaign: dict):
+    """Create a new ad campaign"""
+    campaign_id = f"CAMP_{len(rtb_engine.active_campaigns) + 1:03d}"
+    
+    campaign_data = {
+        'id': campaign_id,
+        'name': campaign['name'],
+        'brand': campaign['brand'],
+        'aggregator': campaign.get('aggregator', 'all'),
+        'max_cpm': campaign.get('max_cpm', 100),
+        'budget': campaign['budget'],
+        'spent': 0,
+        'status': 'active',
+        'targeting': campaign.get('targeting', {}),
+        'creative': campaign.get('creative', {}),
+        'click_url': campaign.get('click_url', ''),
+        'start_date': campaign.get('start_date'),
+        'end_date': campaign.get('end_date'),
+        'created_at': datetime.utcnow().isoformat()
+    }
+    
+    rtb_engine.active_campaigns[campaign_id] = campaign_data
+    
+    return {
+        'status': 'created',
+        'campaign': campaign_data
+    }
+
+
+@app.get("/api/v1/campaigns/list")
+async def list_campaigns(aggregator: Optional[str] = None):
+    """List all campaigns"""
+    campaigns = rtb_engine.get_mock_campaigns(aggregator or 'zepto')
+    return {
+        'total': len(campaigns),
+        'campaigns': campaigns
+    }
+
+
+@app.get("/api/v1/campaigns/{campaign_id}")
+async def get_campaign(campaign_id: str):
+    """Get campaign details"""
+    campaigns = rtb_engine.get_mock_campaigns('zepto')
+    campaign = next((c for c in campaigns if c['id'] == campaign_id), None)
+    
+    if not campaign:
+        raise HTTPException(status_code=404, detail="Campaign not found")
+    
+    # Get stats
+    stats = await rtb_engine.get_auction_stats(campaign_id)
+    
+    return {
+        'campaign': campaign,
+        'stats': stats
+    }
+

@@ -1,0 +1,78 @@
+{
+  "brand": "himalaya",
+  "products": [
+    "Himalaya Himalaya Cleaners 500g 100g"
+  ],
+  "campaign_name": "Clean in 10 Mins",
+  "objective": "conversions",
+  "budget": "449970",
+  "duration_days": "20",
+  "start_date": "2025-11-10",
+  "target_audience": {
+    "age_groups": [
+      "25-34",
+      "35-44"
+    ],
+    "locations": [
+      "Agra",
+      "Ahmedabad",
+      "Ghaziabad",
+      "Gorakhpur",
+      "Kanpur",
+      "Kochi",
+      "Kolhapur",
+      "Kolkata",
+      "Siliguri",
+      "Solapur",
+      "Srinagar"
+    ],
+    "interests": []
+  },
+  "ad_copy": "clean in 10 mins",
+  "headline": "Clean in 10 mins",
+  "description": "",
+  "channels": [
+    "Zepto_App",
+    "Meta",
+    "Google"
+  ],
+  "call_to_action": "shop_now",
+  "ad_images": [],
+  "submission_id": "SUB_20251109_215641_HIM",
+  "submitted_at": "2025-11-09T21:56:41.656005",
+  "status": "approved",
+  "compliance_checks": {
+    "all_passed": true,
+    "checks": {
+      "image_text_ratio": {
+        "passed": true,
+        "rule": "Text should not exceed 20% of image area",
+        "details": "Ad copy length: 16 characters"
+      },
+      "content_moderation": {
+        "passed": true,
+        "rule": "No prohibited content (nudity, violence, hate speech)",
+        "details": "No issues detected"
+      },
+      "brand_safety": {
+        "passed": true,
+        "rule": "Campaign must be from verified brand",
+        "details": "Brand: himalaya - Verified"
+      },
+      "technical_specs": {
+        "passed": true,
+        "rule": "Must have valid channels, budget, and duration",
+        "details": "Channels: 3, Budget: \u20b9449970.0, Duration: 20 days"
+      },
+      "legal_compliance": {
+        "passed": true,
+        "rule": "Exaggerated claims must have disclaimers",
+        "details": "No unsubstantiated claims detected"
+      }
+    },
+    "checked_at": "2025-11-09T21:56:41.661267"
+  },
+  "approved_by": "admin",
+  "approved_at": "2025-11-09T21:57:02.415021",
+  "approval_notes": ""
+}

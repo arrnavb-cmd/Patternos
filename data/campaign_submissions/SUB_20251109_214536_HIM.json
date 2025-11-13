@@ -1,0 +1,78 @@
+{
+  "brand": "himalaya",
+  "products": [
+    "Himalaya Himalaya Cleaners 500g 100g"
+  ],
+  "campaign_name": "Clean in 10 mins",
+  "objective": "conversions",
+  "budget": "44996",
+  "duration_days": "3",
+  "start_date": "2025-11-10",
+  "target_audience": {
+    "age_groups": [
+      "25-34",
+      "35-44"
+    ],
+    "locations": [
+      "Ahmedabad",
+      "Amravati",
+      "Asansol",
+      "Aurangabad",
+      "Bhilai",
+      "Bhiwandi",
+      "Bhubaneswar",
+      "Jabalpur",
+      "Jalandhar",
+      "Maheshtala",
+      "Mangalore"
+    ],
+    "interests": []
+  },
+  "ad_copy": "Clean fast and clean it in 10 mins",
+  "headline": "Clean In 10 Mins",
+  "description": "",
+  "channels": [
+    "Zepto_App",
+    "Meta",
+    "Google"
+  ],
+  "call_to_action": "shop_now",
+  "ad_images": [],
+  "submission_id": "SUB_20251109_214536_HIM",
+  "submitted_at": "2025-11-09T21:45:36.768258",
+  "status": "approved",
+  "compliance_checks": {
+    "all_passed": true,
+    "checks": {
+      "image_text_ratio": {
+        "passed": true,
+        "rule": "Text should not exceed 20% of image area",
+        "details": "Ad copy length: 34 characters"
+      },
+      "content_moderation": {
+        "passed": true,
+        "rule": "No prohibited content (nudity, violence, hate speech)",
+        "details": "No issues detected"
+      },
+      "brand_safety": {
+        "passed": true,
+        "rule": "Campaign must be from verified brand",
+        "details": "Brand: himalaya - Verified"
+      },
+      "technical_specs": {
+        "passed": true,
+        "rule": "Must have valid channels, budget, and duration",
+        "details": "Channels: 3, Budget: \u20b944996.0, Duration: 3 days"
+      },
+      "legal_compliance": {
+        "passed": true,
+        "rule": "Exaggerated claims must have disclaimers",
+        "details": "No unsubstantiated claims detected"
+      }
+    },
+    "checked_at": "2025-11-09T21:45:36.776400"
+  },
+  "approved_by": "admin",
+  "approved_at": "2025-11-09T21:48:06.783540",
+  "approval_notes": ""
+}

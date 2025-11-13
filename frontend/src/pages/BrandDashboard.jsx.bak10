@@ -1,0 +1,278 @@
+import React from "react";
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { 
+  DollarSign, TrendingUp, Eye, MousePointer, ShoppingCart, 
+  Target, BarChart3, Zap, Mic, Brain, ArrowRight, Calendar
+} from 'lucide-react';
+
+export default function BrandDashboard() {
+  const [loading, setLoading] = useState(true);
+  const [brandData, setBrandData] = useState(null);
+  const [campaigns, setCampaigns] = useState([]);
+  const [error, setError] = useState(null);
+
+  const navigate = useNavigate();
+  const [user, setUser] = useState(null);
+  const [metrics, setMetrics] = useState({
+    totalSpend: 1500000,
+    impressions: 12500000,
+    clicks: 185000,
+    attributedSales: 8750000,
+    roas: 5.83,
+    activeCampaigns: 8,
+    ctr: 1.48,
+    conversionRate: 3.2
+  });
+
+  useEffect(() => {
+    const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
+    setUser(storedUser);
+    
+    // Fetch brand performance data
+    const fetchBrandData = async () => {
+      setLoading(true);
+      try {
+        // Get brand slug from stored user (default to nike)
+        const brandSlug = storedUser.username || 'nike';
+        
+        // Fetch organization info
+        const orgResponse = await fetch(`http://localhost:8000/api/organizations/${brandSlug}`);
+        const orgData = await orgResponse.json();
+        
+        // Fetch campaigns for this brand
+        const campaignsResponse = await fetch(`http://localhost:8000/api/campaigns?organization_id=${orgData.id}`);
+        const campaignsData = await campaignsResponse.json();
+        
+        // Calculate aggregate metrics
+        let totalSpend = 0;
+        let totalImpressions = 0;
+        let totalClicks = 0;
+        let totalConversions = 0;
+        let totalRevenue = 0;
+        let activeCampaigns = 0;
+        
+        campaignsData.forEach(campaign => {
+          totalSpend += campaign.spent_amount || 0;
+          totalImpressions += campaign.impressions || 0;
+          totalClicks += campaign.clicks || 0;
+          totalConversions += campaign.conversions || 0;
+          totalRevenue += campaign.revenue_generated || 0;
+          if (campaign.status === 'active') activeCampaigns++;
+        });
+        
+        const ctr = totalImpressions > 0 ? (totalClicks / totalImpressions) * 100 : 0;
+        const roas = totalSpend > 0 ? parseFloat((totalRevenue / totalSpend).toFixed(1)) : 0;
+        
+        setMetrics({
+          totalSpend: totalSpend,
+          impressions: totalImpressions,
+          clicks: totalClicks,
+          ctr: ctr,
+          conversionRate: totalConversions,
+          attributedSales: totalRevenue,
+          roas: roas,
+          activeCampaigns: activeCampaigns
+        });
+        
+        setBrandData(orgData);
+        setCampaigns(campaignsData);
+        
+      } catch (error) {
+        console.error('Failed to fetch brand data:', error);
+        setError(error.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchBrandData();
+  }, []);
+  const handleLogout = () => {
+    localStorage.removeItem("user");
+    localStorage.removeItem("access_token");
+    navigate("/login", { replace: true });
+  };
+  const intelligenceModules = [
+    {
+      id: 'behavioral',
+      title: 'Behavioral',
+      description: 'Search patterns & intent signals',
+      icon: TrendingUp,
+      gradient: 'from-blue-500 to-cyan-500',
+      route: '/intelligence/behavioral'
+    },
+    {
+      id: 'visual',
+      title: 'Visual',
+      description: 'Computer vision & shelf analytics',
+      icon: Eye,
+      gradient: 'from-pink-500 to-rose-500',
+      route: '/intelligence/visual'
+    },
+    {
+      id: 'voice',
+      title: 'Voice',
+      description: 'Conversational commerce',
+      icon: Mic,
+      gradient: 'from-red-500 to-orange-500',
+      route: '/intelligence/voice'
+    },
+    {
+      id: 'predictive',
+      title: 'Predictive',
+      description: 'Pre-intent forecasting',
+      icon: Brain,
+      gradient: 'from-purple-500 to-indigo-500',
+      route: '/intelligence/predictive'
+    }
+  ];
+
+  // Use real campaigns from API, sorted by spend
+  const topCampaigns = campaigns
+    .sort((a, b) => (b.spent_amount || 0) - (a.spent_amount || 0))
+    .slice(0, 5)
+    .map(c => ({
+      name: c.name,
+      spend: c.spent_amount,
+      sales: c.revenue_generated || 0,
+      roas: parseFloat((c.roas || ((c.revenue_generated || 0) / (c.spent_amount || 1))).toFixed(1)),
+      status: c.status
+    }));
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 py-8">
+
+      <div className="max-w-7xl mx-auto px-4">
+        {/* Welcome Banner */}
+        <div className="bg-gradient-to-r from-orange-600 to-red-600 rounded-2xl p-8 mb-8 shadow-2xl">
+          <h1 className="text-3xl font-bold text-white mb-2">
+            Welcome back, {user?.brand_name || 'Brand'}! 👟
+          </h1>
+          <p className="text-orange-100">
+            Your campaigns are performing {metrics.roas > 5 ? 'excellently' : 'well'} - {metrics.roas.toFixed(1)}x ROAS
+          </p>
+        </div>
+
+        {/* Key Metrics */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          <div className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-xl p-6 border border-gray-700 shadow-xl">
+            <div className="flex items-center justify-between mb-4">
+              <DollarSign className="text-green-400" size={28} />
+              <span className="text-green-400 text-sm font-semibold">+18.3%</span>
+            </div>
+            <p className="text-gray-400 text-sm">Total Ad Spend</p>
+            <p className="text-3xl font-bold text-white mt-1">
+              ₹{(metrics.totalSpend / 100000).toFixed(1)}L
+            </p>
+            <p className="text-xs text-gray-400 mt-2">This month</p>
+          </div>
+
+          <div className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-xl p-6 border border-gray-700 shadow-xl">
+            <div className="flex items-center justify-between mb-4">
+              <Eye className="text-blue-400" size={28} />
+            </div>
+            <p className="text-gray-400 text-sm">Total Impressions</p>
+            <p className="text-3xl font-bold text-white mt-1">
+              {(metrics.impressions / 1000000).toFixed(1)}M
+            </p>
+            <p className="text-xs text-blue-400 mt-2">CTR: {metrics.ctr}%</p>
+          </div>
+
+          <div className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-xl p-6 border border-gray-700 shadow-xl">
+            <div className="flex items-center justify-between mb-4">
+              <ShoppingCart className="text-purple-400" size={28} />
+            </div>
+            <p className="text-gray-400 text-sm">Attributed Sales</p>
+            <p className="text-3xl font-bold text-white mt-1">
+              ₹{(metrics.attributedSales / 10000000).toFixed(2)}Cr
+            </p>
+            <p className="text-xs text-green-400 mt-2">Conv: {metrics.conversionRate}%</p>
+          </div>
+
+          <div className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-xl p-6 border border-gray-700 shadow-xl">
+            <div className="flex items-center justify-between mb-4">
+              <TrendingUp className="text-yellow-400" size={28} />
+            </div>
+            <p className="text-gray-400 text-sm">ROAS</p>
+            <p className="text-3xl font-bold text-white mt-1">{metrics.roas.toFixed(1)}x</p>
+            <p className="text-xs text-yellow-400 mt-2">{metrics.activeCampaigns} active campaigns</p>
+          </div>
+        </div>
+
+        {/* PatternOS Intelligence Modules */}
+        <div className="mb-8">
+          <h2 className="text-2xl font-bold text-white mb-4">PatternOS Intelligence Modules</h2>
+          <p className="text-gray-400 mb-6">
+            Use our AI-powered modules to create and optimize your campaigns
+          </p>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {intelligenceModules.map(module => {
+              const Icon = module.icon;
+              return (
+                <div
+                  key={module.id}
+                  onClick={() => navigate(module.route)}
+                  className="group bg-gradient-to-br from-gray-800 to-gray-900 rounded-xl p-6 border border-gray-700 hover:border-blue-500 hover:scale-105 transition-all cursor-pointer shadow-xl"
+                >
+                  <div className={`w-16 h-16 rounded-xl bg-gradient-to-br ${module.gradient} flex items-center justify-center mb-4`}>
+                    <Icon className="text-white" size={32} />
+                  </div>
+                  
+                  <h3 className="text-xl font-bold text-white mb-2">{module.title}</h3>
+                  <p className="text-gray-400 text-sm mb-4">{module.description}</p>
+                  
+                  <div className="flex items-center text-blue-400 group-hover:text-blue-300 transition-colors">
+                    <span className="text-sm font-medium">Launch</span>
+                    <ArrowRight className="ml-2" size={16} />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Campaign Performance */}
+        <div className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-xl p-6 border border-gray-700 shadow-xl mb-8">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-xl font-bold text-white">Top Performing Campaigns</h2>
+            <button
+              onClick={() => navigate('/campaigns')}
+              className="text-blue-400 hover:text-blue-300 text-sm font-medium flex items-center gap-2"
+            >
+              View All
+              <ArrowRight size={16} />
+            </button>
+          </div>
+          
+          <div className="space-y-3">
+            {topCampaigns.map((campaign, idx) => (
+              <div
+                key={idx}
+                className="bg-gray-900/50 rounded-lg p-4 border border-gray-700 hover:border-purple-500 transition flex items-center justify-between"
+              >
+                <div className="flex items-center gap-4">
+                  <div className="bg-gradient-to-br from-purple-500 to-indigo-600 w-12 h-12 rounded-lg flex items-center justify-center text-white font-bold">
+                    #{idx + 1}
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-white">{campaign.name}</h3>
+                    <p className="text-sm text-gray-400">
+                      Spend: ₹{(campaign.spend / 100000).toFixed(1)}L • {campaign.status}
+                    </p>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <p className="text-xl font-bold text-white">
+                    ₹{(campaign.sales / 100000).toFixed(1)}L
+                  </p>
+                  <p className="text-sm text-green-400">{campaign.roas}x ROAS</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}

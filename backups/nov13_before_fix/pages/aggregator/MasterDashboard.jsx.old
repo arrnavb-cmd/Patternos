@@ -1,0 +1,198 @@
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { DollarSign, TrendingUp, ShoppingCart, Users, AlertTriangle, Target, BarChart3 } from 'lucide-react';
+
+export default function MasterDashboard() {
+  const navigate = useNavigate();
+  const [intentStats, setIntentStats] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchIntentStats();
+    const interval = setInterval(fetchIntentStats, 10000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const fetchIntentStats = async () => {
+    try {
+      const response = await fetch('http://localhost:8000/api/v1/intent/stats?clientId=zepto');
+      const data = await response.json();
+      setIntentStats(data);
+      setLoading(false);
+    } catch (error) {
+      console.error('Failed to fetch intent stats:', error);
+      setLoading(false);
+    }
+  };
+
+  // Platform-wide metrics (all brands combined)
+  const platformMetrics = [
+    { label: 'Total Ad Spend', value: '₹13.8Cr', subtext: 'All brands this month', icon: DollarSign, color: 'text-blue-400' },
+    { label: 'GMV Generated', value: '₹89.5Cr', subtext: 'Platform revenue', icon: TrendingUp, color: 'text-green-400' },
+    { label: 'Users Tracked', value: intentStats?.totalUsers || 0, subtext: 'Active shoppers', icon: Users, color: 'text-purple-400' },
+    { label: 'High Intent Users', value: intentStats?.intentDistribution?.high || 0, subtext: 'Ready to purchase', icon: Target, color: 'text-orange-400' }
+  ];
+
+  // All brands' performance data
+  const brandsData = [
+    { name: 'Nike', spend: '₹18.0L', revenue: '₹1.25Cr', roas: '6.9x', campaigns: 12, status: 'ACTIVE', conversionRate: '4.2%' },
+    { name: 'Adidas', spend: '₹15.2L', revenue: '₹1.05Cr', roas: '6.9x', campaigns: 10, status: 'ACTIVE', conversionRate: '4.0%' },
+    { name: 'Lakme', spend: '₹8.5L', revenue: '₹0.52Cr', roas: '6.1x', campaigns: 8, status: 'ACTIVE', conversionRate: '3.8%' },
+    { name: 'Phoocl', spend: '₹6.2L', revenue: '₹0.38Cr', roas: '6.1x', campaigns: 5, status: 'ACTIVE', conversionRate: '3.6%' },
+    { name: 'Amul', spend: '₹5.8L', revenue: '₹0.34Cr', roas: '5.9x', campaigns: 6, status: 'ACTIVE', conversionRate: '3.5%' },
+    { name: "Pond's", spend: '₹4.0L', revenue: '₹0.22Cr', roas: '5.5x', campaigns: 4, status: 'ACTIVE', conversionRate: '3.2%' },
+    { name: 'Maggi', spend: '₹3.5L', revenue: '₹0.19Cr', roas: '5.4x', campaigns: 3, status: 'ACTIVE', conversionRate: '3.0%' },
+    { name: 'Indiggi', spend: '₹2.0L', revenue: '₹0.10Cr', roas: '5.0x', campaigns: 2, status: 'ACTIVE', conversionRate: '2.8%' }
+  ];
+
+  // Revenue opportunities by category (mock data - will be replaced with real data later)
+  const revenueOpportunities = [
+    { category: 'Footwear', users: 100, score: 0.91, revenue: '₹50L', brands: ['Nike', 'Adidas', 'Puma'] },
+    { category: 'Beauty', users: 78, score: 0.85, revenue: '₹40L', brands: ['Lakme', "Pond's", 'Maybelline'] },
+    { category: 'Apparel', users: 68, score: 0.80, revenue: '₹35L', brands: ['Nike', 'Adidas', 'H&M'] },
+    { category: 'Groceries', users: 62, score: 0.89, revenue: '₹30L', brands: ['Amul', 'Maggi', 'ITC'] },
+    { category: 'Electronics', users: 64, score: 0.82, revenue: '₹60L', brands: ['Samsung', 'Apple', 'Sony'] },
+    { category: 'Sports', users: 44, score: 0.79, revenue: '₹25L', brands: ['Nike', 'Puma', 'Decathlon'] }
+  ];
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-slate-900 flex items-center justify-center">
+        <div className="text-white">Loading dashboard...</div>
+      </div>
+    );
+  }
+
+  const highIntentCount = intentStats?.intentDistribution?.high || 0;
+
+  return (
+    <div className="min-h-screen bg-slate-900">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        
+        {/* Header */}
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-white mb-2">Zepto Master Dashboard</h1>
+          <p className="text-slate-400">Platform overview & revenue opportunities</p>
+        </div>
+
+        {/* Platform Metrics */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          {platformMetrics.map((metric, idx) => {
+            const Icon = metric.icon;
+            return (
+              <div key={idx} className="bg-slate-800 rounded-xl p-6 border border-slate-700">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className={`w-12 h-12 rounded-lg ${metric.color.replace('text', 'bg').replace('400', '500/20')} flex items-center justify-center`}>
+                    <Icon className={metric.color} size={24} />
+                  </div>
+                </div>
+                <p className="text-slate-400 text-sm mb-1">{metric.label}</p>
+                <p className="text-3xl font-bold text-white mb-1">{metric.value}</p>
+                <p className="text-sm text-green-400">{metric.subtext}</p>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* High Intent Alert */}
+        <div className="mb-8 bg-gradient-to-r from-orange-900/20 to-red-900/20 border border-orange-500/30 rounded-xl p-6">
+          <div className="flex items-center gap-3 mb-4">
+            <AlertTriangle className="text-orange-400" size={24} />
+            <div>
+              <h3 className="text-lg font-bold text-white">{highIntentCount} High-Intent Users Detected</h3>
+              <p className="text-slate-400 text-sm">Contact brands immediately to capture revenue</p>
+            </div>
+          </div>
+          <button 
+            onClick={() => navigate('/intent')}
+            className="px-6 py-3 bg-orange-600 hover:bg-orange-700 text-white rounded-lg font-medium transition-colors"
+          >
+            View Intent Intelligence →
+          </button>
+        </div>
+
+        {/* Revenue Opportunities by Category */}
+        <div className="mb-8 bg-slate-800 rounded-xl p-6 border border-slate-700">
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h2 className="text-xl font-bold text-white mb-2">Revenue Opportunities by Category</h2>
+              <p className="text-sm text-slate-400">High-intent users ready to purchase</p>
+            </div>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {revenueOpportunities.map((opp, idx) => (
+              <div key={idx} className="bg-slate-700/50 rounded-lg p-4">
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="text-white font-bold">{opp.category}</h3>
+                  <span className="text-orange-400 font-bold text-sm">Score: {opp.score}</span>
+                </div>
+                <div className="space-y-2 mb-3">
+                  <div className="text-sm text-slate-400">
+                    <span className="text-white font-medium">{opp.users}</span> users • {opp.revenue}
+                  </div>
+                </div>
+                <div className="mb-3">
+                  <p className="text-xs text-slate-500 mb-1">CONTACT BRANDS:</p>
+                  <div className="flex flex-wrap gap-1">
+                    {opp.brands.map(brand => (
+                      <span key={brand} className="px-2 py-1 bg-slate-600 text-white text-xs rounded">{brand}</span>
+                    ))}
+                  </div>
+                </div>
+                <button 
+                  onClick={() => navigate(`/intent/high-intent`)}
+                  className="w-full text-sm text-blue-400 hover:text-blue-300 text-center py-2 border border-slate-600 rounded hover:border-blue-500 transition-colors"
+                >
+                  View all {opp.users} users →
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* All Brands Performance */}
+        <div className="bg-slate-800 rounded-xl p-6 border border-slate-700">
+          <div className="flex items-center gap-2 mb-6">
+            <BarChart3 className="text-blue-400" size={24} />
+            <h2 className="text-xl font-bold text-white">All Brands Performance</h2>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-slate-700">
+                  <th className="text-left py-3 px-4 text-sm font-medium text-slate-400">Brand</th>
+                  <th className="text-left py-3 px-4 text-sm font-medium text-slate-400">Ad Spend</th>
+                  <th className="text-left py-3 px-4 text-sm font-medium text-slate-400">Revenue</th>
+                  <th className="text-left py-3 px-4 text-sm font-medium text-slate-400">ROAS</th>
+                  <th className="text-left py-3 px-4 text-sm font-medium text-slate-400">Conversion</th>
+                  <th className="text-left py-3 px-4 text-sm font-medium text-slate-400">Campaigns</th>
+                  <th className="text-left py-3 px-4 text-sm font-medium text-slate-400">Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {brandsData.map((brand, idx) => (
+                  <tr key={idx} className="border-b border-slate-700/50 hover:bg-slate-700/30 transition-colors">
+                    <td className="py-4 px-4">
+                      <span className="text-white font-medium">{brand.name}</span>
+                    </td>
+                    <td className="py-4 px-4 text-slate-300">{brand.spend}</td>
+                    <td className="py-4 px-4 text-green-400 font-medium">{brand.revenue}</td>
+                    <td className="py-4 px-4 text-orange-400 font-bold">{brand.roas}</td>
+                    <td className="py-4 px-4 text-slate-300">{brand.conversionRate}</td>
+                    <td className="py-4 px-4 text-slate-300">{brand.campaigns}</td>
+                    <td className="py-4 px-4">
+                      <span className="px-3 py-1 bg-green-500/20 text-green-400 rounded-full text-xs font-medium">
+                        {brand.status}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  );
+}

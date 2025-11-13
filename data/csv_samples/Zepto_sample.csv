@@ -1,0 +1,6 @@
+customer_id,date_of_order,age_group,state,city,pincode,items_purchased_count,items_list,repeat_order,order_value,discount_value,payment_mode
+ZEP000001,2024-12-01 11:28:04,35-44,Kerala,Kochi,339434,3,"Gits Frozen Veg Mix 400g, Gits Spices 200ml, Amul Handwash 1L",No,3960,296,Credit Card
+ZEP000002,2025-01-03 02:45:39,55+,Karnataka,Bengaluru,702795,7,"Tata Salt Spices 5kg, Britannia Ghee 50g, Dettol Tea 500g, Amul Sugar 1kg Pack, Tata Curd Pack of 12, Coca-Cola Ice Cream 100g, Dove Curd Pack of 6",No,3648,710,UPI
+ZEP000003,2024-09-24 01:35:04,55+,Kerala,Kochi,431486,2,"Godrej Sugar Pack of 12, Hershey's Sugar 5kg",No,2667,442,UPI
+ZEP000004,2025-09-09 02:44:53,25-34,Kerala,Thiruvananthapuram,692636,5,"Maggi Tea 2kg, Maggi Juice 5kg, Nivea Soft Drink 200ml, Parle Juice 1L, Lizol Dishwash Bar 250g",No,968,458,Debit Card
+ZEP000005,2024-04-14 23:39:30,35-44,Telangana,Warangal,265038,7,"Haldiram Ghee 400g, Surf Excel Cooking Oil 200ml, Godrej Juice Pack of 12, Dove Butter 100g, Patanjali Handwash 250g, Amul Biscuits 2kg, Nivea Milk 2kg",No,4988,394,Wallet

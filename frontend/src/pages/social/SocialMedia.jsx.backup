@@ -1,0 +1,53 @@
+import { useState } from 'react';
+import { Facebook, Instagram, CheckCircle } from 'lucide-react';
+
+export default function SocialMedia() {
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 py-8">
+      <div className="max-w-7xl mx-auto px-4">
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-white mb-2">Social Media Integration</h1>
+          <p className="text-gray-400">Manage Facebook & Instagram campaigns from PatternOS</p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="bg-gray-800 rounded-xl p-6 border-2 border-blue-500/50">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-xl bg-blue-600 flex items-center justify-center">
+                  <Facebook className="text-white" size={24} />
+                </div>
+                <div>
+                  <h3 className="font-bold text-white">Facebook Ads</h3>
+                  <p className="text-sm text-gray-400">Business Manager Connected</p>
+                </div>
+              </div>
+              <CheckCircle className="text-green-400" size={24} />
+            </div>
+            <button className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg transition-colors">
+              Manage Facebook Campaigns
+            </button>
+          </div>
+
+          <div className="bg-gray-800 rounded-xl p-6 border-2 border-pink-500/50">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-600 to-pink-600 flex items-center justify-center">
+                  <Instagram className="text-white" size={24} />
+                </div>
+                <div>
+                  <h3 className="font-bold text-white">Instagram Ads</h3>
+                  <p className="text-sm text-gray-400">Business Account Connected</p>
+                </div>
+              </div>
+              <CheckCircle className="text-green-400" size={24} />
+            </div>
+            <button className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white py-2 rounded-lg transition-colors">
+              Manage Instagram Campaigns
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}

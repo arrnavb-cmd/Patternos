@@ -1,0 +1,54 @@
+{
+  "visual": {
+    "total_images": 100000,
+    "customer_images": 58625,
+    "store_images": 41375,
+    "unique_customers": 34573,
+    "devices": {
+      "Mobile": 24971,
+      "Store_Camera": 24931,
+      "Drone": 24920,
+      "Scanner": 25178
+    },
+    "top_brands": {
+      "Amul": 3053,
+      "Britannia": 2987,
+      "Dove": 3051,
+      "Himalaya": 2945,
+      "Pedigree": 3082,
+      "Whiskas": 3097,
+      "Dettol": 2876,
+      "Maggi": 3026,
+      "Nestle": 3058
+    },
+    "categories": {
+      "Grocery": 12626,
+      "Beauty": 12444,
+      "Pet": 12420,
+      "Home": 12477,
+      "Medical": 12704
+    }
+  },
+  "voice": {
+    "total_utterances": 100000,
+    "unique_customers": 78566,
+    "total_languages": 60,
+    "indian_languages": 36,
+    "intents": {
+      "Order_Product": 20088,
+      "Product_Info": 19952,
+      "Add_to_Cart": 19861
+    },
+    "top_brands": {
+      "Britannia": 3115,
+      "Himalaya": 2971,
+      "Amul": 2975,
+      "Dove": 3084,
+      "Colgate": 3095
+    }
+  },
+  "customer": {
+    "total_customers": 78566,
+    "total_interactions": 158625
+  }
+}
