@@ -759,13 +759,34 @@ async def analytics_platform_summary(date_range: str = "last_30_days"):
         conn = sqlite3.connect("patternos_campaign_data.db")
         cursor = conn.cursor()
         
-        cursor.execute("""
+        
+        # Calculate date range
+        cursor.execute("SELECT MAX(date) FROM ad_spend_daily")
+        max_date = cursor.fetchone()[0]
+        
+        if date_range == "last_7_days":
+            days = 7
+        elif date_range == "last_30_days":
+            days = 30
+        elif date_range == "last_60_days":
+            days = 60
+        elif date_range == "last_90_days":
+            days = 90
+        elif date_range == "last_180_days":
+            days = 180
+        else:
+            days = 30
+        
+        date_filter = f"AND date >= date('{max_date}', '-{days} days')"
+
+        cursor.execute(f"""
             SELECT 
                 SUM(spend_value) as total_spend,
                 SUM(impressions) as total_impressions,
                 SUM(clicks) as total_clicks,
                 SUM(conversions) as total_conversions
             FROM ad_spend_daily
+            WHERE date >= date('{max_date}', '-{days} days')
         """)
         
         row = cursor.fetchone()
@@ -773,10 +794,11 @@ async def analytics_platform_summary(date_range: str = "last_30_days"):
         
         
         # Calculate revenue
-        cursor.execute("""
+        cursor.execute(f"""
             SELECT SUM(a.conversions * COALESCE(s.selling_price, 500)) as revenue
             FROM ad_spend_daily a
             LEFT JOIN sku_library s ON a.sku_id = s.sku_id
+            WHERE a.date >= date('{max_date}', '-{days} days')
         """)
         revenue = cursor.fetchone()[0] or 0
         
@@ -797,10 +819,11 @@ async def analytics_platform_summary(date_range: str = "last_30_days"):
         return {"error": str(e)}
         
         # Calculate revenue from conversions
-        cursor.execute("""
+        cursor.execute(f"""
             SELECT SUM(a.conversions * COALESCE(s.selling_price, 500)) as revenue
             FROM ad_spend_daily a
             LEFT JOIN sku_library s ON a.sku_id = s.sku_id
+            WHERE a.date >= date('{max_date}', '-{days} days')
         """)
         revenue = cursor.fetchone()[0] or 0
         
@@ -827,15 +850,38 @@ async def analytics_channel_performance(date_range: str = "last_30_days"):
         conn.row_factory = sqlite3.Row
         cursor = conn.cursor()
         
-        cursor.execute("""
+        
+        # Calculate date range
+        cursor.execute("SELECT MAX(date) FROM ad_spend_daily")
+        max_date = cursor.fetchone()[0]
+        
+        if date_range == "last_7_days":
+            days = 7
+        elif date_range == "last_30_days":
+            days = 30
+        elif date_range == "last_60_days":
+            days = 60
+        elif date_range == "last_90_days":
+            days = 90
+        elif date_range == "last_180_days":
+            days = 180
+        else:
+            days = 30
+        
+        date_filter = f"AND date >= date('{max_date}', '-{days} days')"
+
+        cursor.execute(f"""
             SELECT 
-                channel,
-                SUM(spend_value) as spend,
-                SUM(impressions) as impressions,
-                SUM(clicks) as clicks,
-                SUM(conversions) as conversions
-            FROM ad_spend_daily
-            GROUP BY channel
+                a.channel,
+                SUM(a.spend_value) as spend,
+                SUM(a.impressions) as impressions,
+                SUM(a.clicks) as clicks,
+                SUM(a.conversions) as conversions,
+                SUM(a.conversions * COALESCE(s.selling_price, 500)) as revenue
+            FROM ad_spend_daily a
+            LEFT JOIN sku_library s ON a.sku_id = s.sku_id
+            WHERE a.date >= date('{max_date}', '-{days} days')
+            GROUP BY a.channel
             ORDER BY spend DESC
         """)
         
@@ -844,6 +890,7 @@ async def analytics_channel_performance(date_range: str = "last_30_days"):
             channel = dict(row)
             channel['ctr'] = round((channel['clicks'] / channel['impressions'] * 100), 2) if channel['impressions'] > 0 else 0
             channel['conversion_rate'] = round((channel['conversions'] / channel['clicks'] * 100), 2) if channel['clicks'] > 0 else 0
+            channel['roas'] = round(channel['revenue'] / channel['spend'], 2) if channel['spend'] > 0 else 0
             channels.append(channel)
         
         conn.close()
@@ -860,7 +907,27 @@ async def analytics_brand_comparison(date_range: str = "last_30_days"):
         conn.row_factory = sqlite3.Row
         cursor = conn.cursor()
         
-        cursor.execute("""
+        
+        # Calculate date range
+        cursor.execute("SELECT MAX(date) FROM ad_spend_daily")
+        max_date = cursor.fetchone()[0]
+        
+        if date_range == "last_7_days":
+            days = 7
+        elif date_range == "last_30_days":
+            days = 30
+        elif date_range == "last_60_days":
+            days = 60
+        elif date_range == "last_90_days":
+            days = 90
+        elif date_range == "last_180_days":
+            days = 180
+        else:
+            days = 30
+        
+        date_filter = f"AND date >= date('{max_date}', '-{days} days')"
+
+        cursor.execute(f"""
             SELECT 
                 a.brand,
                 SUM(a.spend_value) as spend,
@@ -870,6 +937,7 @@ async def analytics_brand_comparison(date_range: str = "last_30_days"):
                 SUM(a.conversions * COALESCE(s.selling_price, 500)) as revenue
             FROM ad_spend_daily a
             LEFT JOIN sku_library s ON a.sku_id = s.sku_id
+            WHERE a.date >= date('{max_date}', '-{days} days')
             GROUP BY a.brand
             ORDER BY spend DESC
         """)
@@ -879,6 +947,8 @@ async def analytics_brand_comparison(date_range: str = "last_30_days"):
             brand = dict(row)
             brand['roas'] = round(brand['revenue'] / brand['spend'], 2) if brand['spend'] > 0 else 0
             brand['ctr'] = round((brand['clicks'] / brand['impressions'] * 100), 2) if brand['impressions'] > 0 else 0
+            brand['conversion_rate'] = round((brand['conversions'] / brand['clicks'] * 100), 2) if brand['clicks'] > 0 else 0
+            brand['purchases'] = brand['conversions']  # Add purchases alias
             brands.append(brand)
         
         conn.close()
@@ -895,7 +965,27 @@ async def analytics_category_comparison(date_range: str = "last_30_days"):
         conn.row_factory = sqlite3.Row
         cursor = conn.cursor()
         
-        cursor.execute("""
+        
+        # Calculate date range
+        cursor.execute("SELECT MAX(date) FROM ad_spend_daily")
+        max_date = cursor.fetchone()[0]
+        
+        if date_range == "last_7_days":
+            days = 7
+        elif date_range == "last_30_days":
+            days = 30
+        elif date_range == "last_60_days":
+            days = 60
+        elif date_range == "last_90_days":
+            days = 90
+        elif date_range == "last_180_days":
+            days = 180
+        else:
+            days = 30
+        
+        date_filter = f"AND date >= date('{max_date}', '-{days} days')"
+
+        cursor.execute(f"""
             SELECT 
                 category,
                 SUM(spend_value) as spend,
@@ -903,6 +993,7 @@ async def analytics_category_comparison(date_range: str = "last_30_days"):
                 SUM(clicks) as clicks,
                 SUM(conversions) as conversions
             FROM ad_spend_daily
+            WHERE date >= date('{max_date}', '-{days} days')
             GROUP BY category
             ORDER BY spend DESC
         """)

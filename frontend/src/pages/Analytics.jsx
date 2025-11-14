@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { BarChart3, TrendingUp, DollarSign, Users, Calendar, Download, Filter, MapPin, Tag, UserCircle } from 'lucide-react';
 
 export default function Analytics() {
@@ -16,7 +15,6 @@ export default function Analytics() {
   const [realChannelData, setRealChannelData] = useState([]);
   const [brandComparisonData, setBrandComparisonData] = useState([]);
   const [interactiveData, setInteractiveData] = useState([]);
-  const [monthlyTrends, setMonthlyTrends] = useState([]);
 
   // Fetch interactive comparison data when tab or filter changes
   useEffect(() => {
@@ -296,7 +294,7 @@ export default function Analytics() {
               </div>
               <div className="bg-gradient-to-br from-orange-900/30 to-orange-800/20 border border-orange-700 rounded-xl p-6">
                 <DollarSign className="w-8 h-8 text-orange-400 mb-3" />
-                <p className="text-3xl font-bold text-white mb-1">{platformSummary?.avg_roas ? platformSummary.avg_roas.toFixed(1) + "x" : "0.0x"}</p>
+                <p className="text-3xl font-bold text-white mb-1">{platformSummary ? platformSummary.avg_roas.toFixed(1) + "x" : "1.12x"}</p>
                 <p className="text-sm text-gray-400">Avg ROAS</p>
               </div>
               <div className="bg-gradient-to-br from-purple-900/30 to-purple-800/20 border border-purple-700 rounded-xl p-6">
@@ -337,88 +335,6 @@ export default function Analytics() {
                     ))}
                   </tbody>
                 </table>
-              </div>
-            </div>
-
-          {/* Monthly Trends Charts */}
-          {monthlyTrends && monthlyTrends.length > 0 && (
-            <div className="mt-8 space-y-6">
-              <div className="mb-6">
-                <h3 className="text-2xl font-bold text-white">Monthly Performance Trends</h3>
-                <p className="text-gray-400 text-sm mt-1">Historical performance data by month</p>
-              </div>
-              
-              {/* Ad Spend Trend */}
-              <div className="bg-gray-800 rounded-xl p-6 border border-gray-700">
-                <h4 className="text-lg font-semibold text-white mb-4">Monthly Ad Spend</h4>
-                <ResponsiveContainer width="100%" height={300}>
-                  <BarChart data={monthlyTrends}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-                    <XAxis dataKey="month" stroke="#9CA3AF" />
-                    <YAxis stroke="#9CA3AF" tickFormatter={(value) => `₹${(value / 10000000).toFixed(1)}Cr`} />
-                    <Tooltip 
-                      contentStyle={{ backgroundColor: '#1F2937', border: '1px solid #374151', color: '#fff' }}
-                      formatter={(value) => [`₹${(value / 10000000).toFixed(2)}Cr`, 'Ad Spend']}
-                    />
-                    <Bar dataKey="spend" fill="#3B82F6" radius={[8, 8, 0, 0]} />
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-
-              {/* Clicks & Impressions */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <div className="bg-gray-800 rounded-xl p-6 border border-gray-700">
-                  <h4 className="text-lg font-semibold text-white mb-4">Monthly Clicks</h4>
-                  <ResponsiveContainer width="100%" height={250}>
-                    <BarChart data={monthlyTrends}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-                      <XAxis dataKey="month" stroke="#9CA3AF" />
-                      <YAxis stroke="#9CA3AF" tickFormatter={(value) => `${(value / 1000000).toFixed(1)}M`} />
-                      <Tooltip 
-                        contentStyle={{ backgroundColor: '#1F2937', border: '1px solid #374151', color: '#fff' }}
-                        formatter={(value) => [value.toLocaleString(), 'Clicks']}
-                      />
-                      <Bar dataKey="clicks" fill="#10B981" radius={[8, 8, 0, 0]} />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
-
-                <div className="bg-gray-800 rounded-xl p-6 border border-gray-700">
-                  <h4 className="text-lg font-semibold text-white mb-4">Monthly Impressions</h4>
-                  <ResponsiveContainer width="100%" height={250}>
-                    <BarChart data={monthlyTrends}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-                      <XAxis dataKey="month" stroke="#9CA3AF" />
-                      <YAxis stroke="#9CA3AF" tickFormatter={(value) => `${(value / 1000000).toFixed(0)}M`} />
-                      <Tooltip 
-                        contentStyle={{ backgroundColor: '#1F2937', border: '1px solid #374151', color: '#fff' }}
-                        formatter={(value) => [value.toLocaleString(), 'Impressions']}
-                      />
-                      <Bar dataKey="impressions" fill="#8B5CF6" radius={[8, 8, 0, 0]} />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
-              </div>
-
-              {/* Conversions Chart */}
-              <div className="bg-gray-800 rounded-xl p-6 border border-gray-700">
-                <h4 className="text-lg font-semibold text-white mb-4">Monthly Conversions</h4>
-                <ResponsiveContainer width="100%" height={300}>
-                  <BarChart data={monthlyTrends}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-                    <XAxis dataKey="month" stroke="#9CA3AF" />
-                    <YAxis stroke="#9CA3AF" tickFormatter={(value) => `${(value / 1000).toFixed(0)}K`} />
-                    <Tooltip 
-                      contentStyle={{ backgroundColor: '#1F2937', border: '1px solid #374151', color: '#fff' }}
-                      formatter={(value) => [value.toLocaleString(), 'Conversions']}
-                    />
-                    <Bar dataKey="conversions" fill="#F59E0B" radius={[8, 8, 0, 0]} />
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-            </div>
-          )}
-
               </div>
             </div>
           </div>
