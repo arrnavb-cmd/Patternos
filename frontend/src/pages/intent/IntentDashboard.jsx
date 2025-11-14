@@ -99,17 +99,17 @@ export default function IntentDashboard() {
           <h2 className="text-xl font-bold text-white mb-6">Intent Level Distribution</h2>
           <div className="grid grid-cols-3 gap-6">
             <div className="text-center p-6 bg-red-500/10 rounded-lg border border-red-500/20">
-              <div className="text-4xl font-bold text-red-400 mb-2">{stats.intent_distribution?.High?.count || 0.toLocaleString()}</div>
+              <div className="text-4xl font-bold text-red-400 mb-2">{(stats.intent_distribution?.High?.count || 0).toLocaleString()}</div>
               <div className="text-sm text-gray-300 font-medium">High Intent</div>
               <div className="text-xs text-gray-500 mt-1">≥ 0.70 score</div>
             </div>
             <div className="text-center p-6 bg-yellow-500/10 rounded-lg border border-yellow-500/20">
-              <div className="text-4xl font-bold text-yellow-400 mb-2">{stats.intent_distribution?.Medium?.count || 0.toLocaleString()}</div>
+              <div className="text-4xl font-bold text-yellow-400 mb-2">{(stats.intent_distribution?.Medium?.count || 0).toLocaleString()}</div>
               <div className="text-sm text-gray-300 font-medium">Medium Intent</div>
               <div className="text-xs text-gray-500 mt-1">0.50 - 0.69 score</div>
             </div>
             <div className="text-center p-6 bg-gray-500/10 rounded-lg border border-gray-500/20">
-              <div className="text-4xl font-bold text-gray-400 mb-2">{stats.intent_distribution?.Low?.count || 0.toLocaleString()}</div>
+              <div className="text-4xl font-bold text-gray-400 mb-2">{(stats.intent_distribution?.Low?.count || 0).toLocaleString()}</div>
               <div className="text-sm text-gray-300 font-medium">Low Intent</div>
               <div className="text-xs text-gray-500 mt-1">&lt; 0.50 scorelt; 0.50 score</div>
             </div>

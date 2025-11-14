@@ -56,6 +56,7 @@ export default function MasterDashboard() {
           attributedRevenue: commerceData.attributed_revenue || 0,
           attributionRate: commerceData.total_gmv > 0 ? Math.round((commerceData.attributed_revenue / commerceData.total_gmv) * 100) : 0
         },
+        high_intent_users: commerceData.high_intent_users || 0,
         brands: brandsData.brands || []
       };
       
@@ -114,7 +115,7 @@ export default function MasterDashboard() {
     },
     { 
       label: 'High Intent Users', 
-      value: intentStats?.intentDistribution?.high || 0, 
+      value: commerceData?.high_intent_users || 0, 
       subtext: 'Ready to purchase', 
       icon: Target, 
       color: 'text-orange-400' 
