@@ -253,19 +253,21 @@ export default function IntentDashboard() {
               </div>
               <div className="mt-6">
                 <div className="text-sm text-gray-400 mb-3">Language Distribution</div>
-                <div className="grid grid-cols-2 gap-3">
-                  {Object.entries(voiceData.languages).slice(0, 4).map(([lang, count], idx) => {
-                    const percentage = ((count / voiceData.totalQueries) * 100).toFixed(1);
-                    return (
-                      <div key={idx} className="bg-gray-700/30 rounded-lg p-3">
-                        <div className="flex justify-between items-center mb-1">
-                          <span className="text-xs font-medium text-gray-300">{lang}</span>
-                          <span className="text-xs font-semibold text-orange-400">{percentage}%</span>
+                <div className="space-y-2">
+                  {Object.entries(voiceData.languages).map(([lang, count], idx) => (
+                    <div key={idx} className="flex justify-between items-center">
+                      <span className="text-gray-300">{lang}</span>
+                      <div className="flex items-center gap-2">
+                        <div className="w-32 bg-gray-700 rounded-full h-2">
+                          <div 
+                            className="bg-orange-400 h-2 rounded-full" 
+                            style={{width: `${(count / voiceData.totalQueries * 100)}%`}}
+                          />
                         </div>
-                        <div className="text-lg font-bold text-white">{count.toLocaleString()}</div>
+                        <span className="text-sm text-orange-400">{count.toLocaleString()}</span>
                       </div>
-                    );
-                  })}
+                    </div>
+                  ))}
                 </div>
               </div>
               {voiceData.topIntents && (

@@ -1,15 +1,82 @@
 INFO:     Will watch for changes in these directories: ['/Users/arrnavb/Desktop/ARRNAVB/SaaS/PatternOS']
 INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
-INFO:     Started reloader process [59447] using WatchFiles
-INFO:     Started server process [59450]
+INFO:     Started reloader process [76718] using WatchFiles
+INFO:     Started server process [76721]
 INFO:     Waiting for application startup.
 INFO:     Application startup complete.
-INFO:     127.0.0.1:55676 - "GET /api/ai/config/status HTTP/1.1" 200 OK
-INFO:     127.0.0.1:55690 - "GET /api/v1/intent/stats?clientId=zepto HTTP/1.1" 200 OK
-INFO:     127.0.0.1:55691 - "GET /api/v1/intent/behavioral-deep-dive?clientId=zepto HTTP/1.1" 200 OK
-INFO:     127.0.0.1:55767 - "GET /api/v1/intent/stats?clientId=zepto HTTP/1.1" 200 OK
-INFO:     127.0.0.1:55768 - "GET /api/v1/intent/behavioral-deep-dive?clientId=zepto HTTP/1.1" 200 OK
-INFO:     127.0.0.1:55833 - "GET /api/v1/intent/stats?clientId=zepto HTTP/1.1" 200 OK
-INFO:     127.0.0.1:55834 - "GET /api/v1/intent/behavioral-deep-dive?clientId=zepto HTTP/1.1" 200 OK
-INFO:     127.0.0.1:55920 - "GET /api/v1/intent/stats?clientId=zepto HTTP/1.1" 200 OK
-INFO:     127.0.0.1:55922 - "GET /api/v1/intent/behavioral-deep-dive?clientId=zepto HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58147 - "GET /api/v1/visual-intelligence/summary HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58158 - "GET /api/master/intent-stats?clientId=zepto HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58161 - "GET /api/master/dashboard-v2?clientId=zepto HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58158 - "GET /api/v1/voice-intelligence/summary HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58163 - "GET /api/master/platform-revenue?period=monthly HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58165 - "GET /api/master/brand-performance-v2?period=monthly HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58167 - "GET /api/master/revenue-opportunities?clientId=zepto&minScore=0.7 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58168 - "GET /api/v1/visual-intelligence/summary HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58168 - "GET /api/v1/intent/stats?clientId=zepto HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58167 - "GET /api/v1/intent/behavioral-deep-dive?clientId=zepto HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58165 - "GET /api/v1/visual-intelligence/summary HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58163 - "GET /api/v1/voice-intelligence/summary HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58249 - "GET /api/v1/intent/stats?clientId=zepto HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58250 - "GET /api/v1/intent/behavioral-deep-dive?clientId=zepto HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58252 - "GET /api/v1/visual-intelligence/summary HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58253 - "GET /api/v1/voice-intelligence/summary HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58319 - "GET /api/v1/intent/stats?clientId=zepto HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58321 - "GET /api/v1/intent/behavioral-deep-dive?clientId=zepto HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58322 - "GET /api/v1/visual-intelligence/summary HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58323 - "GET /api/v1/voice-intelligence/summary HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58389 - "GET /api/v1/intent/stats?clientId=zepto HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58391 - "GET /api/v1/intent/behavioral-deep-dive?clientId=zepto HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58392 - "GET /api/v1/visual-intelligence/summary HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58393 - "GET /api/v1/voice-intelligence/summary HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58461 - "GET /api/v1/intent/stats?clientId=zepto HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58465 - "GET /api/v1/intent/behavioral-deep-dive?clientId=zepto HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58466 - "GET /api/v1/visual-intelligence/summary HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58467 - "GET /api/v1/voice-intelligence/summary HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58533 - "GET /api/v1/intent/stats?clientId=zepto HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58535 - "GET /api/v1/intent/behavioral-deep-dive?clientId=zepto HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58537 - "GET /api/v1/visual-intelligence/summary HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58538 - "GET /api/v1/voice-intelligence/summary HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58607 - "GET /api/v1/intent/stats?clientId=zepto HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58608 - "GET /api/v1/intent/behavioral-deep-dive?clientId=zepto HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58610 - "GET /api/v1/visual-intelligence/summary HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58611 - "GET /api/v1/voice-intelligence/summary HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58685 - "GET /api/v1/intent/stats?clientId=zepto HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58686 - "GET /api/v1/intent/behavioral-deep-dive?clientId=zepto HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58688 - "GET /api/v1/visual-intelligence/summary HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58689 - "GET /api/v1/voice-intelligence/summary HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58757 - "GET /api/v1/intent/stats?clientId=zepto HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58758 - "GET /api/v1/intent/behavioral-deep-dive?clientId=zepto HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58760 - "GET /api/v1/visual-intelligence/summary HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58761 - "GET /api/v1/voice-intelligence/summary HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58878 - "GET /api/v1/intent/stats?clientId=zepto HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58880 - "GET /api/v1/intent/behavioral-deep-dive?clientId=zepto HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58883 - "GET /api/v1/visual-intelligence/summary HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58884 - "GET /api/v1/voice-intelligence/summary HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59020 - "GET /api/v1/intent/stats?clientId=zepto HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59021 - "GET /api/v1/intent/behavioral-deep-dive?clientId=zepto HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59024 - "GET /api/v1/visual-intelligence/summary HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59025 - "GET /api/v1/voice-intelligence/summary HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59093 - "GET /api/v1/intent/stats?clientId=zepto HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59095 - "GET /api/v1/intent/behavioral-deep-dive?clientId=zepto HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59096 - "GET /api/v1/visual-intelligence/summary HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59097 - "GET /api/v1/voice-intelligence/summary HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59161 - "GET /api/v1/intent/stats?clientId=zepto HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59162 - "GET /api/v1/intent/behavioral-deep-dive?clientId=zepto HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59164 - "GET /api/v1/visual-intelligence/summary HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59165 - "GET /api/v1/voice-intelligence/summary HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59236 - "GET /api/v1/intent/stats?clientId=zepto HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59238 - "GET /api/v1/intent/behavioral-deep-dive?clientId=zepto HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59239 - "GET /api/v1/visual-intelligence/summary HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59240 - "GET /api/v1/voice-intelligence/summary HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59307 - "GET /api/v1/intent/stats?clientId=zepto HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59308 - "GET /api/v1/intent/behavioral-deep-dive?clientId=zepto HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59310 - "GET /api/v1/visual-intelligence/summary HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59311 - "GET /api/v1/voice-intelligence/summary HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59376 - "GET /api/v1/intent/stats?clientId=zepto HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59378 - "GET /api/v1/intent/behavioral-deep-dive?clientId=zepto HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59379 - "GET /api/v1/visual-intelligence/summary HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59380 - "GET /api/v1/voice-intelligence/summary HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59447 - "GET /api/v1/intent/stats?clientId=zepto HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59448 - "GET /api/v1/intent/behavioral-deep-dive?clientId=zepto HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59450 - "GET /api/v1/visual-intelligence/summary HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59451 - "GET /api/v1/voice-intelligence/summary HTTP/1.1" 200 OK
