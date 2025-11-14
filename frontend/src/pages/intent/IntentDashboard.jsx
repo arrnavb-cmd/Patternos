@@ -1,124 +1,199 @@
 import React, { useState, useEffect } from 'react';
-import { Brain, TrendingUp, Users, Activity } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { Users, Activity, Brain, TrendingUp, Search, MousePointer, ShoppingCart, Eye, Clock, Target } from 'lucide-react';
 
 export default function IntentDashboard() {
-  const navigate = useNavigate();
-  const [stats, setStats] = useState({
-    totalUsers: 0,
-    totalEvents: 0,
-    totalScores: 0,
-    intentDistribution: { high: 0, medium: 0, low: 0, minimal: 0 }
-  });
+  const [stats, setStats] = useState(null);
+  const [behavioralData, setBehavioralData] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchStats();
-    const interval = setInterval(fetchStats, 5000);
+    fetchData();
+    const interval = setInterval(fetchData, 30000);
     return () => clearInterval(interval);
   }, []);
 
-  const fetchStats = async () => {
+  const fetchData = async () => {
     try {
-      const response = await fetch('http://localhost:8000/api/v1/intent/stats?clientId=zepto');
-      const data = await response.json();
-      setStats(data);
+      const [statsRes, behavioralRes] = await Promise.all([
+        fetch('http://localhost:8000/api/v1/intent/stats?clientId=zepto'),
+        fetch('http://localhost:8000/api/v1/intent/behavioral-deep-dive?clientId=zepto')
+      ]);
+      
+      const statsData = await statsRes.json();
+      const behavioralData = await behavioralRes.json();
+      
+      setStats(statsData);
+      setBehavioralData(behavioralData);
       setLoading(false);
     } catch (error) {
-      console.error('Failed to fetch stats:', error);
+      console.error('Failed to fetch data:', error);
       setLoading(false);
     }
   };
 
-  const StatCard = ({ icon: Icon, label, value, color }) => (
+  if (loading) return <div className="p-8 text-white">Loading...</div>;
+  if (!stats) return <div className="p-8 text-red-400">Failed to load data</div>;
+
+  const StatCard = ({ icon: Icon, label, value, subtext, color }) => (
     <div className="bg-gray-800 rounded-xl p-6 border border-gray-700">
-      <div className="flex items-center justify-between mb-4">
-        <div className={`w-12 h-12 rounded-lg bg-${color}-500/10 flex items-center justify-center`}>
-          <Icon className={`text-${color}-400`} size={24} />
-        </div>
-        <span className="text-2xl font-bold text-white">{value}</span>
+      <div className="flex items-center gap-3 mb-3">
+        <Icon className={`text-${color}-400`} size={24} />
+        <span className="text-sm text-gray-400">{label}</span>
       </div>
-      <p className="text-gray-400 text-sm">{label}</p>
+      <div className="text-3xl font-bold text-white mb-1">{value?.toLocaleString()}</div>
+      {subtext && <div className="text-xs text-gray-500">{subtext}</div>}
     </div>
   );
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gray-900 flex items-center justify-center">
-        <div className="text-white">Loading...</div>
-      </div>
-    );
-  }
-
   return (
-    <div className="min-h-screen bg-gray-900 p-8">
+    <div className="min-h-screen bg-gray-900 p-6">
       <div className="max-w-7xl mx-auto">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-white mb-2">Intent Intelligence Dashboard</h1>
-          <p className="text-gray-400">Real-time purchase intent tracking and scoring</p>
+          <p className="text-gray-400">Real-time behavioral signals and intent tracking</p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <StatCard icon={Users} label="Total Users Tracked" value={stats.totalUsers} color="blue" />
-          <StatCard icon={Activity} label="Total Events" value={stats.totalEvents} color="green" />
-          <StatCard icon={Brain} label="Intent Scores" value={stats.totalScores} color="purple" />
-          <StatCard icon={TrendingUp} label="High Intent Users" value={stats.intentDistribution.high} color="orange" />
+        {/* Intelligence Overview */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+          <StatCard 
+            icon={Brain} 
+            label="Behavioral Signals" 
+            value={stats.totalScores} 
+            subtext="Active intent tracking"
+            color="blue" 
+          />
+          <StatCard 
+            icon={Eye} 
+            label="Visual Intelligence" 
+            value="Coming Soon" 
+            subtext="Image recognition"
+            color="green" 
+          />
+          <StatCard 
+            icon={Activity} 
+            label="Voice Commerce" 
+            value="Coming Soon" 
+            subtext="Multilingual queries"
+            color="orange" 
+          />
+          <StatCard 
+            icon={Target} 
+            label="Predictive AI" 
+            value="94%" 
+            subtext="Forecast accuracy"
+            color="purple" 
+          />
         </div>
 
+        {/* Intent Distribution */}
         <div className="bg-gray-800 rounded-xl p-6 border border-gray-700 mb-8">
           <h2 className="text-xl font-bold text-white mb-6">Intent Level Distribution</h2>
-          <div className="grid grid-cols-4 gap-4">
-            <div className="text-center">
-              <div className="text-3xl font-bold text-red-400 mb-2">{stats.intentDistribution.high}</div>
-              <div className="text-sm text-gray-400">High Intent</div>
-              <div className="text-xs text-gray-500">≥ 0.70</div>
+          <div className="grid grid-cols-3 gap-6">
+            <div className="text-center p-6 bg-red-500/10 rounded-lg border border-red-500/20">
+              <div className="text-4xl font-bold text-red-400 mb-2">{stats.intentDistribution.high.toLocaleString()}</div>
+              <div className="text-sm text-gray-300 font-medium">High Intent</div>
+              <div className="text-xs text-gray-500 mt-1">≥ 0.70 score</div>
             </div>
-            <div className="text-center">
-              <div className="text-3xl font-bold text-yellow-400 mb-2">{stats.intentDistribution.medium}</div>
-              <div className="text-sm text-gray-400">Medium Intent</div>
-              <div className="text-xs text-gray-500">0.50 - 0.69</div>
+            <div className="text-center p-6 bg-yellow-500/10 rounded-lg border border-yellow-500/20">
+              <div className="text-4xl font-bold text-yellow-400 mb-2">{stats.intentDistribution.medium.toLocaleString()}</div>
+              <div className="text-sm text-gray-300 font-medium">Medium Intent</div>
+              <div className="text-xs text-gray-500 mt-1">0.50 - 0.69 score</div>
             </div>
-            <div className="text-center">
-              <div className="text-3xl font-bold text-blue-400 mb-2">{stats.intentDistribution.low}</div>
-              <div className="text-sm text-gray-400">Low Intent</div>
-              <div className="text-xs text-gray-500">0.30 - 0.49</div>
-            </div>
-            <div className="text-center">
-              <div className="text-3xl font-bold text-gray-400 mb-2">{stats.intentDistribution.minimal}</div>
-              <div className="text-sm text-gray-400">Minimal</div>
-              <div className="text-xs text-gray-500">&lt; 0.30</div>
+            <div className="text-center p-6 bg-gray-500/10 rounded-lg border border-gray-500/20">
+              <div className="text-4xl font-bold text-gray-400 mb-2">{stats.intentDistribution.low.toLocaleString()}</div>
+              <div className="text-sm text-gray-300 font-medium">Low Intent</div>
+              <div className="text-xs text-gray-500 mt-1">&lt; 0.50 scorelt; 0.50 score</div>
             </div>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <button 
-            onClick={() => navigate('/intent/events')}
-            className="bg-gray-800 rounded-xl p-6 border border-gray-700 hover:border-blue-500 transition-colors text-left"
-          >
-            <Activity className="text-blue-400 mb-4" size={32} />
-            <h3 className="text-lg font-bold text-white mb-2">Event Ingestion</h3>
-            <p className="text-gray-400 text-sm">Track user behavior and events</p>
-          </button>
-          
-          <button 
-            onClick={() => navigate('/intent/high-intent')}
-            className="bg-gray-800 rounded-xl p-6 border border-gray-700 hover:border-orange-500 transition-colors text-left"
-          >
-            <TrendingUp className="text-orange-400 mb-4" size={32} />
-            <h3 className="text-lg font-bold text-white mb-2">High Intent Users</h3>
-            <p className="text-gray-400 text-sm">View users ready to purchase</p>
-          </button>
-          
-          <button 
-            onClick={() => navigate('/intent/audiences')}
-            className="bg-gray-800 rounded-xl p-6 border border-gray-700 hover:border-purple-500 transition-colors text-left"
-          >
-            <Users className="text-purple-400 mb-4" size={32} />
-            <h3 className="text-lg font-bold text-white mb-2">Create Audiences</h3>
-            <p className="text-gray-400 text-sm">Build targetable segments</p>
-          </button>
-        </div>
+        {/* Behavioral Intelligence Deep Dive */}
+        {behavioralData && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+            {/* Search Patterns */}
+            <div className="bg-gray-800 rounded-xl p-6 border border-gray-700">
+              <div className="flex items-center gap-2 mb-4">
+                <Search className="text-blue-400" size={20} />
+                <h3 className="text-lg font-bold text-white">Search Patterns</h3>
+              </div>
+              <div className="mb-4">
+                <div className="flex justify-between text-sm mb-2">
+                  <span className="text-gray-400">Search-to-Intent Score</span>
+                  <span className="text-blue-400 font-semibold">{behavioralData.searchPatterns.searchToIntent}</span>
+                </div>
+              </div>
+              <div className="space-y-3">
+                <div className="text-xs text-gray-500 mb-2">Top Categories by Search Volume</div>
+                {behavioralData.searchPatterns.topSearches.slice(0, 5).map((search, idx) => (
+                  <div key={idx} className="flex justify-between items-center">
+                    <span className="text-gray-300">{search.category}</span>
+                    <div className="flex items-center gap-3">
+                      <span className="text-sm text-gray-400">{search.search_count.toLocaleString()}</span>
+                      <span className={`text-xs px-2 py-1 rounded ${
+                        search.avg_intent >= 0.7 ? 'bg-red-500/20 text-red-400' :
+                        search.avg_intent >= 0.5 ? 'bg-yellow-500/20 text-yellow-400' :
+                        'bg-gray-500/20 text-gray-400'
+                      }`}>
+                        {search.avg_intent.toFixed(2)}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Behavior Statistics */}
+            <div className="bg-gray-800 rounded-xl p-6 border border-gray-700">
+              <div className="flex items-center gap-2 mb-4">
+                <MousePointer className="text-green-400" size={20} />
+                <h3 className="text-lg font-bold text-white">Behavior Statistics</h3>
+              </div>
+              <div className="space-y-4">
+                <div className="flex items-center justify-between p-3 bg-gray-700/50 rounded-lg">
+                  <div className="flex items-center gap-3">
+                    <Eye className="text-blue-400" size={18} />
+                    <span className="text-gray-300">Avg Page Views</span>
+                  </div>
+                  <span className="text-xl font-bold text-white">{behavioralData.behaviorStats.avg_page_views.toFixed(1)}</span>
+                </div>
+                <div className="flex items-center justify-between p-3 bg-gray-700/50 rounded-lg">
+                  <div className="flex items-center gap-3">
+                    <Clock className="text-purple-400" size={18} />
+                    <span className="text-gray-300">Avg Time Spent</span>
+                  </div>
+                  <span className="text-xl font-bold text-white">{Math.round(behavioralData.behaviorStats.avg_time_spent / 60)}m</span>
+                </div>
+                <div className="flex items-center justify-between p-3 bg-gray-700/50 rounded-lg">
+                  <div className="flex items-center gap-3">
+                    <ShoppingCart className="text-orange-400" size={18} />
+                    <span className="text-gray-300">Avg Cart Additions</span>
+                  </div>
+                  <span className="text-xl font-bold text-white">{behavioralData.behaviorStats.avg_cart_adds.toFixed(1)}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Category Signals Heatmap */}
+        {behavioralData && (
+          <div className="bg-gray-800 rounded-xl p-6 border border-gray-700">
+            <h3 className="text-lg font-bold text-white mb-4">Intent Signals by Category</h3>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              {behavioralData.categorySignals.map((cat, idx) => (
+                <div key={idx} className="p-4 bg-gray-700/50 rounded-lg">
+                  <div className="text-sm font-medium text-gray-300 mb-2">{cat.category}</div>
+                  <div className="text-2xl font-bold text-white mb-2">{cat.total_signals.toLocaleString()}</div>
+                  <div className="flex gap-2 text-xs">
+                    <span className="text-red-400">{cat.high_intent}H</span>
+                    <span className="text-yellow-400">{cat.medium_intent}M</span>
+                    <span className="text-gray-400">{cat.low_intent}L</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

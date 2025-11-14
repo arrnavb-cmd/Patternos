@@ -7,6 +7,8 @@ export default function MasterDashboard() {
   const [intentStats, setIntentStats] = useState(null);
   const [commerceData, setCommerceData] = useState(null);
   const [platformRevenue, setPlatformRevenue] = useState(null);
+  const [period, setPeriod] = useState('monthly');
+  const [brandPeriod, setBrandPeriod] = useState('monthly');
   const [opportunities, setOpportunities] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -15,23 +17,42 @@ export default function MasterDashboard() {
     const interval = setInterval(fetchData, 10000);
     return () => clearInterval(interval);
   }, []);
+  
+  useEffect(() => {
+    fetchData();
+  }, [brandPeriod]);
+  
+  useEffect(() => {
+    fetchData();
+  }, [period]);
 
   const fetchData = async () => {
     try {
-      const [intentRes, commerceRes, platformRes, oppsRes] = await Promise.all([
-        fetch('http://localhost:3025/api/v1/intent/stats?clientId=zepto'),
-        fetch('http://localhost:3025/api/v1/commerce/dashboard?clientId=zepto'),
-        fetch('http://localhost:3025/api/v1/commerce/platform-revenue?clientId=zepto'),
-        fetch('http://localhost:3025/api/v1/intent/opportunities/by-category?clientId=zepto&minScore=0.7')
+      const [intentRes, commerceRes, platformRes, brandsRes, oppsRes] = await Promise.all([
+        fetch('http://localhost:8000/api/master/intent-stats?clientId=zepto'),
+        fetch('http://localhost:8000/api/master/dashboard-v2?clientId=zepto'),
+        fetch(`http://localhost:8000/api/master/platform-revenue?period=${period}`),
+        fetch(`http://localhost:8000/api/master/brand-performance-v2?period=${brandPeriod}`),
+        fetch('http://localhost:8000/api/master/revenue-opportunities?clientId=zepto&minScore=0.7')
       ]);
       
       const intentData = await intentRes.json();
       const commerceData = await commerceRes.json();
       const platformData = await platformRes.json();
+      const brandsData = await brandsRes.json();
       const oppsData = await oppsRes.json();
       
+      const transformedCommerce = {
+        summary: {
+          totalRevenue: commerceData.total_gmv || 0,
+          attributedRevenue: commerceData.attributed_revenue || 0,
+          attributionRate: commerceData.total_gmv > 0 ? Math.round((commerceData.attributed_revenue / commerceData.total_gmv) * 100) : 0
+        },
+        brands: brandsData.brands || []
+      };
+      
       setIntentStats(intentData);
-      setCommerceData(commerceData);
+      setCommerceData(transformedCommerce);
       setPlatformRevenue(platformData);
       setOpportunities(oppsData.opportunities || []);
       setLoading(false);
@@ -90,9 +111,7 @@ export default function MasterDashboard() {
   const highIntentCount = intentStats?.intentDistribution?.high || 0;
   
   // Get top 5 brands by revenue
-  const topBrands = commerceData?.brands
-    ?.sort((a, b) => b.revenue - a.revenue)
-    .slice(0, 5) || [];
+  const topBrands = (Array.isArray(commerceData?.brands) ? commerceData.brands : []).sort((a, b) => (b.revenue || 0) - (a.revenue || 0)).slice(0, 5);
 
   return (
     <div className="min-h-screen bg-slate-900">
@@ -123,6 +142,26 @@ export default function MasterDashboard() {
         </div>
 
         {/* Platform Revenue Section */}
+        
+        {/* Period Toggle */}
+        <div className="mb-6 flex justify-end">
+          <div className="inline-flex rounded-lg bg-slate-800 p-1">
+            {['monthly', 'quarterly', 'half-yearly', 'yearly'].map(p => (
+              <button
+                key={p}
+                onClick={() => setPeriod(p)}
+                className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                  period === p 
+                    ? 'bg-purple-600 text-white' 
+                    : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                {p.charAt(0).toUpperCase() + p.slice(1).replace('-', ' ')}
+              </button>
+            ))}
+          </div>
+        </div>
+
         {platformRevenue && (
           <div className="mb-8 bg-gradient-to-r from-purple-900/20 to-blue-900/20 border border-purple-500/30 rounded-xl p-6">
             <div className="flex items-center gap-3 mb-4">
@@ -145,7 +184,7 @@ export default function MasterDashboard() {
               <div className="bg-slate-800/50 rounded-lg p-4">
                 <p className="text-slate-400 text-sm mb-1">Ad Commission (10%)</p>
                 <p className="text-2xl font-bold text-purple-400">
-                  {formatCurrency(platformRevenue.ad_commission_revenue || platformRevenue.platformAdFee)}
+                  {formatCurrency(platformRevenue.ad_commission)}
                 </p>
                 <p className="text-xs text-slate-500 mt-1">
                   From {formatCurrency(platformRevenue.total_ad_spend || platformRevenue.totalAdSpend)} ad spend
@@ -163,7 +202,7 @@ export default function MasterDashboard() {
               <div className="bg-slate-800/50 rounded-lg p-4 border-2 border-purple-500/50">
                 <p className="text-slate-400 text-sm mb-1">Total Platform Revenue</p>
                 <p className="text-3xl font-bold text-white">
-                  {formatCurrency(platformRevenue.total_monthly_revenue || platformRevenue.totalWithRetainer)}
+                  {formatCurrency(platformRevenue.total_revenue)}
                 </p>
                 <p className="text-xs text-green-400 mt-1">Per month (incl. retainer)</p>
               </div>
@@ -202,30 +241,25 @@ export default function MasterDashboard() {
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {opportunities.map((opp, idx) => (
+              {(Array.isArray(opportunities) ? opportunities : []).map((opp, idx) => (
                 <div key={idx} className="bg-slate-700/50 rounded-lg p-4">
                   <div className="flex items-center justify-between mb-3">
                     <h3 className="text-white font-bold capitalize">{opp.category}</h3>
-                    <span className="text-orange-400 font-bold text-sm">Score: {opp.avgIntentScore}</span>
+                    <span className="text-orange-400 font-bold text-sm">Score: {opp.avg_intent_score?.toFixed(2)}</span>
                   </div>
                   <div className="space-y-2 mb-3">
                     <div className="text-sm text-slate-400">
-                      <span className="text-white font-medium">{opp.userCount}</span> users • {formatCurrency(opp.revenueEstimate)}
+                      <span className="text-white font-medium">{opp.users?.toLocaleString()}</span> users • {formatCurrency(opp.potential_revenue)}
                     </div>
-                  </div>
-                  <div className="mb-3">
-                    <p className="text-xs text-slate-500 mb-1">CONTACT BRANDS:</p>
-                    <div className="flex flex-wrap gap-1">
-                      {opp.suggestedBrands.map(brand => (
-                        <span key={brand} className="px-2 py-1 bg-slate-600 text-white text-xs rounded">{brand}</span>
-                      ))}
+                    <div className="text-sm text-slate-400">
+                      High Intent: <span className="text-green-400 font-medium">{opp.high_intent_users?.toLocaleString()}</span>
                     </div>
                   </div>
                   <button 
                     onClick={() => navigate('/intent/high-intent')}
                     className="w-full text-sm text-blue-400 hover:text-blue-300 text-center py-2 border border-slate-600 rounded hover:border-blue-500 transition-colors"
                   >
-                    View all {opp.userCount} users →
+                    View all {opp.users} users →
                   </button>
                 </div>
               ))}
@@ -240,6 +274,24 @@ export default function MasterDashboard() {
             <div>
               <h2 className="text-xl font-bold text-white">Top 5 Brand Performance</h2>
               <p className="text-sm text-slate-400">Highest revenue generating brands</p>
+            </div>
+          </div>
+                    {/* Brand Period Toggle */}
+          <div className="mb-4 flex justify-end">
+            <div className="inline-flex rounded-lg bg-slate-700 p-1">
+              {['monthly', 'quarterly', 'half-yearly', 'yearly'].map(p => (
+                <button
+                  key={p}
+                  onClick={() => setBrandPeriod(p)}
+                  className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
+                    brandPeriod === p 
+                      ? 'bg-blue-600 text-white' 
+                      : 'text-slate-400 hover:text-white'
+                  }`}
+                >
+                  {p.charAt(0).toUpperCase() + p.slice(1).replace('-', ' ')}
+                </button>
+              ))}
             </div>
           </div>
           <div className="overflow-x-auto">
@@ -266,21 +318,13 @@ export default function MasterDashboard() {
                     <td className="py-4 px-4">
                       <span className="text-white font-medium">{brand.brand}</span>
                     </td>
-                    <td className="py-4 px-4 text-slate-300">{formatCurrency(brand.spend)}</td>
+                    <td className="py-4 px-4 text-slate-300">{formatCurrency(brand.ad_spend)}</td>
                     <td className="py-4 px-4 text-green-400 font-medium">{formatCurrency(brand.revenue)}</td>
                     <td className="py-4 px-4 text-orange-400 font-bold">{brand.roas}x</td>
-                    <td className="py-4 px-4 text-slate-300">{brand.purchases}</td>
+                    <td className="py-4 px-4 text-slate-300">{brand.purchases?.toLocaleString()}</td>
                     <td className="py-4 px-4 text-blue-400">{brand.ctr}%</td>
-                    <td className="py-4 px-4 text-purple-400">{brand.conversion_rate}%</td>
-                    <td className="py-4 px-4">
-                      <div className="flex flex-wrap gap-1">
-                        {Object.keys(brand.channels).slice(0, 3).map(channel => (
-                          <span key={channel} className="px-2 py-1 bg-slate-700 text-xs text-slate-300 rounded">
-                            {channel.replace('_', ' ')}
-                          </span>
-                        ))}
-                      </div>
-                    </td>
+                    <td className="py-4 px-4 text-purple-400">{brand.conv_rate}%</td>
+                    <td className="py-4 px-4 text-slate-400">Multi</td>
                   </tr>
                 ))}
               </tbody>

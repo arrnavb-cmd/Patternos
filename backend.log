@@ -1,73 +1,15 @@
 INFO:     Will watch for changes in these directories: ['/Users/arrnavb/Desktop/ARRNAVB/SaaS/PatternOS']
 INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
-INFO:     Started reloader process [83187] using WatchFiles
-INFO:     Started server process [83190]
+INFO:     Started reloader process [59447] using WatchFiles
+INFO:     Started server process [59450]
 INFO:     Waiting for application startup.
 INFO:     Application startup complete.
-INFO:     127.0.0.1:54080 - "GET /api/master/brand-performance-v2?period=monthly HTTP/1.1" 200 OK
-INFO:     127.0.0.1:54082 - "GET /api/master/brand-performance-v2?period=quarterly HTTP/1.1" 200 OK
-INFO:     127.0.0.1:54094 - "GET /api/master/intent-stats?clientId=zepto HTTP/1.1" 200 OK
-INFO:     127.0.0.1:54097 - "GET /api/master/dashboard-v2?clientId=zepto HTTP/1.1" 200 OK
-INFO:     127.0.0.1:54099 - "GET /api/master/platform-revenue?period=monthly HTTP/1.1" 200 OK
-INFO:     127.0.0.1:54101 - "GET /api/master/brand-performance-v2?period=monthly HTTP/1.1" 200 OK
-INFO:     127.0.0.1:54102 - "GET /api/master/revenue-opportunities?clientId=zepto&minScore=0.7 HTTP/1.1" 200 OK
-INFO:     127.0.0.1:54106 - "GET /api/master/intent-stats?clientId=zepto HTTP/1.1" 200 OK
-INFO:     127.0.0.1:54108 - "GET /api/master/dashboard-v2?clientId=zepto HTTP/1.1" 200 OK
-INFO:     127.0.0.1:54110 - "GET /api/master/platform-revenue?period=monthly HTTP/1.1" 200 OK
-INFO:     127.0.0.1:54112 - "GET /api/master/brand-performance-v2?period=monthly HTTP/1.1" 200 OK
-INFO:     127.0.0.1:54113 - "GET /api/master/revenue-opportunities?clientId=zepto&minScore=0.7 HTTP/1.1" 200 OK
-INFO:     127.0.0.1:54113 - "GET /api/master/intent-stats?clientId=zepto HTTP/1.1" 200 OK
-INFO:     127.0.0.1:54112 - "GET /api/master/dashboard-v2?clientId=zepto HTTP/1.1" 200 OK
-INFO:     127.0.0.1:54110 - "GET /api/master/platform-revenue?period=monthly HTTP/1.1" 200 OK
-INFO:     127.0.0.1:54108 - "GET /api/master/brand-performance-v2?period=monthly HTTP/1.1" 200 OK
-INFO:     127.0.0.1:54106 - "GET /api/master/revenue-opportunities?clientId=zepto&minScore=0.7 HTTP/1.1" 200 OK
-INFO:     127.0.0.1:54110 - "GET /api/master/intent-stats?clientId=zepto HTTP/1.1" 200 OK
-INFO:     127.0.0.1:54108 - "GET /api/master/dashboard-v2?clientId=zepto HTTP/1.1" 200 OK
-INFO:     127.0.0.1:54112 - "GET /api/master/platform-revenue?period=monthly HTTP/1.1" 200 OK
-INFO:     127.0.0.1:54106 - "GET /api/master/brand-performance-v2?period=quarterly HTTP/1.1" 200 OK
-INFO:     127.0.0.1:54113 - "GET /api/master/revenue-opportunities?clientId=zepto&minScore=0.7 HTTP/1.1" 200 OK
-INFO:     127.0.0.1:54113 - "GET /api/master/intent-stats?clientId=zepto HTTP/1.1" 200 OK
-INFO:     127.0.0.1:54108 - "GET /api/master/dashboard-v2?clientId=zepto HTTP/1.1" 200 OK
-INFO:     127.0.0.1:54112 - "GET /api/master/platform-revenue?period=monthly HTTP/1.1" 200 OK
-INFO:     127.0.0.1:54106 - "GET /api/master/brand-performance-v2?period=half-yearly HTTP/1.1" 200 OK
-INFO:     127.0.0.1:54110 - "GET /api/master/revenue-opportunities?clientId=zepto&minScore=0.7 HTTP/1.1" 200 OK
-INFO:     127.0.0.1:54127 - "GET /api/master/intent-stats?clientId=zepto HTTP/1.1" 200 OK
-INFO:     127.0.0.1:54131 - "GET /api/master/dashboard-v2?clientId=zepto HTTP/1.1" 200 OK
-INFO:     127.0.0.1:54132 - "GET /api/master/platform-revenue?period=monthly HTTP/1.1" 200 OK
-INFO:     127.0.0.1:54134 - "GET /api/master/brand-performance-v2?period=yearly HTTP/1.1" 200 OK
-INFO:     127.0.0.1:54135 - "GET /api/master/revenue-opportunities?clientId=zepto&minScore=0.7 HTTP/1.1" 200 OK
-INFO:     127.0.0.1:54159 - "GET /api/master/intent-stats?clientId=zepto HTTP/1.1" 200 OK
-INFO:     127.0.0.1:54160 - "GET /api/master/dashboard-v2?clientId=zepto HTTP/1.1" 200 OK
-INFO:     127.0.0.1:54162 - "GET /api/master/platform-revenue?period=monthly HTTP/1.1" 200 OK
-INFO:     127.0.0.1:54164 - "GET /api/master/brand-performance-v2?period=monthly HTTP/1.1" 200 OK
-INFO:     127.0.0.1:54165 - "GET /api/master/revenue-opportunities?clientId=zepto&minScore=0.7 HTTP/1.1" 200 OK
-INFO:     127.0.0.1:54191 - "GET /api/master/intent-stats?clientId=zepto HTTP/1.1" 200 OK
-INFO:     127.0.0.1:54193 - "GET /api/master/dashboard-v2?clientId=zepto HTTP/1.1" 200 OK
-INFO:     127.0.0.1:54194 - "GET /api/master/platform-revenue?period=monthly HTTP/1.1" 200 OK
-INFO:     127.0.0.1:54196 - "GET /api/master/brand-performance-v2?period=monthly HTTP/1.1" 200 OK
-INFO:     127.0.0.1:54197 - "GET /api/master/revenue-opportunities?clientId=zepto&minScore=0.7 HTTP/1.1" 200 OK
-INFO:     127.0.0.1:54221 - "GET /api/master/intent-stats?clientId=zepto HTTP/1.1" 200 OK
-INFO:     127.0.0.1:54223 - "GET /api/master/dashboard-v2?clientId=zepto HTTP/1.1" 200 OK
-INFO:     127.0.0.1:54224 - "GET /api/master/platform-revenue?period=monthly HTTP/1.1" 200 OK
-INFO:     127.0.0.1:54226 - "GET /api/master/brand-performance-v2?period=monthly HTTP/1.1" 200 OK
-INFO:     127.0.0.1:54227 - "GET /api/master/revenue-opportunities?clientId=zepto&minScore=0.7 HTTP/1.1" 200 OK
-INFO:     127.0.0.1:54251 - "GET /api/master/intent-stats?clientId=zepto HTTP/1.1" 200 OK
-INFO:     127.0.0.1:54253 - "GET /api/master/dashboard-v2?clientId=zepto HTTP/1.1" 200 OK
-INFO:     127.0.0.1:54255 - "GET /api/master/platform-revenue?period=monthly HTTP/1.1" 200 OK
-INFO:     127.0.0.1:54257 - "GET /api/master/brand-performance-v2?period=monthly HTTP/1.1" 200 OK
-INFO:     127.0.0.1:54258 - "GET /api/master/revenue-opportunities?clientId=zepto&minScore=0.7 HTTP/1.1" 200 OK
-INFO:     127.0.0.1:54283 - "GET /api/master/intent-stats?clientId=zepto HTTP/1.1" 200 OK
-INFO:     127.0.0.1:54284 - "GET /api/master/dashboard-v2?clientId=zepto HTTP/1.1" 200 OK
-INFO:     127.0.0.1:54286 - "GET /api/master/platform-revenue?period=monthly HTTP/1.1" 200 OK
-INFO:     127.0.0.1:54288 - "GET /api/master/brand-performance-v2?period=monthly HTTP/1.1" 200 OK
-INFO:     127.0.0.1:54289 - "GET /api/master/revenue-opportunities?clientId=zepto&minScore=0.7 HTTP/1.1" 200 OK
-INFO:     127.0.0.1:54313 - "GET /api/master/intent-stats?clientId=zepto HTTP/1.1" 200 OK
-INFO:     127.0.0.1:54314 - "GET /api/master/dashboard-v2?clientId=zepto HTTP/1.1" 200 OK
-INFO:     127.0.0.1:54316 - "GET /api/master/platform-revenue?period=monthly HTTP/1.1" 200 OK
-INFO:     127.0.0.1:54318 - "GET /api/master/brand-performance-v2?period=monthly HTTP/1.1" 200 OK
-INFO:     127.0.0.1:54319 - "GET /api/master/revenue-opportunities?clientId=zepto&minScore=0.7 HTTP/1.1" 200 OK
-INFO:     127.0.0.1:54349 - "GET /api/master/intent-stats?clientId=zepto HTTP/1.1" 200 OK
-INFO:     127.0.0.1:54350 - "GET /api/master/dashboard-v2?clientId=zepto HTTP/1.1" 200 OK
-INFO:     127.0.0.1:54352 - "GET /api/master/platform-revenue?period=monthly HTTP/1.1" 200 OK
-INFO:     127.0.0.1:54355 - "GET /api/master/brand-performance-v2?period=monthly HTTP/1.1" 200 OK
-INFO:     127.0.0.1:54356 - "GET /api/master/revenue-opportunities?clientId=zepto&minScore=0.7 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55676 - "GET /api/ai/config/status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55690 - "GET /api/v1/intent/stats?clientId=zepto HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55691 - "GET /api/v1/intent/behavioral-deep-dive?clientId=zepto HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55767 - "GET /api/v1/intent/stats?clientId=zepto HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55768 - "GET /api/v1/intent/behavioral-deep-dive?clientId=zepto HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55833 - "GET /api/v1/intent/stats?clientId=zepto HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55834 - "GET /api/v1/intent/behavioral-deep-dive?clientId=zepto HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55920 - "GET /api/v1/intent/stats?clientId=zepto HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55922 - "GET /api/v1/intent/behavioral-deep-dive?clientId=zepto HTTP/1.1" 200 OK

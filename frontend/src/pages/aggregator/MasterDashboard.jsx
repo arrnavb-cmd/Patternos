@@ -11,6 +11,8 @@ export default function MasterDashboard() {
   const [brandPeriod, setBrandPeriod] = useState('monthly');
   const [opportunities, setOpportunities] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [visualData, setVisualData] = useState(null);
+  const [voiceData, setVoiceData] = useState(null);
 
   useEffect(() => {
     fetchData();
@@ -28,12 +30,14 @@ export default function MasterDashboard() {
 
   const fetchData = async () => {
     try {
-      const [intentRes, commerceRes, platformRes, brandsRes, oppsRes] = await Promise.all([
+      const [intentRes, commerceRes, platformRes, brandsRes, oppsRes, visualRes, voiceRes] = await Promise.all([
         fetch('http://localhost:8000/api/master/intent-stats?clientId=zepto'),
         fetch('http://localhost:8000/api/master/dashboard-v2?clientId=zepto'),
         fetch(`http://localhost:8000/api/master/platform-revenue?period=${period}`),
         fetch(`http://localhost:8000/api/master/brand-performance-v2?period=${brandPeriod}`),
-        fetch('http://localhost:8000/api/master/revenue-opportunities?clientId=zepto&minScore=0.7')
+        fetch('http://localhost:8000/api/master/revenue-opportunities?clientId=zepto&minScore=0.7'),
+        fetch('http://localhost:8000/api/v1/visual-intelligence/summary'),
+        fetch('http://localhost:8000/api/v1/voice-intelligence/summary')
       ]);
       
       const intentData = await intentRes.json();
@@ -41,6 +45,8 @@ export default function MasterDashboard() {
       const platformData = await platformRes.json();
       const brandsData = await brandsRes.json();
       const oppsData = await oppsRes.json();
+      const visualData = await visualRes.json();
+      const voiceData = await voiceRes.json();
       
       const transformedCommerce = {
         summary: {
@@ -55,6 +61,8 @@ export default function MasterDashboard() {
       setCommerceData(transformedCommerce);
       setPlatformRevenue(platformData);
       setOpportunities(oppsData.opportunities || []);
+      setVisualData(visualData);
+      setVoiceData(voiceData);
       setLoading(false);
     } catch (error) {
       console.error('Failed to fetch data:', error);
