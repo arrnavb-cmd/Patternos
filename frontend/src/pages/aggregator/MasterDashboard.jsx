@@ -7,6 +7,8 @@ export default function MasterDashboard() {
   const [intentStats, setIntentStats] = useState(null);
   const [commerceData, setCommerceData] = useState(null);
   const [platformRevenue, setPlatformRevenue] = useState(null);
+  const [period, setPeriod] = useState('monthly');
+  const [brandPeriod, setBrandPeriod] = useState('monthly');
   const [opportunities, setOpportunities] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -15,14 +17,22 @@ export default function MasterDashboard() {
     const interval = setInterval(fetchData, 10000);
     return () => clearInterval(interval);
   }, []);
+  
+  useEffect(() => {
+    fetchData();
+  }, [brandPeriod]);
+  
+  useEffect(() => {
+    fetchData();
+  }, [period]);
 
   const fetchData = async () => {
     try {
       const [intentRes, commerceRes, platformRes, brandsRes, oppsRes] = await Promise.all([
         fetch('http://localhost:8000/api/master/intent-stats?clientId=zepto'),
         fetch('http://localhost:8000/api/master/dashboard-v2?clientId=zepto'),
-        fetch('http://localhost:8000/api/master/platform-revenue?clientId=zepto'),
-        fetch('http://localhost:8000/api/master/brand-performance-v2'),
+        fetch(`http://localhost:8000/api/master/platform-revenue?period=${period}`),
+        fetch(`http://localhost:8000/api/master/brand-performance-v2?period=${brandPeriod}`),
         fetch('http://localhost:8000/api/master/revenue-opportunities?clientId=zepto&minScore=0.7')
       ]);
       
@@ -132,6 +142,26 @@ export default function MasterDashboard() {
         </div>
 
         {/* Platform Revenue Section */}
+        
+        {/* Period Toggle */}
+        <div className="mb-6 flex justify-end">
+          <div className="inline-flex rounded-lg bg-slate-800 p-1">
+            {['monthly', 'quarterly', 'half-yearly', 'yearly'].map(p => (
+              <button
+                key={p}
+                onClick={() => setPeriod(p)}
+                className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                  period === p 
+                    ? 'bg-purple-600 text-white' 
+                    : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                {p.charAt(0).toUpperCase() + p.slice(1).replace('-', ' ')}
+              </button>
+            ))}
+          </div>
+        </div>
+
         {platformRevenue && (
           <div className="mb-8 bg-gradient-to-r from-purple-900/20 to-blue-900/20 border border-purple-500/30 rounded-xl p-6">
             <div className="flex items-center gap-3 mb-4">
@@ -215,14 +245,14 @@ export default function MasterDashboard() {
                 <div key={idx} className="bg-slate-700/50 rounded-lg p-4">
                   <div className="flex items-center justify-between mb-3">
                     <h3 className="text-white font-bold capitalize">{opp.category}</h3>
-                    <span className="text-green-400 font-bold text-sm">{opp.campaigns} campaigns</span>
+                    <span className="text-orange-400 font-bold text-sm">Score: {opp.avg_intent_score?.toFixed(2)}</span>
                   </div>
                   <div className="space-y-2 mb-3">
                     <div className="text-sm text-slate-400">
-                      Revenue: <span className="text-white font-medium">{formatCurrency(opp.revenue)}</span>
+                      <span className="text-white font-medium">{opp.users?.toLocaleString()}</span> users • {formatCurrency(opp.potential_revenue)}
                     </div>
                     <div className="text-sm text-slate-400">
-                      Conversions: <span className="text-white font-medium">{opp.conversions?.toLocaleString()}</span>
+                      High Intent: <span className="text-green-400 font-medium">{opp.high_intent_users?.toLocaleString()}</span>
                     </div>
                   </div>
                   <button 
@@ -244,6 +274,24 @@ export default function MasterDashboard() {
             <div>
               <h2 className="text-xl font-bold text-white">Top 5 Brand Performance</h2>
               <p className="text-sm text-slate-400">Highest revenue generating brands</p>
+            </div>
+          </div>
+                    {/* Brand Period Toggle */}
+          <div className="mb-4 flex justify-end">
+            <div className="inline-flex rounded-lg bg-slate-700 p-1">
+              {['monthly', 'quarterly', 'half-yearly', 'yearly'].map(p => (
+                <button
+                  key={p}
+                  onClick={() => setBrandPeriod(p)}
+                  className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
+                    brandPeriod === p 
+                      ? 'bg-blue-600 text-white' 
+                      : 'text-slate-400 hover:text-white'
+                  }`}
+                >
+                  {p.charAt(0).toUpperCase() + p.slice(1).replace('-', ' ')}
+                </button>
+              ))}
             </div>
           </div>
           <div className="overflow-x-auto">
@@ -270,12 +318,13 @@ export default function MasterDashboard() {
                     <td className="py-4 px-4">
                       <span className="text-white font-medium">{brand.brand}</span>
                     </td>
-                    <td className="py-4 px-4 text-slate-300">{formatCurrency(brand.revenue)}</td>
-                    <td className="py-4 px-4 text-green-400 font-medium">{brand.campaigns}</td>
-                    <td className="py-4 px-4 text-blue-400">{brand.impressions?.toLocaleString()}</td>
-                    <td className="py-4 px-4 text-purple-400">{brand.clicks?.toLocaleString()}</td>
-                    <td className="py-4 px-4 text-orange-400">{brand.orders?.toLocaleString()}</td>
-                    <td className="py-4 px-4 text-slate-300">{brand.clicks && brand.impressions ? ((brand.clicks/brand.impressions)*100).toFixed(2) : 0}%</td>
+                    <td className="py-4 px-4 text-slate-300">{formatCurrency(brand.ad_spend)}</td>
+                    <td className="py-4 px-4 text-green-400 font-medium">{formatCurrency(brand.revenue)}</td>
+                    <td className="py-4 px-4 text-orange-400 font-bold">{brand.roas}x</td>
+                    <td className="py-4 px-4 text-slate-300">{brand.purchases?.toLocaleString()}</td>
+                    <td className="py-4 px-4 text-blue-400">{brand.ctr}%</td>
+                    <td className="py-4 px-4 text-purple-400">{brand.conv_rate}%</td>
+                    <td className="py-4 px-4 text-slate-400">Multi</td>
                   </tr>
                 ))}
               </tbody>

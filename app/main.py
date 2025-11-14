@@ -1,11 +1,9 @@
 from fastapi import FastAPI
-
 from fastapi.middleware.cors import CORSMiddleware
 import sqlite3
 import os
 
 app = FastAPI(title="PatternOS API")
-
 
 # Get absolute database path
 DB_PATH = os.path.join(os.getcwd(), "intent_intelligence.db")
@@ -57,114 +55,166 @@ async def master_dashboard_v2(clientId: str = "zepto"):
 @app.get("/api/master/intent-stats")
 async def intent_stats():
     try:
-        conn = sqlite3.connect(DB_PATH)
+        import sqlite3
+        conn = sqlite3.connect("intent_intelligence.db")
         cursor = conn.cursor()
         
         cursor.execute("SELECT COUNT(DISTINCT user_id) FROM intent_scores")
         total = cursor.fetchone()[0]
         
-        cursor.execute("SELECT intent_level, COUNT(*) as count FROM intent_scores GROUP BY intent_level")
+        cursor.execute("SELECT intent_level, COUNT(*) FROM intent_scores GROUP BY intent_level")
         results = cursor.fetchall()
-        conn.close()
         
         dist = {"high": 0, "medium": 0, "low": 0}
         for level, count in results:
             if level:
                 dist[level.lower()] = count
         
-        return {
-            "totalUsers": total,
-            "intentDistribution": dist
-        }
-    except Exception as e:
+        conn.close()
+        return {"totalUsers": total, "intentDistribution": dist}
+    except:
         return {"totalUsers": 0, "intentDistribution": {"high": 0, "medium": 0, "low": 0}}
 
 @app.get("/api/master/platform-revenue")
-async def platform_revenue():
+
+@app.get("/api/master/platform-revenue")
+async def platform_revenue(period: str = "monthly"):
     try:
         import sqlite3
         conn = sqlite3.connect("patternos_campaign_data.db")
         cursor = conn.cursor()
         
-        cursor.execute("SELECT SUM(spend_value) FROM ad_spend_daily")
-        total_ad_spend = cursor.fetchone()[0] or 0
+        cursor.execute("SELECT SUM(attributed_spend) FROM ad_attribution")
+        total_attributed = cursor.fetchone()[0] or 0
         
-        cursor.execute("SELECT SUM(spend_value) FROM ad_spend_daily WHERE intent_level='High'")
+        # Get max date and calculate period
+        cursor.execute("SELECT MAX(date) FROM ad_spend_daily")
+        max_date = cursor.fetchone()[0]
+        
+        if period == "monthly":
+            days = 30
+        elif period == "quarterly":
+            days = 90
+        elif period == "half-yearly":
+            days = 180
+        else:
+            days = 365
+        
+        cursor.execute("SELECT SUM(spend_value) FROM ad_spend_daily WHERE intent_level='High' AND date >= date(?, '-' || ? || ' days')", (max_date, days))
         high_intent_spend = cursor.fetchone()[0] or 0
         
-        cursor.execute("SELECT SUM(spend_value) FROM ad_spend_daily WHERE intent_level IN ('Medium', 'Low')")
-        other_ad_spend = cursor.fetchone()[0] or 0
+        cursor.execute("SELECT SUM(spend_value) FROM ad_spend_daily WHERE intent_level IN ('Medium', 'Low') AND date >= date(?, '-' || ? || ' days')", (max_date, days))
+        other_spend = cursor.fetchone()[0] or 0
         
         conn.close()
         
-        monthly_retainer = 300000
-        high_intent_commission = high_intent_spend * 0.20
-        other_commission = other_ad_spend * 0.10
-        total_revenue = monthly_retainer + high_intent_commission + other_commission
+        if period == "monthly":
+            retainer = 300000
+        elif period == "quarterly":
+            retainer = 900000
+        elif period == "half-yearly":
+            retainer = 1800000
+        else:
+            retainer = 3600000
+        
+        high_commission = high_intent_spend * 0.20
+        other_commission = other_spend * 0.10
+        total_revenue = retainer + high_commission + other_commission
         
         return {
-            "monthly_retainer": round(monthly_retainer, 2),
-            "total_ad_spend": round(total_ad_spend, 2),
-            "high_intent_campaign_spend": round(high_intent_spend, 2),
-            "high_intent_premium": round(high_intent_commission, 2),
-            "other_ad_spend": round(other_ad_spend, 2),
-            "other_commission": round(other_commission, 2), "ad_commission": round(other_commission, 2),
-            "total": round(total_revenue, 2), "total_revenue": round(total_revenue, 2)
+            "monthly_retainer": retainer,
+            "total_ad_spend": high_intent_spend + other_spend,
+            "high_intent_campaign_spend": high_intent_spend,
+            "high_intent_premium": round(high_commission, 2),
+            "other_ad_spend": other_spend,
+            "other_commission": round(other_commission, 2),
+            "ad_commission": round(other_commission, 2),
+            "attributed_revenue": round(total_attributed, 2),
+            "total": round(total_revenue, 2),
+            "total_revenue": round(total_revenue, 2)
         }
     except Exception as e:
-        return {"monthly_retainer": 300000, "total": 300000, "error": str(e)}
+        return {"error": str(e), "total_revenue": 0}
 
 @app.get("/api/master/revenue-opportunities")
 async def revenue_opportunities(minScore: float = 0.7):
     try:
         import sqlite3
-        conn = sqlite3.connect("patternos_campaign_data.db")
+        conn = sqlite3.connect("intent_intelligence.db")
         conn.row_factory = sqlite3.Row
         cursor = conn.cursor()
         
         cursor.execute("""
             SELECT 
                 category,
-                SUM(spend_value) as revenue,
-                COUNT(*) as campaigns,
-                SUM(conversions) as conversions
-            FROM ad_spend_daily
+                COUNT(DISTINCT user_id) as users,
+                AVG(intent_score) as avg_intent_score,
+                SUM(CASE WHEN intent_level='High' THEN 1 ELSE 0 END) as high_intent_users
+            FROM intent_scores
+            WHERE intent_score >= ?
             GROUP BY category
-            ORDER BY revenue DESC
-        """)
+            ORDER BY high_intent_users DESC
+        """, (minScore,))
         
-        opportunities = [dict(row) for row in cursor.fetchall()]
+        opportunities = []
+        for row in cursor.fetchall():
+            opp = dict(row)
+            opp['potential_revenue'] = opp['high_intent_users'] * 2500
+            opportunities.append(opp)
+        
         conn.close()
-        
         return {"opportunities": opportunities}
     except Exception as e:
         return {"opportunities": [], "error": str(e)}
 
 @app.get("/api/master/brand-performance-v2")
-async def brand_performance():
+async def brand_performance(period: str = "monthly"):
     try:
         import sqlite3
         conn = sqlite3.connect("patternos_campaign_data.db")
         conn.row_factory = sqlite3.Row
         cursor = conn.cursor()
         
+        # Get max date for period filtering
+        cursor.execute("SELECT MAX(date) FROM ad_spend_daily")
+        max_date = cursor.fetchone()[0]
+        
+        if period == "monthly":
+            days = 30
+        elif period == "quarterly":
+            days = 90
+        elif period == "half-yearly":
+            days = 180
+        else:
+            days = 365
+        
+        # Get brand performance with SKU prices
         cursor.execute("""
             SELECT 
-                brand,
-                SUM(spend_value) as revenue,
-                COUNT(DISTINCT campaign_id) as campaigns,
-                SUM(impressions) as impressions,
-                SUM(clicks) as clicks,
-                SUM(conversions) as orders
-            FROM ad_spend_daily
-            GROUP BY brand
-            ORDER BY revenue DESC
+                a.brand,
+                SUM(a.spend_value) as ad_spend,
+                SUM(a.conversions * COALESCE(s.selling_price, 500)) as revenue,
+                SUM(a.conversions) as purchases,
+                SUM(a.clicks) as clicks,
+                SUM(a.impressions) as impressions
+            FROM ad_spend_daily a
+            LEFT JOIN sku_library s ON a.sku_id = s.sku_id
+            WHERE a.date >= date(?, '-' || ? || ' days')
+            GROUP BY a.brand
+            ORDER BY ad_spend DESC
             LIMIT 5
-        """)
+        """, (max_date, days))
         
-        brands = [dict(row) for row in cursor.fetchall()]
+        brands = []
+        for row in cursor.fetchall():
+            b = dict(row)
+            # Calculate actual ROAS from revenue and ad spend
+            b['roas'] = round(b['revenue'] / b['ad_spend'], 2) if b['ad_spend'] > 0 else 0
+            b['ctr'] = round((b['clicks'] / b['impressions'] * 100), 2) if b['impressions'] > 0 else 0
+            b['conv_rate'] = round((b['purchases'] / b['clicks'] * 100), 2) if b['clicks'] > 0 else 0
+            brands.append(b)
+        
         conn.close()
-        
         return {"brands": brands}
     except Exception as e:
         return {"brands": [], "error": str(e)}
