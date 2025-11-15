@@ -4,6 +4,7 @@ import Header from './components/layout/Header';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import BrandDashboard from './pages/BrandDashboard';
+import BrandAnalytics from './pages/BrandAnalytics';
 import Campaigns from './pages/Campaigns';
 import CreateCampaign from './pages/CreateCampaign';
 import Products from './pages/Products';
@@ -56,6 +57,14 @@ function AppContent() {
           element={
             <ProtectedRoute>
               <BrandDashboard />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/brand/:brandName/analytics" 
+          element={
+            <ProtectedRoute>
+              <BrandAnalytics />
             </ProtectedRoute>
           } 
         />
