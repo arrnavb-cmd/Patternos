@@ -1,0 +1,219 @@
+import React, { useState, useEffect } from 'react';
+import { useParams } from 'react-router-dom';
+import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { TrendingUp, Target, Layers, Award, ArrowRight } from 'lucide-react';
+
+export default function AttributionDashboard() {
+  const { brandName } = useParams();
+  const [loading, setLoading] = useState(false);
+  const [summary, setSummary] = useState(null);
+  const [channelContribution, setChannelContribution] = useState([]);
+  const [topPaths, setTopPaths] = useState([]);
+  const [modelComparison, setModelComparison] = useState([]);
+  const [assistedConversions, setAssistedConversions] = useState([]);
+
+  const isAggregator = !brandName;
+
+  useEffect(() => {
+    fetchAttributionData();
+  }, [brandName]);
+
+  const fetchAttributionData = async () => {
+    setLoading(true);
+    try {
+      const brandParam = brandName ? `?brand_name=${brandName}` : '';
+      
+      const [summaryRes, channelsRes, pathsRes, modelsRes, assistedRes] = await Promise.all([
+        fetch(`http://localhost:8000/api/v1/attribution/summary${brandParam}`),
+        fetch(`http://localhost:8000/api/v1/attribution/channel-contribution${brandParam}`),
+        fetch(`http://localhost:8000/api/v1/attribution/top-paths${brandParam}`),
+        fetch(`http://localhost:8000/api/v1/attribution/model-comparison${brandParam}`),
+        fetch(`http://localhost:8000/api/v1/attribution/assisted-conversions${brandParam}`)
+      ]);
+
+      const summaryData = await summaryRes.json();
+      const channelsData = await channelsRes.json();
+      const pathsData = await pathsRes.json();
+      const modelsData = await modelsRes.json();
+      const assistedData = await assistedRes.json();
+
+      setSummary(summaryData);
+      setChannelContribution(channelsData.channels || []);
+      setTopPaths(pathsData.top_paths || []);
+      setModelComparison(modelsData.models || []);
+      setAssistedConversions(assistedData.campaigns || []);
+    } catch (error) {
+      console.error('Failed to fetch attribution data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const formatCurrency = (amount) => {
+    if (amount >= 10000000) return '₹' + (amount / 10000000).toFixed(1) + 'Cr';
+    if (amount >= 100000) return '₹' + (amount / 100000).toFixed(1) + 'L';
+    return '₹' + amount.toFixed(0);
+  };
+
+  const COLORS = ['#3B82F6', '#10B981', '#F59E0B', '#8B5CF6', '#EC4899', '#14B8A6'];
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-900 flex items-center justify-center">
+        <div className="text-white text-xl">Loading attribution data...</div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-900 p-6">
+      <div className="max-w-7xl mx-auto">
+        {/* Header */}
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-white mb-2">
+            {isAggregator ? 'Multi-Touch Attribution Analysis' : `${brandName} Attribution Analysis`}
+          </h1>
+          <p className="text-gray-400">
+            Understand the customer journey and channel contribution to conversions
+          </p>
+        </div>
+
+        {/* Summary Cards */}
+        {summary && (
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            <div className="bg-gradient-to-br from-blue-900/30 to-blue-800/20 border border-blue-700 rounded-xl p-6">
+              <Target className="w-8 h-8 text-blue-400 mb-3" />
+              <p className="text-3xl font-bold text-white mb-1">{summary.total_orders?.toLocaleString()}</p>
+              <p className="text-sm text-gray-400">Total Conversions</p>
+            </div>
+            <div className="bg-gradient-to-br from-green-900/30 to-green-800/20 border border-green-700 rounded-xl p-6">
+              <Layers className="w-8 h-8 text-green-400 mb-3" />
+              <p className="text-3xl font-bold text-white mb-1">{summary.total_touchpoints?.toLocaleString()}</p>
+              <p className="text-sm text-gray-400">Total Touchpoints</p>
+            </div>
+            <div className="bg-gradient-to-br from-orange-900/30 to-orange-800/20 border border-orange-700 rounded-xl p-6">
+              <TrendingUp className="w-8 h-8 text-orange-400 mb-3" />
+              <p className="text-3xl font-bold text-white mb-1">{summary.avg_touchpoints_per_order?.toFixed(1)}</p>
+              <p className="text-sm text-gray-400">Avg Touchpoints/Order</p>
+            </div>
+            <div className="bg-gradient-to-br from-purple-900/30 to-purple-800/20 border border-purple-700 rounded-xl p-6">
+              <Award className="w-8 h-8 text-purple-400 mb-3" />
+              <p className="text-3xl font-bold text-white mb-1">{formatCurrency(summary.total_attributed_spend)}</p>
+              <p className="text-sm text-gray-400">Attributed Spend</p>
+            </div>
+          </div>
+        )}
+
+        {/* Channel Contribution */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+          <div className="bg-gray-800 rounded-xl p-6 border border-gray-700">
+            <h3 className="text-xl font-bold text-white mb-4">Channel Contribution</h3>
+            <ResponsiveContainer width="100%" height={300}>
+              <PieChart>
+                <Pie
+                  data={channelContribution}
+                  dataKey="assisted_orders"
+                  nameKey="channel"
+                  cx="50%"
+                  cy="50%"
+                  outerRadius={100}
+                  label={(entry) => `${entry.channel}: ${entry.assisted_orders}`}
+                >
+                  {channelContribution.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                  ))}
+                </Pie>
+                <Tooltip 
+                  contentStyle={{ backgroundColor: '#1F2937', border: '1px solid #374151', color: '#fff' }}
+                />
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
+
+          <div className="bg-gray-800 rounded-xl p-6 border border-gray-700">
+            <h3 className="text-xl font-bold text-white mb-4">Attributed Spend by Channel</h3>
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChart data={channelContribution}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                <XAxis dataKey="channel" stroke="#9CA3AF" />
+                <YAxis stroke="#9CA3AF" tickFormatter={(value) => formatCurrency(value)} />
+                <Tooltip 
+                  contentStyle={{ backgroundColor: '#1F2937', border: '1px solid #374151', color: '#fff' }}
+                  formatter={(value) => [formatCurrency(value), 'Spend']}
+                />
+                <Bar dataKey="attributed_spend" fill="#3B82F6" radius={[8, 8, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        {/* Top Conversion Paths */}
+        <div className="bg-gray-800 rounded-xl p-6 border border-gray-700 mb-8">
+          <h3 className="text-xl font-bold text-white mb-4">Top Conversion Paths</h3>
+          <div className="space-y-3">
+            {topPaths.slice(0, 10).map((path, idx) => (
+              <div key={idx} className="bg-gray-700/30 rounded-lg p-4">
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-2">
+                    <span className="text-2xl font-bold text-blue-400">#{idx + 1}</span>
+                    <ArrowRight className="text-gray-500" size={16} />
+                    <span className="text-white font-mono text-sm">{path.path}</span>
+                  </div>
+                  <div className="text-lg font-bold text-green-400">{path.frequency} orders</div>
+                </div>
+                <div className="flex gap-4 text-sm text-gray-400">
+                  <span>Total: {formatCurrency(path.total_spend)}</span>
+                  <span>Avg: {formatCurrency(path.avg_spend)}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Attribution Models */}
+        <div className="bg-gray-800 rounded-xl p-6 border border-gray-700 mb-8">
+          <h3 className="text-xl font-bold text-white mb-4">Attribution Model Comparison</h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {modelComparison.map((model, idx) => (
+              <div key={idx} className="bg-gray-700/30 rounded-lg p-6 text-center">
+                <div className="text-sm text-gray-400 mb-2 uppercase">{model.attribution_method}</div>
+                <div className="text-3xl font-bold text-white mb-2">{model.orders?.toLocaleString()}</div>
+                <div className="text-sm text-gray-400">Orders</div>
+                <div className="text-lg font-semibold text-green-400 mt-2">{formatCurrency(model.attributed_spend)}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Assisted Conversions */}
+        <div className="bg-gray-800 rounded-xl p-6 border border-gray-700">
+          <h3 className="text-xl font-bold text-white mb-4">Top Campaigns by Assisted Conversions</h3>
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="bg-gray-700">
+                <tr>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-300">Campaign</th>
+                  {isAggregator && <th className="px-6 py-4 text-left text-sm font-semibold text-gray-300">Brand</th>}
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-300">Channel</th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-300">Assisted Orders</th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-300">Attributed Spend</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-700">
+                {assistedConversions.slice(0, 20).map((campaign, idx) => (
+                  <tr key={idx} className="hover:bg-gray-700/30">
+                    <td className="px-6 py-4 text-sm font-medium text-white">{campaign.campaign_id}</td>
+                    {isAggregator && <td className="px-6 py-4 text-sm text-gray-300">{campaign.brand}</td>}
+                    <td className="px-6 py-4 text-sm text-gray-300">{campaign.channel}</td>
+                    <td className="px-6 py-4 text-sm text-blue-400 font-semibold">{campaign.assisted_orders.toLocaleString()}</td>
+                    <td className="px-6 py-4 text-sm text-green-400 font-semibold">{formatCurrency(campaign.attributed_spend)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}

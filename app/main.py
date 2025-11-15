@@ -1412,3 +1412,370 @@ async def login(request: LoginRequest):
         
     except Exception as e:
         return {"error": str(e)}, 500
+
+# Attribution & Conversion Funnel APIs
+
+@app.get("/api/v1/attribution/summary")
+async def attribution_summary(brand_name: str = None):
+    """Attribution summary - all brands or specific brand"""
+    try:
+        import sqlite3
+        conn = sqlite3.connect("patternos_campaign_data.db")
+        cursor = conn.cursor()
+        
+        brand_filter = ""
+        params = []
+        if brand_name:
+            brand_filter = "WHERE c.brand = ?"
+            params.append(brand_name)
+        
+        cursor.execute(f"""
+            SELECT 
+                COUNT(DISTINCT a.order_id) as total_orders,
+                COUNT(*) as total_touchpoints,
+                AVG(touchpoint_count) as avg_touchpoints_per_order,
+                SUM(a.attributed_spend) as total_attributed_spend
+            FROM ad_attribution a
+            JOIN campaigns_master c ON a.campaign_id = c.campaign_id
+            JOIN (
+                SELECT order_id, COUNT(*) as touchpoint_count
+                FROM ad_attribution
+                GROUP BY order_id
+            ) tc ON a.order_id = tc.order_id
+            {brand_filter}
+        """, params)
+        
+        result = cursor.fetchone()
+        conn.close()
+        
+        return {
+            "total_orders": result[0],
+            "total_touchpoints": result[1],
+            "avg_touchpoints_per_order": round(result[2], 2) if result[2] else 0,
+            "total_attributed_spend": round(result[3], 2) if result[3] else 0
+        }
+    except Exception as e:
+        return {"error": str(e)}
+
+@app.get("/api/v1/attribution/channel-contribution")
+async def attribution_channel_contribution(brand_name: str = None):
+    """Channel contribution to conversions"""
+    try:
+        import sqlite3
+        conn = sqlite3.connect("patternos_campaign_data.db")
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
+        
+        brand_filter = ""
+        params = []
+        if brand_name:
+            brand_filter = "WHERE c.brand = ?"
+            params.append(brand_name)
+        
+        cursor.execute(f"""
+            SELECT 
+                c.channel,
+                COUNT(DISTINCT a.order_id) as assisted_orders,
+                SUM(a.attributed_spend) as attributed_spend,
+                COUNT(*) as touchpoints
+            FROM ad_attribution a
+            JOIN campaigns_master c ON a.campaign_id = c.campaign_id
+            {brand_filter}
+            GROUP BY c.channel
+            ORDER BY attributed_spend DESC
+        """, params)
+        
+        channels = [dict(row) for row in cursor.fetchall()]
+        conn.close()
+        
+        return {"channels": channels}
+    except Exception as e:
+        return {"error": str(e)}
+
+@app.get("/api/v1/attribution/path-analysis")
+async def attribution_path_analysis(brand_name: str = None, limit: int = 100):
+    """Analyze conversion paths"""
+    try:
+        import sqlite3
+        conn = sqlite3.connect("patternos_campaign_data.db")
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
+        
+        brand_filter = ""
+        params = []
+        if brand_name:
+            brand_filter = "AND c.brand = ?"
+            params.append(brand_name)
+        
+        params.append(limit)
+        
+        cursor.execute(f"""
+            SELECT 
+                a.order_id,
+                GROUP_CONCAT(c.channel, ' → ') as path,
+                COUNT(*) as path_length,
+                SUM(a.attributed_spend) as total_spend
+            FROM ad_attribution a
+            JOIN campaigns_master c ON a.campaign_id = c.campaign_id
+            WHERE 1=1 {brand_filter}
+            GROUP BY a.order_id
+            ORDER BY path_length DESC
+            LIMIT ?
+        """, params)
+        
+        paths = [dict(row) for row in cursor.fetchall()]
+        conn.close()
+        
+        return {"paths": paths}
+    except Exception as e:
+        return {"error": str(e)}
+
+@app.get("/api/v1/attribution/top-paths")
+async def attribution_top_paths(brand_name: str = None):
+    """Most common conversion paths"""
+    try:
+        import sqlite3
+        conn = sqlite3.connect("patternos_campaign_data.db")
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
+        
+        brand_filter = ""
+        params = []
+        if brand_name:
+            brand_filter = "AND c.brand = ?"
+            params.append(brand_name)
+        
+        cursor.execute(f"""
+            WITH paths AS (
+                SELECT 
+                    a.order_id,
+                    GROUP_CONCAT(c.channel, ' → ') as path,
+                    SUM(a.attributed_spend) as spend
+                FROM ad_attribution a
+                JOIN campaigns_master c ON a.campaign_id = c.campaign_id
+                WHERE 1=1 {brand_filter}
+                GROUP BY a.order_id
+            )
+            SELECT 
+                path,
+                COUNT(*) as frequency,
+                SUM(spend) as total_spend,
+                AVG(spend) as avg_spend
+            FROM paths
+            GROUP BY path
+            ORDER BY frequency DESC
+            LIMIT 20
+        """, params)
+        
+        top_paths = [dict(row) for row in cursor.fetchall()]
+        conn.close()
+        
+        return {"top_paths": top_paths}
+    except Exception as e:
+        return {"error": str(e)}
+
+@app.get("/api/v1/attribution/model-comparison")
+async def attribution_model_comparison(brand_name: str = None):
+    """Compare different attribution models"""
+    try:
+        import sqlite3
+        conn = sqlite3.connect("patternos_campaign_data.db")
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
+        
+        brand_filter = ""
+        params = []
+        if brand_name:
+            brand_filter = "WHERE c.brand = ?"
+            params.append(brand_name)
+        
+        cursor.execute(f"""
+            SELECT 
+                a.attribution_method,
+                COUNT(DISTINCT a.order_id) as orders,
+                SUM(a.attributed_spend) as attributed_spend
+            FROM ad_attribution a
+            JOIN campaigns_master c ON a.campaign_id = c.campaign_id
+            {brand_filter}
+            GROUP BY a.attribution_method
+        """, params)
+        
+        models = [dict(row) for row in cursor.fetchall()]
+        conn.close()
+        
+        return {"models": models}
+    except Exception as e:
+        return {"error": str(e)}
+
+@app.get("/api/v1/attribution/assisted-conversions")
+async def attribution_assisted_conversions(brand_name: str = None):
+    """Campaigns with assisted conversions"""
+    try:
+        import sqlite3
+        conn = sqlite3.connect("patternos_campaign_data.db")
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
+        
+        brand_filter = ""
+        params = []
+        if brand_name:
+            brand_filter = "WHERE c.brand = ?"
+            params.append(brand_name)
+        
+        cursor.execute(f"""
+            SELECT 
+                c.campaign_id,
+                c.brand,
+                c.channel,
+                c.category,
+                COUNT(DISTINCT a.order_id) as assisted_orders,
+                SUM(a.attributed_spend) as attributed_spend,
+                COUNT(*) as touchpoints
+            FROM ad_attribution a
+            JOIN campaigns_master c ON a.campaign_id = c.campaign_id
+            {brand_filter}
+            GROUP BY c.campaign_id, c.brand, c.channel, c.category
+            ORDER BY assisted_orders DESC
+            LIMIT 50
+        """, params)
+        
+        campaigns = [dict(row) for row in cursor.fetchall()]
+        conn.close()
+        
+        return {"campaigns": campaigns}
+    except Exception as e:
+        return {"error": str(e)}
+
+@app.get("/api/v1/attribution/touchpoint-distribution")
+async def attribution_touchpoint_distribution(brand_name: str = None):
+    """Distribution of orders by number of touchpoints"""
+    try:
+        import sqlite3
+        conn = sqlite3.connect("patternos_campaign_data.db")
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
+        
+        brand_filter = ""
+        params = []
+        if brand_name:
+            brand_filter = """
+                AND a.order_id IN (
+                    SELECT DISTINCT att.order_id 
+                    FROM ad_attribution att
+                    JOIN campaigns_master cm ON att.campaign_id = cm.campaign_id
+                    WHERE cm.brand = ?
+                )
+            """
+            params.append(brand_name)
+        
+        cursor.execute(f"""
+            WITH touchpoint_counts AS (
+                SELECT order_id, COUNT(*) as touchpoint_count
+                FROM ad_attribution a
+                WHERE 1=1 {brand_filter}
+                GROUP BY order_id
+            )
+            SELECT 
+                touchpoint_count,
+                COUNT(*) as order_count
+            FROM touchpoint_counts
+            GROUP BY touchpoint_count
+            ORDER BY touchpoint_count
+        """, params)
+        
+        distribution = [dict(row) for row in cursor.fetchall()]
+        conn.close()
+        
+        return {"distribution": distribution}
+    except Exception as e:
+        return {"error": str(e)}
+
+@app.get("/api/v1/attribution/channel-overlap")
+async def attribution_channel_overlap(brand_name: str = None):
+    """Channel combinations in customer journeys"""
+    try:
+        import sqlite3
+        conn = sqlite3.connect("patternos_campaign_data.db")
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
+        
+        brand_filter = ""
+        params = []
+        if brand_name:
+            brand_filter = "WHERE c.brand = ?"
+            params.append(brand_name)
+        
+        cursor.execute(f"""
+            WITH channel_combos AS (
+                SELECT 
+                    a.order_id,
+                    GROUP_CONCAT(DISTINCT c.channel) as channels
+                FROM ad_attribution a
+                JOIN campaigns_master c ON a.campaign_id = c.campaign_id
+                {brand_filter}
+                GROUP BY a.order_id
+            )
+            SELECT 
+                channels,
+                COUNT(*) as frequency
+            FROM channel_combos
+            GROUP BY channels
+            ORDER BY frequency DESC
+            LIMIT 20
+        """, params)
+        
+        overlaps = [dict(row) for row in cursor.fetchall()]
+        conn.close()
+        
+        return {"overlaps": overlaps}
+    except Exception as e:
+        return {"error": str(e)}
+
+@app.get("/api/v1/attribution/conversion-value-analysis")
+async def attribution_conversion_value_analysis(brand_name: str = None):
+    """Analyze conversion value by touchpoint count"""
+    try:
+        import sqlite3
+        conn = sqlite3.connect("patternos_campaign_data.db")
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
+        
+        brand_filter = ""
+        params = []
+        if brand_name:
+            brand_filter = """
+                AND a.order_id IN (
+                    SELECT DISTINCT att.order_id 
+                    FROM ad_attribution att
+                    JOIN campaigns_master cm ON att.campaign_id = cm.campaign_id
+                    WHERE cm.brand = ?
+                )
+            """
+            params.append(brand_name)
+        
+        cursor.execute(f"""
+            WITH order_data AS (
+                SELECT 
+                    a.order_id,
+                    COUNT(*) as touchpoint_count,
+                    SUM(a.attributed_spend) as total_value
+                FROM ad_attribution a
+                WHERE 1=1 {brand_filter}
+                GROUP BY a.order_id
+            )
+            SELECT 
+                touchpoint_count,
+                COUNT(*) as order_count,
+                AVG(total_value) as avg_value,
+                SUM(total_value) as total_value
+            FROM order_data
+            GROUP BY touchpoint_count
+            ORDER BY touchpoint_count
+        """, params)
+        
+        analysis = [dict(row) for row in cursor.fetchall()]
+        conn.close()
+        
+        return {"value_analysis": analysis}
+    except Exception as e:
+        return {"error": str(e)}

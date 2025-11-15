@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, AreaChart, Area, ScatterChart, Scatter, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { BarChart3, TrendingUp, DollarSign, Users, Calendar, Download, Filter, MapPin, Tag, UserCircle } from 'lucide-react';
 
 export default function Analytics() {
@@ -15,10 +16,10 @@ export default function Analytics() {
   const [realChannelData, setRealChannelData] = useState([]);
   const [brandComparisonData, setBrandComparisonData] = useState([]);
   const [interactiveData, setInteractiveData] = useState([]);
-  const [monthlyTrends, setMonthlyTrends] = useState([]);
   const [attributionSummary, setAttributionSummary] = useState(null);
   const [attributionChannels, setAttributionChannels] = useState([]);
   const [topPaths, setTopPaths] = useState([]);
+  const [monthlyTrends, setMonthlyTrends] = useState([]);
 
   // Fetch interactive comparison data when tab or filter changes
   useEffect(() => {
@@ -103,15 +104,17 @@ export default function Analytics() {
       }
       
       const [summaryRes, channelRes] = await Promise.all([
-        fetch(url),
+      const [summaryRes, channelRes, trendsRes] = await Promise.all([
         fetch(`http://localhost:8000/api/v1/analytics/channel-performance?date_range=${dateRange}`)
-      ]);
+        fetch(`http://localhost:8000/api/v1/analytics/channel-performance?date_range=${dateRange}`),
+        fetch('http://localhost:8000/api/v1/analytics/monthly-trends')
       
       const summary = await summaryRes.json();
       const channels = await channelRes.json();
       
       setPlatformSummary(summary);
       setRealChannelData(channels.channels || []);
+      setMonthlyTrends(trends.monthly_trends || []);
 
 
       // Fetch brand comparison data if on brand tab
@@ -307,6 +310,157 @@ export default function Analytics() {
         {activeTab === 'platform' && isAggregator && (
           <div>
             <h2 className="text-2xl font-bold text-white mb-6">Platform Overview</h2>
+
+            {/* Line Chart - Monthly Spend & Revenue Trend */}
+            {monthlyTrends && monthlyTrends.length > 0 && (
+              <div className="bg-gray-800 rounded-xl p-6 border border-gray-700 mb-6">
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className="text-lg font-bold text-white">📈 Performance Trends Over Time</h3>
+                  <button className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm">
+                    Download Report
+                  </button>
+                </div>
+                <ResponsiveContainer width="100%" height={350}>
+                  <LineChart data={monthlyTrends}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                    <XAxis dataKey="month" stroke="#9CA3AF" />
+                    <YAxis stroke="#9CA3AF" tickFormatter={(value) => `₹${(value / 10000000).toFixed(0)}Cr`} />
+                    <Tooltip 
+                      contentStyle={{ backgroundColor: '#1F2937', border: '1px solid #374151', color: '#fff' }}
+                      formatter={(value) => [`₹${(value / 10000000).toFixed(2)}Cr`, '']}
+                    />
+                    <Legend />
+                    <Line type="monotone" dataKey="spend" stroke="#3B82F6" strokeWidth={3} name="Ad Spend" dot={{ r: 5 }} />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            )}
+
+            {/* Bar Chart & Pie Chart Grid */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+              {/* Bar Chart - Channel Performance */}
+              {realChannelData && realChannelData.length > 0 && (
+                <div className="bg-gray-800 rounded-xl p-6 border border-gray-700">
+                  <div className="flex justify-between items-center mb-4">
+                    <h3 className="text-lg font-bold text-white">📊 Channel Conversions</h3>
+                    <button className="px-3 py-1 bg-gray-700 hover:bg-gray-600 text-white rounded text-xs">
+                      Export
+                    </button>
+                  </div>
+                  <ResponsiveContainer width="100%" height={300}>
+                    <BarChart data={realChannelData}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                      <XAxis dataKey="channel" stroke="#9CA3AF" />
+                      <YAxis stroke="#9CA3AF" />
+                      <Tooltip 
+                        contentStyle={{ backgroundColor: '#1F2937', border: '1px solid #374151', color: '#fff' }}
+                      />
+                      <Bar dataKey="conversions" fill="#10B981" radius={[8, 8, 0, 0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              )}
+
+              {/* Pie Chart - Channel Spend Distribution */}
+              {realChannelData && realChannelData.length > 0 && (
+                <div className="bg-gray-800 rounded-xl p-6 border border-gray-700">
+                  <div className="flex justify-between items-center mb-4">
+                    <h3 className="text-lg font-bold text-white">🥧 Channel Spend Distribution</h3>
+                    <button className="px-3 py-1 bg-gray-700 hover:bg-gray-600 text-white rounded text-xs">
+                      Export
+                    </button>
+                  </div>
+                  <ResponsiveContainer width="100%" height={300}>
+                    <PieChart>
+                      <Pie
+                        data={realChannelData}
+                        dataKey="spend"
+                        nameKey="channel"
+                        cx="50%"
+                        cy="50%"
+                        outerRadius={100}
+                        label={(entry) => `${entry.channel}: ${((entry.spend / realChannelData.reduce((sum, ch) => sum + ch.spend, 0)) * 100).toFixed(1)}%`}
+                      >
+                        {realChannelData.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={['#3B82F6', '#10B981', '#F59E0B', '#8B5CF6', '#EC4899', '#14B8A6'][index % 6]} />
+                        ))}
+                      </Pie>
+                      <Tooltip 
+                        contentStyle={{ backgroundColor: '#1F2937', border: '1px solid #374151', color: '#fff' }}
+                        formatter={(value) => [`₹${(value / 10000000).toFixed(2)}Cr`, 'Spend']}
+                      />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </div>
+              )}
+            </div>
+
+            {/* Area Chart & Scatter Chart Grid */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+              {/* Area Chart - Impressions & Clicks */}
+              {monthlyTrends && monthlyTrends.length > 0 && (
+                <div className="bg-gray-800 rounded-xl p-6 border border-gray-700">
+                  <div className="flex justify-between items-center mb-4">
+                    <h3 className="text-lg font-bold text-white">📉 Impressions & Clicks Trend</h3>
+                    <button className="px-3 py-1 bg-gray-700 hover:bg-gray-600 text-white rounded text-xs">
+                      Export
+                    </button>
+                  </div>
+                  <ResponsiveContainer width="100%" height={300}>
+                    <AreaChart data={monthlyTrends}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                      <XAxis dataKey="month" stroke="#9CA3AF" />
+                      <YAxis stroke="#9CA3AF" tickFormatter={(value) => `${(value / 1000000).toFixed(0)}M`} />
+                      <Tooltip 
+                        contentStyle={{ backgroundColor: '#1F2937', border: '1px solid #374151', color: '#fff' }}
+                        formatter={(value) => [value.toLocaleString(), '']}
+                      />
+                      <Legend />
+                      <Area type="monotone" dataKey="impressions" stackId="1" stroke="#10B981" fill="#10B981" fillOpacity={0.6} name="Impressions" />
+                      <Area type="monotone" dataKey="clicks" stackId="2" stroke="#F59E0B" fill="#F59E0B" fillOpacity={0.6} name="Clicks" />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                </div>
+              )}
+
+              {/* Scatter Chart - CTR vs Conversions */}
+              {realChannelData && realChannelData.length > 0 && (
+                <div className="bg-gray-800 rounded-xl p-6 border border-gray-700">
+                  <div className="flex justify-between items-center mb-4">
+                    <h3 className="text-lg font-bold text-white">⚡ Channel Efficiency Analysis</h3>
+                    <button className="px-3 py-1 bg-gray-700 hover:bg-gray-600 text-white rounded text-xs">
+                      Export
+                    </button>
+                  </div>
+                  <ResponsiveContainer width="100%" height={300}>
+                    <ScatterChart>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                      <XAxis 
+                        type="number" 
+                        dataKey="ctr" 
+                        stroke="#9CA3AF" 
+                        name="CTR"
+                        label={{ value: 'CTR %', position: 'insideBottom', offset: -5, fill: '#9CA3AF' }}
+                      />
+                      <YAxis 
+                        type="number" 
+                        dataKey="conversion_rate" 
+                        stroke="#9CA3AF" 
+                        name="Conv Rate"
+                        label={{ value: 'Conversion Rate %', angle: -90, position: 'insideLeft', fill: '#9CA3AF' }}
+                      />
+                      <Tooltip 
+                        contentStyle={{ backgroundColor: '#1F2937', border: '1px solid #374151', color: '#fff' }}
+                        cursor={{ strokeDasharray: '3 3' }}
+                      />
+                      <Scatter data={realChannelData} fill="#8B5CF6" />
+                    </ScatterChart>
+                  </ResponsiveContainer>
+                </div>
+              )}
+            </div>
+
+
             
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
               <div className="bg-gradient-to-br from-blue-900/30 to-blue-800/20 border border-blue-700 rounded-xl p-6">

@@ -15,7 +15,6 @@ export default function Analytics() {
   const [realChannelData, setRealChannelData] = useState([]);
   const [brandComparisonData, setBrandComparisonData] = useState([]);
   const [interactiveData, setInteractiveData] = useState([]);
-  const [monthlyTrends, setMonthlyTrends] = useState([]);
   const [attributionSummary, setAttributionSummary] = useState(null);
   const [attributionChannels, setAttributionChannels] = useState([]);
   const [topPaths, setTopPaths] = useState([]);
