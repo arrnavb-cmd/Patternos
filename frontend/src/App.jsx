@@ -70,6 +70,22 @@ function AppContent() {
             </ProtectedRoute>
           } 
         />
+        <Route 
+          path="/brand/:brandName/campaigns" 
+          element={
+            <ProtectedRoute>
+              <BrandCampaigns />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/brand/:brandName/campaigns/create" 
+          element={
+            <ProtectedRoute>
+              <CreateCampaign />
+            </ProtectedRoute>
+          } 
+        />
         
                 <Route 
           path="/intent" 

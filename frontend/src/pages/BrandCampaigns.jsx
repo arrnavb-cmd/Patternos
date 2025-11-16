@@ -5,6 +5,7 @@ import {
   DollarSign, Target, Clock, CheckCircle, XCircle,
   AlertCircle, Activity, Calendar, Eye, Edit, Trash2
 } from 'lucide-react';
+import CampaignDetailModal from '../components/CampaignDetailModal';
 
 export default function BrandCampaigns() {
   const navigate = useNavigate();
@@ -16,6 +17,11 @@ export default function BrandCampaigns() {
   const [selectedStatus, setSelectedStatus] = useState('all');
   const [selectedChannel, setSelectedChannel] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [sortBy, setSortBy] = useState('start_date');
+  const [sortOrder, setSortOrder] = useState('desc');
+  const [selectedCampaign, setSelectedCampaign] = useState(null);
+  const itemsPerPage = 10;
 
   useEffect(() => {
     fetchCampaigns();
@@ -41,7 +47,25 @@ export default function BrandCampaigns() {
     if (searchQuery && !c.campaign_id.toLowerCase().includes(searchQuery.toLowerCase()) && 
         !c.campaign_name?.toLowerCase().includes(searchQuery.toLowerCase())) return false;
     return true;
+  }).sort((a, b) => {
+    let aVal = a[sortBy];
+    let bVal = b[sortBy];
+    
+    if (sortBy === 'start_date' || sortBy === 'end_date') {
+      aVal = new Date(aVal);
+      bVal = new Date(bVal);
+    }
+    
+    if (sortOrder === 'asc') {
+      return aVal > bVal ? 1 : -1;
+    } else {
+      return aVal < bVal ? 1 : -1;
+    }
   });
+
+  const totalPages = Math.ceil(filteredCampaigns.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const paginatedCampaigns = filteredCampaigns.slice(startIndex, startIndex + itemsPerPage);
 
   const formatCurrency = (amount) => {
     if (!amount) return '₹0';
@@ -157,8 +181,9 @@ export default function BrandCampaigns() {
 
         {/* Filters */}
         <div className="bg-gray-800 rounded-xl p-4 mb-6 border border-gray-700">
-          <div className="flex items-center gap-4">
-            <Filter className="text-gray-400" size={20} />
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-4 flex-1">
+              <Filter className="text-gray-400" size={20} />
             <input
               type="text"
               placeholder="Search campaigns..."
@@ -180,6 +205,25 @@ export default function BrandCampaigns() {
             <button className="px-4 py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-600">
               <Download size={18} />
             </button>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-gray-400">Sort by:</span>
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value)}
+                className="px-3 py-1 bg-gray-900 border border-gray-700 rounded text-white text-sm">
+                <option value="start_date">Start Date</option>
+                <option value="end_date">End Date</option>
+                <option value="total_spend">Spend</option>
+                <option value="revenue">Revenue</option>
+                <option value="roas">ROAS</option>
+              </select>
+              <button
+                onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
+                className="px-3 py-1 bg-gray-900 border border-gray-700 rounded text-white text-sm hover:bg-gray-800">
+                {sortOrder === 'asc' ? '↑ Asc' : '↓ Desc'}
+              </button>
+            </div>
           </div>
         </div>
 
@@ -202,7 +246,7 @@ export default function BrandCampaigns() {
               <tbody className="divide-y divide-gray-700">
                 {loading ? (
                   <tr><td colSpan="8" className="px-6 py-12 text-center text-gray-400">Loading campaigns...</td></tr>
-                ) : filteredCampaigns.length === 0 ? (
+                ) : paginatedCampaigns.length === 0 ? (
                   <tr>
                     <td colSpan="8" className="px-6 py-12 text-center">
                       <div className="flex flex-col items-center gap-3">
@@ -217,7 +261,7 @@ export default function BrandCampaigns() {
                     </td>
                   </tr>
                 ) : (
-                  filteredCampaigns.map((campaign, idx) => (
+                  paginatedCampaigns.map((campaign, idx) => (
                     <tr key={idx} className="hover:bg-gray-700/30 transition-colors">
                       <td className="px-6 py-4">
                         <div className="flex flex-col">
@@ -248,8 +292,8 @@ export default function BrandCampaigns() {
                       <td className="px-6 py-4">
                         <div className="flex items-center justify-center gap-2">
                           <button 
-                            onClick={() => navigate(`/brand/${brandName}/campaigns/${campaign.campaign_id}`)}
-                            className="p-2 hover:bg-gray-700 rounded-lg" title="View Details">
+                            onClick={() => setSelectedCampaign(campaign)}
+                            className="p-2 hover:bg-gray-700 rounded-lg" title="View Report">
                             <Eye size={16} className="text-blue-400" />
                           </button>
                           <button className="p-2 hover:bg-gray-700 rounded-lg" title="Edit">
@@ -266,8 +310,63 @@ export default function BrandCampaigns() {
               </tbody>
             </table>
           </div>
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="px-6 py-4 border-t border-gray-700 flex items-center justify-between">
+              <div className="text-sm text-gray-400">
+                Showing {startIndex + 1}-{Math.min(startIndex + itemsPerPage, filteredCampaigns.length)} of {filteredCampaigns.length}
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                  disabled={currentPage === 1}
+                  className="px-4 py-2 bg-gray-700 text-white rounded hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed">
+                  Previous
+                </button>
+                
+                <div className="flex items-center gap-1">
+                  {[...Array(totalPages)].map((_, i) => {
+                    const page = i + 1;
+                    if (page === 1 || page === totalPages || (page >= currentPage - 1 && page <= currentPage + 1)) {
+                      return (
+                        <button
+                          key={page}
+                          onClick={() => setCurrentPage(page)}
+                          className={`px-3 py-1 rounded ${
+                            currentPage === page 
+                              ? 'bg-blue-600 text-white' 
+                              : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                          }`}>
+                          {page}
+                        </button>
+                      );
+                    } else if (page === currentPage - 2 || page === currentPage + 2) {
+                      return <span key={page} className="text-gray-500">...</span>;
+                    }
+                    return null;
+                  })}
+                </div>
+
+                <button
+                  onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                  disabled={currentPage === totalPages}
+                  className="px-4 py-2 bg-gray-700 text-white rounded hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed">
+                  Next
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
+
+      {/* Campaign Detail Modal */}
+      {selectedCampaign && (
+        <CampaignDetailModal 
+          campaign={selectedCampaign} 
+          onClose={() => setSelectedCampaign(null)} 
+        />
+      )}
     </div>
   );
 }
