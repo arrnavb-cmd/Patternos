@@ -1325,19 +1325,19 @@ async def brand_products_performance(brand_name: str, date_range: str = "last_30
         else:
             days = 30
         
+        # Get product names from sku_library by matching brand
         cursor.execute(f"""
             SELECT 
-                COALESCE(s.sku_name, 'Unknown Product') as sku_name,
+                COALESCE(s.sku_name, a.sku_id) as sku_name,
                 COALESCE(s.category_level_1, a.category) as category_level_1,
                 SUM(a.spend_value) as spend,
                 SUM(a.conversions) as conversions,
-                SUM(a.conversions * COALESCE(s.selling_price, 500)) as revenue
+                SUM(a.conversions * 500) as revenue
             FROM ad_spend_daily a
-            LEFT JOIN sku_library s ON a.sku_id = s.sku_id
+            LEFT JOIN sku_library s ON s.brand = a.brand
             WHERE a.brand = ? AND a.date >= date('{max_date}', '-{days} days')
-            GROUP BY s.sku_name, s.category_level_1, a.category
-            HAVING sku_name IS NOT NULL
-            ORDER BY revenue DESC
+            GROUP BY s.sku_name, s.category_level_1, a.sku_id, a.category
+            ORDER BY spend DESC
             LIMIT 20
         """, (brand_name,))
         

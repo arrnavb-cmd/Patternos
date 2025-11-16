@@ -44,9 +44,9 @@ export default function Analytics() {
 
   const formatCurrency = (amount) => {
     if (!amount) return '₹0';
-    if (amount >= 10000000) return '₹' + (amount / 10000000).toFixed(1) + 'Cr';
-    if (amount >= 100000) return '₹' + (amount / 100000).toFixed(1) + 'L';
-    return '₹' + amount.toLocaleString();
+    if (amount >= 10000000) return '₹' + Math.round(amount / 10000000) + 'Cr';
+    if (amount >= 100000) return '₹' + Math.round(amount / 100000) + 'L';
+    return '₹' + Math.round(amount).toLocaleString();
   };
 
   const COLORS = ['#3B82F6', '#10B981', '#F59E0B', '#8B5CF6', '#EC4899', '#14B8A6'];
@@ -97,7 +97,7 @@ export default function Analytics() {
                 </div>
                 <div className="bg-gradient-to-br from-orange-900/30 to-orange-800/20 border border-orange-700 rounded-xl p-6">
                   <DollarSign className="w-8 h-8 text-orange-400 mb-3" />
-                  <p className="text-3xl font-bold text-white">{platformSummary.avg_roas?.toFixed(2)}x</p>
+                  <p className="text-3xl font-bold text-white">{Math.round(platformSummary.avg_roas)}x</p>
                   <p className="text-sm text-gray-400 mt-1">Avg ROAS</p>
                 </div>
                 <div className="bg-gradient-to-br from-purple-900/30 to-purple-800/20 border border-purple-700 rounded-xl p-6">
@@ -234,7 +234,7 @@ export default function Analytics() {
                       <td className="px-6 py-4 text-sm font-medium text-white">{brand.brand}</td>
                       <td className="px-6 py-4 text-sm text-gray-300">{formatCurrency(brand.spend)}</td>
                       <td className="px-6 py-4 text-sm text-green-400">{formatCurrency(brand.revenue)}</td>
-                      <td className="px-6 py-4 text-sm text-orange-400 font-bold">{brand.roas?.toFixed(2)}x</td>
+                      <td className="px-6 py-4 text-sm text-orange-400 font-bold">{Math.round(brand.roas)}x</td>
                       <td className="px-6 py-4 text-sm text-blue-400">{brand.conversions?.toLocaleString()}</td>
                     </tr>
                   ))}

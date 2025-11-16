@@ -50,9 +50,19 @@ export default function BrandAnalytics() {
 
   const formatCurrency = (amount) => {
     if (!amount) return '₹0';
-    if (amount >= 10000000) return '₹' + (amount / 10000000).toFixed(1) + 'Cr';
-    if (amount >= 100000) return '₹' + (amount / 100000).toFixed(1) + 'L';
-    return '₹' + amount.toLocaleString();
+    if (amount >= 10000000) return '₹' + Math.round(amount / 10000000) + 'Cr';
+    if (amount >= 100000) return '₹' + Math.round(amount / 100000) + 'L';
+    return '₹' + Math.round(amount).toLocaleString();
+  };
+
+  const downloadCSV = (data, filename) => {
+    const csv = [Object.keys(data[0]).join(','), ...data.map(row => Object.values(row).join(','))].join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    a.click();
   };
 
   const COLORS = ['#3B82F6', '#10B981', '#F59E0B', '#8B5CF6', '#EC4899', '#14B8A6'];
@@ -107,7 +117,7 @@ export default function BrandAnalytics() {
               </div>
               <div className="bg-gradient-to-br from-orange-900/30 to-orange-800/20 border border-orange-700 rounded-xl p-6">
                 <DollarSign className="w-8 h-8 text-orange-400 mb-3" />
-                <p className="text-3xl font-bold text-white">{summary.avg_roas?.toFixed(2)}x</p>
+                <p className="text-3xl font-bold text-white">{Math.round(summary.avg_roas)}x</p>
                 <p className="text-sm text-gray-400 mt-1">Avg ROAS</p>
               </div>
               <div className="bg-gradient-to-br from-purple-900/30 to-purple-800/20 border border-purple-700 rounded-xl p-6">
@@ -152,53 +162,222 @@ export default function BrandAnalytics() {
 
         {activeTab === 'campaigns' && (
           <div>
-            {loading && <div className="text-white text-center py-8">Loading campaigns...</div>}
-            {!loading && campaigns.length === 0 && (
-              <div className="bg-gray-800 rounded-xl p-8 border border-gray-700 text-center">
-                <p className="text-gray-400">No campaign data available for this period</p>
-              </div>
-            )}
-            {!loading && campaigns.length > 0 && (
-          <div className="bg-gray-800 rounded-xl p-6 border border-gray-700">
-            <h3 className="text-xl font-bold text-white mb-4">Campaign Performance</h3>
-            <p className="text-gray-400">Campaign details will be displayed here</p>
-          </div>
-        )}
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-2xl font-bold text-white">Campaign Performance</h2>
+              <button onClick={() => downloadCSV(campaigns, `${brandName}_campaigns.csv`)} 
+                className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                <Download size={20} /> Download Report
+              </button>
+            </div>
+            
+            {campaigns.length > 0 ? (
+              <div>
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+                  <div className="bg-gray-800 rounded-xl p-6 border border-gray-700">
+                    <h3 className="text-lg font-bold text-white mb-4">Top Campaigns by Spend</h3>
+                    <ResponsiveContainer width="100%" height={300}>
+                      <BarChart data={campaigns.slice(0,10)} layout="vertical">
+                        <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                        <XAxis type="number" stroke="#9CA3AF" />
+                        <YAxis type="category" dataKey="campaign_id" stroke="#9CA3AF" width={80} />
+                        <Tooltip contentStyle={{backgroundColor:'#1F2937',border:'1px solid #374151'}} />
+                        <Bar dataKey="spend" fill="#3B82F6" radius={[0,8,8,0]} />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
 
+                  <div className="bg-gray-800 rounded-xl p-6 border border-gray-700">
+                    <h3 className="text-lg font-bold text-white mb-4">Intent Distribution</h3>
+                    <ResponsiveContainer width="100%" height={300}>
+                      <PieChart>
+                        <Pie data={[
+                          {name: 'High', value: campaigns.filter(c=>c.intent_level==='High').length},
+                          {name: 'Medium', value: campaigns.filter(c=>c.intent_level==='Medium').length},
+                          {name: 'Low', value: campaigns.filter(c=>c.intent_level==='Low').length}
+                        ]} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={100} label>
+                          <Cell fill="#EF4444" />
+                          <Cell fill="#F59E0B" />
+                          <Cell fill="#10B981" />
+                        </Pie>
+                        <Tooltip contentStyle={{backgroundColor:'#1F2937',border:'1px solid #374151'}} />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  </div>
+                </div>
+
+                <div className="bg-gray-800 rounded-xl p-6 border border-gray-700">
+                  <table className="w-full">
+                    <thead className="bg-gray-700">
+                      <tr>
+                        <th className="px-6 py-4 text-left text-sm font-semibold text-gray-300">Campaign</th>
+                        <th className="px-6 py-4 text-left text-sm font-semibold text-gray-300">Channel</th>
+                        <th className="px-6 py-4 text-left text-sm font-semibold text-gray-300">Intent</th>
+                        <th className="px-6 py-4 text-left text-sm font-semibold text-gray-300">Spend</th>
+                        <th className="px-6 py-4 text-left text-sm font-semibold text-gray-300">Conversions</th>
+                        <th className="px-6 py-4 text-left text-sm font-semibold text-gray-300">CTR</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-700">
+                      {campaigns.map((c, idx) => (
+                        <tr key={idx} className="hover:bg-gray-700/30">
+                          <td className="px-6 py-4 text-sm font-medium text-white">{c.campaign_id}</td>
+                          <td className="px-6 py-4 text-sm text-gray-300">{c.channel}</td>
+                          <td className="px-6 py-4">
+                            <span className={`px-2 py-1 rounded text-xs ${c.intent_level==='High'?'bg-red-500/20 text-red-400':c.intent_level==='Medium'?'bg-yellow-500/20 text-yellow-400':'bg-gray-500/20 text-gray-400'}`}>
+                              {c.intent_level}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 text-sm text-gray-300">{formatCurrency(c.spend)}</td>
+                          <td className="px-6 py-4 text-sm text-blue-400">{c.conversions?.toLocaleString()}</td>
+                          <td className="px-6 py-4 text-sm text-gray-300">{c.ctr}%</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            ) : (
+              <div className="bg-gray-800 rounded-xl p-8 border border-gray-700 text-center">
+                <p className="text-gray-400">No campaign data available</p>
+              </div>
             )}
           </div>
         )}
 
         {activeTab === 'products' && (
-          <div className="bg-gray-800 rounded-xl p-6 border border-gray-700">
-            <h3 className="text-xl font-bold text-white mb-4">Product Performance</h3>
-            <p className="text-gray-400">Product details will be displayed here</p>
+          <div>
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-2xl font-bold text-white">Product Performance</h2>
+              <button onClick={() => downloadCSV(products, `${brandName}_products.csv`)} 
+                className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                <Download size={20} /> Download Report
+              </button>
+            </div>
+
+            {products.length > 0 ? (
+              <div>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                  {products.slice(0,3).map((p, idx) => (
+                    <div key={idx} className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-xl p-6 border border-gray-700">
+                      <div className="text-sm text-gray-400 mb-2">#{idx+1} Top Product</div>
+                      <h4 className="text-lg font-bold text-white mb-1">{p.sku_name}</h4>
+                      <div className="text-2xl font-bold text-green-400">{formatCurrency(p.revenue)}</div>
+                      <div className="text-sm text-gray-500">Revenue</div>
+                      <div className="mt-2 text-xl font-bold text-orange-400">{Math.round(p.roas)}x</div>
+                      <div className="text-xs text-gray-500">ROAS</div>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="bg-gray-800 rounded-xl p-6 border border-gray-700 mb-6">
+                  <h3 className="text-lg font-bold text-white mb-4">Product Revenue</h3>
+                  <ResponsiveContainer width="100%" height={300}>
+                    <BarChart data={products.slice(0,10)}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                      <XAxis dataKey="sku_name" stroke="#9CA3AF" angle={-45} textAnchor="end" height={100} />
+                      <YAxis stroke="#9CA3AF" tickFormatter={(v)=>formatCurrency(v)} />
+                      <Tooltip contentStyle={{backgroundColor:'#1F2937',border:'1px solid #374151'}} />
+                      <Bar dataKey="revenue" fill="#10B981" radius={[8,8,0,0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+
+                <div className="bg-gray-800 rounded-xl p-6 border border-gray-700">
+                  <table className="w-full">
+                    <thead className="bg-gray-700">
+                      <tr>
+                        <th className="px-6 py-4 text-left text-sm font-semibold text-gray-300">Product</th>
+                        <th className="px-6 py-4 text-left text-sm font-semibold text-gray-300">Category</th>
+                        <th className="px-6 py-4 text-left text-sm font-semibold text-gray-300">Spend</th>
+                        <th className="px-6 py-4 text-left text-sm font-semibold text-gray-300">Revenue</th>
+                        <th className="px-6 py-4 text-left text-sm font-semibold text-gray-300">ROAS</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-700">
+                      {products.map((p, idx) => (
+                        <tr key={idx} className="hover:bg-gray-700/30">
+                          <td className="px-6 py-4 text-sm font-medium text-white">{p.sku_name}</td>
+                          <td className="px-6 py-4 text-sm text-gray-300">{p.category_level_1 || '-'}</td>
+                          <td className="px-6 py-4 text-sm text-gray-300">{formatCurrency(p.spend)}</td>
+                          <td className="px-6 py-4 text-sm text-green-400">{formatCurrency(p.revenue)}</td>
+                          <td className="px-6 py-4 text-sm text-orange-400 font-bold">{Math.round(p.roas)}x</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            ) : (
+              <div className="bg-gray-800 rounded-xl p-8 border border-gray-700 text-center">
+                <p className="text-gray-400">No product data available</p>
+              </div>
+            )}
           </div>
         )}
 
         {activeTab === 'channels' && channelData.length > 0 && (
-          <div className="bg-gray-800 rounded-xl p-6 border border-gray-700">
-            <h3 className="text-xl font-bold text-white mb-4">Channel Performance</h3>
-            <table className="w-full">
-              <thead className="bg-gray-700">
-                <tr>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-300">Channel</th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-300">Spend</th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-300">Revenue</th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-300">ROAS</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-700">
-                {channelData.map((ch, idx) => (
-                  <tr key={idx} className="hover:bg-gray-700/30">
-                    <td className="px-6 py-4 text-sm font-medium text-white">{ch.channel}</td>
-                    <td className="px-6 py-4 text-sm text-gray-300">{formatCurrency(ch.spend)}</td>
-                    <td className="px-6 py-4 text-sm text-green-400">{formatCurrency(ch.revenue)}</td>
-                    <td className="px-6 py-4 text-sm text-orange-400 font-bold">{ch.roas?.toFixed(2)}x</td>
+          <div>
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-2xl font-bold text-white">Channel Performance</h2>
+              <button onClick={() => downloadCSV(channelData, `${brandName}_channels.csv`)} 
+                className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                <Download size={20} /> Download Report
+              </button>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+              <div className="bg-gray-800 rounded-xl p-6 border border-gray-700">
+                <h3 className="text-lg font-bold text-white mb-4">Channel Mix</h3>
+                <ResponsiveContainer width="100%" height={300}>
+                  <PieChart>
+                    <Pie data={channelData} dataKey="spend" nameKey="channel" cx="50%" cy="50%" outerRadius={100} label>
+                      {channelData.map((e,i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
+                    </Pie>
+                    <Tooltip contentStyle={{backgroundColor:'#1F2937',border:'1px solid #374151'}} />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+
+              <div className="bg-gray-800 rounded-xl p-6 border border-gray-700">
+                <h3 className="text-lg font-bold text-white mb-4">Channel Conversions</h3>
+                <ResponsiveContainer width="100%" height={300}>
+                  <BarChart data={channelData}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                    <XAxis dataKey="channel" stroke="#9CA3AF" />
+                    <YAxis stroke="#9CA3AF" />
+                    <Tooltip contentStyle={{backgroundColor:'#1F2937',border:'1px solid #374151'}} />
+                    <Bar dataKey="conversions" fill="#10B981" radius={[8,8,0,0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+
+            <div className="bg-gray-800 rounded-xl p-6 border border-gray-700">
+              <table className="w-full">
+                <thead className="bg-gray-700">
+                  <tr>
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-300">Channel</th>
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-300">Spend</th>
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-300">Revenue</th>
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-300">ROAS</th>
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-300">Conversions</th>
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-300">CTR</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody className="divide-y divide-gray-700">
+                  {channelData.map((ch, idx) => (
+                    <tr key={idx} className="hover:bg-gray-700/30">
+                      <td className="px-6 py-4 text-sm font-medium text-white">{ch.channel}</td>
+                      <td className="px-6 py-4 text-sm text-gray-300">{formatCurrency(ch.spend)}</td>
+                      <td className="px-6 py-4 text-sm text-green-400">{formatCurrency(ch.revenue)}</td>
+                      <td className="px-6 py-4 text-sm text-orange-400 font-bold">{Math.round(ch.roas)}x</td>
+                      <td className="px-6 py-4 text-sm text-blue-400">{ch.conversions?.toLocaleString()}</td>
+                      <td className="px-6 py-4 text-sm text-gray-300">{ch.ctr}%</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         )}
       </div>
