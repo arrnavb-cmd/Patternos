@@ -119,7 +119,7 @@ export default function Analytics() {
                     <LineChart data={monthlyTrends}>
                       <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
                       <XAxis dataKey="month" stroke="#9CA3AF" />
-                      <YAxis stroke="#9CA3AF" tickFormatter={(v) => `₹${(v/10000000).toFixed(0)}Cr`} />
+                      <YAxis stroke="#9CA3AF" tickFormatter={(v) => `₹${(v/10000000)}Cr`} />
                       <Tooltip contentStyle={{backgroundColor:'#1F2937',border:'1px solid #374151',color:'#fff'}} />
                       <Line type="monotone" dataKey="spend" stroke="#3B82F6" strokeWidth={3} />
                     </LineChart>
@@ -154,7 +154,7 @@ export default function Analytics() {
                   <ResponsiveContainer width="100%" height={300}>
                     <PieChart>
                       <Pie data={channelData} dataKey="spend" nameKey="channel" cx="50%" cy="50%" outerRadius={100}
-                        label={(e) => `${e.channel}: ${((e.spend/channelData.reduce((s,c)=>s+c.spend,0))*100).toFixed(0)}%`}>
+                        label={(e) => `${e.channel}: ${((e.spend/channelData.reduce((s,c)=>s+c.spend,0))*100)}%`}>
                         {channelData.map((e,i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
                       </Pie>
                       <Tooltip contentStyle={{backgroundColor:'#1F2937',border:'1px solid #374151',color:'#fff'}} />
@@ -173,7 +173,7 @@ export default function Analytics() {
                     <AreaChart data={monthlyTrends}>
                       <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
                       <XAxis dataKey="month" stroke="#9CA3AF" />
-                      <YAxis stroke="#9CA3AF" tickFormatter={(v) => `${(v/1000000).toFixed(0)}M`} />
+                      <YAxis stroke="#9CA3AF" tickFormatter={(v) => `${(v/1000000)}M`} />
                       <Tooltip contentStyle={{backgroundColor:'#1F2937',border:'1px solid #374151',color:'#fff'}} />
                       <Legend />
                       <Area type="monotone" dataKey="impressions" stroke="#10B981" fill="#10B981" fillOpacity={0.3} name="Impressions" />

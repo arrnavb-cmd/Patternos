@@ -10,3 +10,24 @@ INFO:     127.0.0.1:57722 - "GET /api/v1/brand/Himalaya/analytics/channel-perfor
 INFO:     127.0.0.1:57724 - "GET /api/v1/brand/Himalaya/analytics/campaigns?date_range=last_30_days HTTP/1.1" 200 OK
 INFO:     127.0.0.1:57726 - "GET /api/v1/brand/Himalaya/analytics/products?date_range=last_30_days HTTP/1.1" 200 OK
 INFO:     127.0.0.1:57727 - "GET /api/v1/brand/Himalaya/analytics/monthly-trends HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58764 - "GET /api/v1/brand/Himalaya/analytics/summary?date_range=last_30_days HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58766 - "GET /api/v1/brand/Himalaya/analytics/channel-performance?date_range=last_30_days HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58768 - "GET /api/v1/brand/Himalaya/analytics/campaigns?date_range=last_30_days HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58769 - "GET /api/v1/brand/Himalaya/analytics/products?date_range=last_30_days HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58771 - "GET /api/v1/brand/Himalaya/analytics/monthly-trends HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58864 - "GET /api/master/brand/Nike/metrics HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:58865 - "GET /api/organizations/Himalaya HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:58865 - "GET /api/campaigns?organization_id=undefined HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:58907 - "GET /api/master/brand/Nike/metrics HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:58909 - "GET /api/organizations/Himalaya HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:58909 - "GET /api/campaigns?organization_id=undefined HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:58909 - "GET /api/master/brand/Nike/metrics HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:58907 - "GET /api/organizations/Himalaya HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:58907 - "GET /api/campaigns?organization_id=undefined HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:59116 - "GET /api/v1/analytics/platform-summary?date_range=last_30_days HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59118 - "GET /api/v1/analytics/channel-performance?date_range=last_30_days HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59120 - "GET /api/v1/analytics/brand-comparison?date_range=last_30_days HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59121 - "GET /api/v1/analytics/monthly-trends HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59733 - "GET /api/master/brand/Nike/metrics HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:59734 - "GET /api/organizations/Himalaya HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:59734 - "GET /api/campaigns?organization_id=undefined HTTP/1.1" 404 Not Found

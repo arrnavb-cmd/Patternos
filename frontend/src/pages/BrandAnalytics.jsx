@@ -229,7 +229,7 @@ export default function BrandAnalytics() {
                           </td>
                           <td className="px-6 py-4 text-sm text-gray-300">{formatCurrency(c.spend)}</td>
                           <td className="px-6 py-4 text-sm text-blue-400">{c.conversions?.toLocaleString()}</td>
-                          <td className="px-6 py-4 text-sm text-gray-300">{c.ctr}%</td>
+                          <td className="px-6 py-4 text-sm text-gray-300">{Math.round(c.ctr)}%</td>
                         </tr>
                       ))}
                     </tbody>
