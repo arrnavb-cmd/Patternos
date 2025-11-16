@@ -7,6 +7,7 @@ export default function Header() {
   const location = useLocation();
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const user = JSON.parse(localStorage.getItem('user') || '{}');
+  const brand = localStorage.getItem('brand') || user.username || 'Himalaya';
   
   // Check if user is Zepto admin (aggregator)
   const isAggregator = user?.username === 'zepto' || user?.username === 'admin' || user?.role === 'platform_admin';
@@ -33,7 +34,7 @@ export default function Header() {
             )}
             <div 
               className="flex items-center gap-3 cursor-pointer"
-              onClick={() => navigate('/dashboard')}
+              onClick={() => navigate(isAggregator ? '/dashboard' : `/brand/${brand}/dashboard`)}
             >
               <div className="text-2xl">⚡</div>
               <div>
@@ -50,9 +51,9 @@ export default function Header() {
             {isAggregator ? (
               <React.Fragment>
                 <button
-                  onClick={() => navigate('/dashboard')}
+                  onClick={() => navigate(`/brand/${brand}/dashboard`)}
                   className={`text-sm font-medium transition-colors ${
-                    location.pathname === '/dashboard'
+                    location.pathname.includes('/brand/') && location.pathname.includes('/dashboard')
                       ? 'text-blue-400'
                       : 'text-slate-400 hover:text-white'
                   }`}
@@ -70,9 +71,9 @@ export default function Header() {
                   Intent Intelligence
                 </button>
                 <button
-                  onClick={() => navigate('/analytics')}
+                  onClick={() => navigate(`/brand/${brand}/analytics`)}
                   className={`text-sm font-medium transition-colors ${
-                    location.pathname === '/analytics'
+                    location.pathname.includes('/brand/') && location.pathname.includes('/analytics')
                       ? 'text-blue-400'
                       : 'text-slate-400 hover:text-white'
                   }`}
@@ -94,9 +95,9 @@ export default function Header() {
               /* BRAND MENU (Nike, Adidas, etc.) */
               <React.Fragment>
                 <button
-                  onClick={() => navigate('/dashboard')}
+                  onClick={() => navigate(`/brand/${brand}/dashboard`)}
                   className={`text-sm font-medium transition-colors ${
-                    location.pathname === '/dashboard'
+                    location.pathname.includes('/brand/') && location.pathname.includes('/dashboard')
                       ? 'text-blue-400'
                       : 'text-slate-400 hover:text-white'
                   }`}
@@ -104,9 +105,9 @@ export default function Header() {
                   Dashboard
                 </button>
                 <button
-                  onClick={() => navigate('/campaigns')}
+                  onClick={() => navigate(`/brand/${brand}/campaigns`)}
                   className={`text-sm font-medium transition-colors ${
-                    location.pathname === '/campaigns'
+                    location.pathname.includes('/campaigns')
                       ? 'text-blue-400'
                       : 'text-slate-400 hover:text-white'
                   }`}
@@ -114,9 +115,9 @@ export default function Header() {
                   Campaigns
                 </button>
                 <button
-                  onClick={() => navigate('/analytics')}
+                  onClick={() => navigate(`/brand/${brand}/analytics`)}
                   className={`text-sm font-medium transition-colors ${
-                    location.pathname === '/analytics'
+                    location.pathname.includes('/brand/') && location.pathname.includes('/analytics')
                       ? 'text-blue-400'
                       : 'text-slate-400 hover:text-white'
                   }`}

@@ -13,6 +13,7 @@ export default function BrandDashboard() {
   const [error, setError] = useState(null);
 
   const navigate = useNavigate();
+  const brand = localStorage.getItem("brand") || "Himalaya";
   const [user, setUser] = useState(null);
   const [metrics, setMetrics] = useState({
     totalSpend: 0,
@@ -154,6 +155,14 @@ export default function BrandDashboard() {
       icon: Brain,
       gradient: 'from-purple-500 to-indigo-500',
       route: '/intelligence/predictive'
+    },
+    {
+      id: 'analytics',
+      title: 'Analytics',
+      description: 'Performance insights & reports',
+      icon: TrendingUp,
+      gradient: 'from-green-500 to-emerald-500',
+      route: `/brand/${brand}/analytics`
     }
   ];
 
