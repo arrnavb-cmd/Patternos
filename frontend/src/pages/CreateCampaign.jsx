@@ -1,826 +1,298 @@
-import React from "react";
-import { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
-  ArrowLeft, ArrowRight, Check, Target, Users, Image as ImageIcon, DollarSign, 
-  Calendar, Zap, TrendingUp, Eye, Upload, X, Sparkles, Wand2, Play, ChevronDown,
-  Edit3, Info
+  ArrowLeft, ArrowRight, Search, Filter, Package, 
+  CheckCircle, Circle, ShoppingCart, X, Info
 } from 'lucide-react';
-
-// Simple Platform Icons
-const GoogleIcon = () => (
-  <svg viewBox="0 0 24 24" className="w-8 h-8">
-    <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
-    <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
-    <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
-    <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
-  </svg>
-);
-
-const FacebookIcon = () => (
-  <svg viewBox="0 0 24 24" className="w-8 h-8" fill="white">
-    <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
-  </svg>
-);
-
-const InstagramIcon = () => (
-  <svg viewBox="0 0 24 24" className="w-8 h-8" fill="white">
-    <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069z"/>
-  </svg>
-);
-
-const ZeptoIcon = () => (
-  <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center">
-    <span className="text-purple-600 font-bold text-xl">Z</span>
-  </div>
-);
-
-// Platform configurations with detailed copy and CTA info
-const PLATFORMS = {
-  zepto: {
-    name: 'Zepto',
-    icon: ZeptoIcon,
-    bg: 'bg-purple-600',
-    reach: '5M+ users',
-    recommended: true,
-    formats: [
-      { 
-        id: 'homepage_banner', 
-        name: 'Homepage Banner', 
-        sizes: '728x90, 320x50',
-        copy: 'Short headline (25 chars) + Brief description (40 chars)',
-        ctas: ['Order Now', 'Shop Fast', 'Get in 10min', 'Quick Buy'],
-        example: 'Nike Air Max | Get in 10 minutes → Order Now'
-      },
-      { 
-        id: 'category_ad', 
-        name: 'Category Page Ad', 
-        sizes: '300x250',
-        copy: 'Product name (30 chars) + Price + Offer text (50 chars)',
-        ctas: ['Add to Cart', 'Buy Now', 'Quick Order', 'Shop'],
-        example: 'Nike Air Max ₹8,999 | Free delivery above ₹499 → Add to Cart'
-      }
-    ]
-  },
-  facebook: {
-    name: 'Facebook',
-    icon: FacebookIcon,
-    bg: 'bg-blue-600',
-    reach: '300M+ users',
-    formats: [
-      { 
-        id: 'feed_image', 
-        name: 'Feed - Single Image', 
-        sizes: '1200x628',
-        copy: 'Headline (40 chars) + Primary text (125 chars) + Description (30 chars)',
-        ctas: ['Shop Now', 'Learn More', 'Sign Up', 'Download'],
-        example: 'Just Do It with Nike Air Max | Experience ultimate comfort → Shop Now'
-      },
-      { 
-        id: 'stories', 
-        name: 'Stories Ad', 
-        sizes: '1080x1920',
-        copy: 'Minimal text overlay (20 chars) + Strong visual focus',
-        ctas: ['Shop Now', 'Learn More', 'Sign Up'],
-        example: 'Nike Air Max ✨ → Shop Now'
-      }
-    ]
-  },
-  instagram: {
-    name: 'Instagram',
-    icon: InstagramIcon,
-    bg: 'bg-gradient-to-br from-purple-600 via-pink-600 to-orange-500',
-    reach: '230M+ users',
-    formats: [
-      { 
-        id: 'feed_square', 
-        name: 'Feed - Square', 
-        sizes: '1080x1080',
-        copy: 'Caption (125 chars) + Hashtags + Engaging hook',
-        ctas: ['Shop Now', 'Learn More', 'Sign Up'],
-        example: 'Step into greatness with Nike Air Max 💪 #JustDoIt → Shop Now'
-      },
-      { 
-        id: 'reels', 
-        name: 'Reels Ad', 
-        sizes: '1080x1920 (9:16)',
-        copy: 'Hook text (20 chars) + Trending audio + Quick cuts',
-        ctas: ['Shop Now', 'Learn More', 'Follow'],
-        example: 'Nike Air Max Flow 🔥 → Shop Now'
-      }
-    ]
-  },
-  google: {
-    name: 'Google Ads',
-    icon: GoogleIcon,
-    bg: 'bg-white',
-    reach: '500M+ users',
-    formats: [
-      { 
-        id: 'responsive', 
-        name: 'Responsive Display', 
-        sizes: 'Auto-optimized',
-        copy: 'Headlines (30 chars each, up to 5) + Descriptions (90 chars each)',
-        ctas: ['Shop Now', 'Learn More', 'Get Quote', 'Sign Up'],
-        example: 'Nike Air Max Collection | Premium Running Shoes → Shop Now'
-      }
-    ]
-  }
-};
-
-const CITIES = [
-  'Mumbai', 'Delhi', 'Bangalore', 'Hyderabad', 'Chennai', 'Kolkata', 'Pune', 'Ahmedabad'
-];
 
 export default function CreateCampaign() {
   const navigate = useNavigate();
-  const [user] = useState(JSON.parse(localStorage.getItem('user') || '{}'));
+  const user = JSON.parse(localStorage.getItem('user') || '{}');
+  const isAggregator = user.role === 'platform_admin' || user.username === 'admin' || user.username === 'zepto';
+  const userBrand = isAggregator ? 'Zepto' : (localStorage.getItem('brand') || user.username);
+  
   const [currentStep, setCurrentStep] = useState(1);
-  const [showCityDropdown, setShowCityDropdown] = useState(false);
-  const [showAIPrompt, setShowAIPrompt] = useState(false);
-  const [aiPrompt, setAiPrompt] = useState('');
+  
+  // Step 1: Product Selection
+  const [products, setProducts] = useState([]);
+  const [selectedProducts, setSelectedProducts] = useState([]);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedBrand, setSelectedBrand] = useState('all');
+  const [selectedCategory, setSelectedCategory] = useState('all');
+  const [categories, setCategories] = useState([]);
+  const [brands, setBrands] = useState([]);
+  const [loading, setLoading] = useState(false);
 
-  const handleLogout = () => {
-    localStorage.removeItem('user');
-    localStorage.removeItem('access_token');
-    navigate('/login', { replace: true });
+  useEffect(() => {
+    fetchProducts();
+  }, [searchQuery, selectedBrand, selectedCategory]);
+
+  const fetchProducts = async () => {
+    setLoading(true);
+    try {
+      let url = 'http://localhost:8000/api/v1/products/search?limit=50';
+      
+      // CRITICAL: Everyone only sees their OWN brand products
+      // Aggregator = Zepto products only
+      // Himalaya = Himalaya products only
+      // Amul = Amul products only, etc.
+      url += `&brand=${userBrand}`;
+      
+      if (searchQuery) url += `&search=${searchQuery}`;
+      if (selectedCategory !== 'all') url += `&category=${selectedCategory}`;
+      
+      const res = await fetch(url);
+      const data = await res.json();
+      setProducts(data.products || []);
+      setCategories(data.categories || []);
+      setBrands(data.brands || []);
+    } catch (error) {
+      console.error('Failed to fetch products:', error);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const getTodayDate = () => {
-    return new Date().toISOString().split('T')[0];
-  };
-
-  const [campaignData, setCampaignData] = useState({
-    name: '',
-    objective: 'conversions',
-    schedule: {
-      startDate: getTodayDate(),
-      endDate: ''
-    },
-    platform: '',
-    targeting: {
-      cities: []
-    },
-    adFormat: '',
-    creatives: [],
-    budgetType: 'daily',
-    dailyBudget: '',
-    lifetimeBudget: ''
-  });
-
-  const steps = [
-    { number: 1, title: 'Basic Info', icon: Target },
-    { number: 2, title: 'Platform', icon: Zap },
-    { number: 3, title: 'Targeting', icon: Users },
-    { number: 4, title: 'Creative', icon: ImageIcon },
-    { number: 5, title: 'Budget', icon: DollarSign },
-    { number: 6, title: 'Review', icon: Check }
-  ];
-
-  const objectives = [
-    { id: 'awareness', label: 'Brand Awareness', icon: Eye, desc: 'Reach maximum people' },
-    { id: 'consideration', label: 'Consideration', icon: TrendingUp, desc: 'Drive traffic & engagement' },
-    { id: 'conversions', label: 'Conversions', icon: Target, desc: 'Drive sales & actions' }
-  ];
-
-  const selectedPlatform = campaignData.platform ? PLATFORMS[campaignData.platform] : null;
-  const selectedFormat = selectedPlatform?.formats.find(f => f.id === campaignData.adFormat);
-
-  const toggleCity = (city) => {
-    const cities = campaignData.targeting.cities;
-    const newCities = cities.includes(city)
-      ? cities.filter(c => c !== city)
-      : [...cities, city];
-    
-    setCampaignData({
-      ...campaignData,
-      targeting: { ...campaignData.targeting, cities: newCities }
+  const toggleProductSelection = (product) => {
+    setSelectedProducts(prev => {
+      const exists = prev.find(p => p.sku_id === product.sku_id);
+      if (exists) {
+        return prev.filter(p => p.sku_id !== product.sku_id);
+      } else {
+        return [...prev, product];
+      }
     });
   };
 
-  const generateAI = (type) => {
-    if (!aiPrompt.trim()) {
-      alert('Please enter a prompt!');
-      return;
-    }
-
-    setTimeout(() => {
-      if (type === 'image') {
-        const mockFile = new File(['mock'], 'ai-nike-ad.jpg', { type: 'image/jpeg' });
-        setCampaignData({
-          ...campaignData,
-          creatives: [...campaignData.creatives, mockFile]
-        });
-        alert('✅ AI Image Generated with platform-optimized copy and CTA!');
-      } else if (type === 'copy') {
-        const copy = selectedFormat?.example || 'Nike Air Max | Premium comfort → Shop Now';
-        navigator.clipboard.writeText(copy);
-        alert('✅ Platform-optimized copy generated and copied to clipboard!');
-      } else if (type === 'video') {
-        const mockVideo = new File(['mock'], 'ai-nike-video.mp4', { type: 'video/mp4' });
-        setCampaignData({
-          ...campaignData,
-          creatives: [...campaignData.creatives, mockVideo]
-        });
-        alert('✅ Platform-optimized video generated!');
-      }
-      setShowAIPrompt(false);
-      setAiPrompt('');
-    }, 1500);
+  const isProductSelected = (product) => {
+    return selectedProducts.some(p => p.sku_id === product.sku_id);
   };
 
-  const renderStep1 = () => (
-    <div className="space-y-6">
-      <div>
-        <label className="block text-sm font-medium text-gray-300 mb-2">Campaign Name *</label>
-        <input
-          type="text"
-          value={campaignData.name}
-          onChange={(e) => setCampaignData({...campaignData, name: e.target.value})}
-          placeholder="e.g., Nike Air Max - Mumbai Launch"
-          className="w-full bg-slate-700 text-white rounded-lg px-4 py-3 border border-slate-600 focus:border-blue-500 focus:outline-none"
-        />
-      </div>
-
-      <div>
-        <label className="block text-sm font-medium text-gray-300 mb-3">Campaign Objective *</label>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {objectives.map(obj => {
-            const Icon = obj.icon;
-            return (
-              <button
-                key={obj.id}
-                onClick={() => setCampaignData({...campaignData, objective: obj.id})}
-                className={`p-4 rounded-xl border-2 transition-all text-left ${
-                  campaignData.objective === obj.id
-                    ? 'border-blue-500 bg-blue-500/10'
-                    : 'border-slate-600 hover:border-slate-500'
-                }`}
-              >
-                <Icon className={campaignData.objective === obj.id ? 'text-blue-400' : 'text-gray-400'} size={24} />
-                <h3 className="text-white font-bold mt-2">{obj.label}</h3>
-                <p className="text-gray-400 text-sm mt-1">{obj.desc}</p>
-              </button>
-            );
-          })}
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div>
-          <label className="block text-sm font-medium text-gray-300 mb-2">Start Date *</label>
-          <input
-            type="date"
-            min={getTodayDate()}
-            value={campaignData.schedule.startDate}
-            onChange={(e) => setCampaignData({
-              ...campaignData,
-              schedule: {...campaignData.schedule, startDate: e.target.value}
-            })}
-            className="w-full bg-slate-700 text-white rounded-lg px-4 py-3 border border-slate-600 focus:border-blue-500 focus:outline-none"
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-300 mb-2">End Date (Optional)</label>
-          <input
-            type="date"
-            value={campaignData.schedule.endDate}
-            onChange={(e) => setCampaignData({
-              ...campaignData,
-              schedule: {...campaignData.schedule, endDate: e.target.value}
-            })}
-            className="w-full bg-slate-700 text-white rounded-lg px-4 py-3 border border-slate-600 focus:border-blue-500 focus:outline-none"
-          />
-        </div>
-      </div>
-    </div>
-  );
-
-  const renderStep2 = () => (
-    <div className="space-y-6">
-      <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-4">
-        <p className="text-blue-300 font-medium">Select ONE Platform</p>
-        <p className="text-gray-400 text-sm mt-1">Each platform has unique ad formats, copy requirements, and CTA options.</p>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {Object.entries(PLATFORMS).map(([key, platform]) => {
-          const isSelected = campaignData.platform === key;
-          const IconComponent = platform.icon;
-          
-          return (
-            <button
-              key={key}
-              onClick={() => setCampaignData({
-                ...campaignData, 
-                platform: key,
-                adFormat: ''
-              })}
-              className={`relative p-6 rounded-xl border-2 transition-all text-left ${
-                isSelected
-                  ? 'border-blue-500 bg-blue-500/10'
-                  : 'border-slate-600 hover:border-slate-500'
-              }`}
-            >
-              {platform.recommended && (
-                <span className="absolute top-3 right-3 px-2 py-1 bg-green-500/20 text-green-400 text-xs font-medium rounded-full">
-                  Recommended
-                </span>
-              )}
-              <div className="flex items-center gap-4 mb-3">
-                <div className={`w-14 h-14 rounded-xl ${platform.bg} flex items-center justify-center`}>
-                  <IconComponent />
-                </div>
-                <div className="flex-1">
-                  <h3 className="text-white font-bold text-lg">{platform.name}</h3>
-                  <p className="text-gray-400 text-sm">{platform.reach}</p>
-                </div>
-              </div>
-              {isSelected && (
-                <div className="absolute top-3 left-3 w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center">
-                  <Check size={16} className="text-white" />
-                </div>
-              )}
-            </button>
-          );
-        })}
-      </div>
-    </div>
-  );
-
-  const renderStep3 = () => (
-    <div className="space-y-6">
-      <div>
-        <label className="block text-sm font-medium text-gray-300 mb-2">
-          Target Cities ({campaignData.targeting.cities.length} selected)
-        </label>
-        
-        <div className="relative">
-          <button
-            onClick={() => setShowCityDropdown(!showCityDropdown)}
-            className="w-full bg-slate-700 text-white rounded-lg px-4 py-3 border border-slate-600 flex items-center justify-between hover:border-blue-500 transition-colors"
-          >
-            <span>
-              {campaignData.targeting.cities.length > 0 
-                ? campaignData.targeting.cities.join(', ')
-                : 'Select cities...'
-              }
-            </span>
-            <ChevronDown size={20} className={`text-gray-400 transition-transform ${showCityDropdown ? 'rotate-180' : ''}`} />
-          </button>
-
-          {showCityDropdown && (
-            <div className="absolute top-full left-0 right-0 mt-1 bg-slate-700 border border-slate-600 rounded-lg shadow-xl z-50">
-              <div className="max-h-60 overflow-y-auto">
-                {CITIES.map(city => {
-                  const isSelected = campaignData.targeting.cities.includes(city);
-                  return (
-                    <button
-                      key={city}
-                      onClick={() => toggleCity(city)}
-                      className={`w-full px-4 py-2 text-left hover:bg-slate-600 transition-colors ${
-                        isSelected ? 'bg-blue-600 text-white' : 'text-gray-300'
-                      }`}
-                    >
-                      <div className="flex items-center justify-between">
-                        <span>{city}</span>
-                        {isSelected && <Check size={16} />}
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-        </div>
-
-        {campaignData.targeting.cities.length > 0 && (
-          <div className="flex flex-wrap gap-2 mt-3">
-            {campaignData.targeting.cities.map(city => (
-              <span key={city} className="px-3 py-1 bg-blue-600 text-white rounded-full text-sm flex items-center gap-2">
-                {city}
-                <X size={14} className="cursor-pointer hover:text-red-300" onClick={() => toggleCity(city)} />
-              </span>
-            ))}
-          </div>
-        )}
-      </div>
-    </div>
-  );
-
-  const renderStep4 = () => (
-    <div className="space-y-6">
-      {!selectedPlatform ? (
-        <div className="text-center py-8 text-gray-400">
-          <ImageIcon size={48} className="mx-auto mb-3" />
-          <p>Please select a platform first</p>
-        </div>
-      ) : (
-        <>
-          <div>
-            <label className="block text-sm font-medium text-gray-300 mb-3">
-              Ad Format for {selectedPlatform.name}
-            </label>
-            <div className="grid gap-4">
-              {selectedPlatform.formats.map(format => (
-                <button
-                  key={format.id}
-                  onClick={() => setCampaignData({...campaignData, adFormat: format.id})}
-                  className={`p-4 rounded-xl border-2 transition-all text-left ${
-                    campaignData.adFormat === format.id
-                      ? 'border-blue-500 bg-blue-500/10'
-                      : 'border-slate-600 hover:border-slate-500'
-                  }`}
-                >
-                  <div className="flex items-start justify-between mb-3">
-                    <div>
-                      <h3 className="text-white font-bold text-lg">{format.name}</h3>
-                      <p className="text-gray-400 text-sm">{format.sizes}</p>
-                    </div>
-                    {campaignData.adFormat === format.id && <Check className="text-blue-400" size={20} />}
-                  </div>
-                  
-                  <div className="space-y-3">
-                    <div className="bg-slate-700 rounded-lg p-3">
-                      <div className="flex items-center gap-2 mb-2">
-                        <Info size={16} className="text-blue-400" />
-                        <span className="text-blue-300 font-medium text-sm">Copy Requirements</span>
-                      </div>
-                      <p className="text-gray-300 text-sm">{format.copy}</p>
-                    </div>
-                    
-                    <div className="bg-slate-700 rounded-lg p-3">
-                      <div className="flex items-center gap-2 mb-2">
-                        <Zap size={16} className="text-green-400" />
-                        <span className="text-green-300 font-medium text-sm">Available CTAs</span>
-                      </div>
-                      <div className="flex flex-wrap gap-2">
-                        {format.ctas.map((cta, idx) => (
-                          <span key={idx} className="px-2 py-1 bg-green-600 text-white text-xs rounded">
-                            {cta}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                    
-                    <div className="bg-slate-700 rounded-lg p-3">
-                      <div className="flex items-center gap-2 mb-2">
-                        <Eye size={16} className="text-purple-400" />
-                        <span className="text-purple-300 font-medium text-sm">Example</span>
-                      </div>
-                      <p className="text-gray-300 text-sm font-mono">{format.example}</p>
-                    </div>
-                  </div>
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div className="bg-gradient-to-r from-purple-600 to-pink-600 rounded-xl p-6">
-            <div className="flex items-start gap-4">
-              <Sparkles className="text-white mt-1" size={24} />
-              <div className="flex-1">
-                <h3 className="text-white font-bold text-lg mb-3">🤖 AI Ad Generator</h3>
-                
-                {!showAIPrompt ? (
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <button onClick={() => setShowAIPrompt('image')} className="bg-white/20 hover:bg-white/30 text-white rounded-lg p-4 transition-colors">
-                      <div className="text-center">
-                        <ImageIcon className="mx-auto mb-2" size={24} />
-                        <p className="font-medium">Generate Images</p>
-                      </div>
-                    </button>
-                    <button onClick={() => setShowAIPrompt('copy')} className="bg-white/20 hover:bg-white/30 text-white rounded-lg p-4 transition-colors">
-                      <div className="text-center">
-                        <Edit3 className="mx-auto mb-2" size={24} />
-                        <p className="font-medium">Generate Copy</p>
-                      </div>
-                    </button>
-                    <button onClick={() => setShowAIPrompt('video')} className="bg-white/20 hover:bg-white/30 text-white rounded-lg p-4 transition-colors">
-                      <div className="text-center">
-                        <Play className="mx-auto mb-2" size={24} />
-                        <p className="font-medium">Generate Video</p>
-                      </div>
-                    </button>
-                  </div>
-                ) : (
-                  <div className="bg-white/10 rounded-lg p-4">
-                    <div className="flex items-center justify-between mb-3">
-                      <h4 className="text-white font-medium">Describe your ad concept</h4>
-                      <button onClick={() => { setShowAIPrompt(false); setAiPrompt(''); }} className="text-white/70 hover:text-white">
-                        <X size={20} />
-                      </button>
-                    </div>
-                    <textarea
-                      value={aiPrompt}
-                      onChange={(e) => setAiPrompt(e.target.value)}
-                      placeholder="e.g., Nike Air Max shoes in action, dynamic sports background..."
-                      className="w-full bg-white/20 text-white rounded-lg px-4 py-3 placeholder-white/50 border-none focus:outline-none resize-none"
-                      rows={3}
-                    />
-                    <button
-                      onClick={() => generateAI(showAIPrompt)}
-                      disabled={!aiPrompt.trim()}
-                      className="w-full mt-3 bg-white text-purple-600 rounded-lg px-4 py-2 font-medium hover:bg-white/90 disabled:opacity-50 transition-colors"
-                    >
-                      Generate {showAIPrompt === 'image' ? 'Image' : showAIPrompt === 'copy' ? 'Copy' : 'Video'}
-                    </button>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-
-          <div className="border-2 border-dashed border-slate-600 rounded-xl p-8 text-center hover:border-blue-500 transition-colors">
-            <Upload className="mx-auto text-gray-400 mb-3" size={48} />
-            <p className="text-white font-medium mb-2">Drop files here or click to upload</p>
-            <input
-              type="file"
-              multiple
-              accept=".jpg,.jpeg,.png,.mp4,.gif"
-              onChange={(e) => {
-                const files = Array.from(e.target.files);
-                setCampaignData({...campaignData, creatives: [...campaignData.creatives, ...files]});
-              }}
-              className="hidden"
-              id="file-upload"
-            />
-            <label htmlFor="file-upload" className="inline-flex items-center px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium cursor-pointer transition-colors">
-              Browse Files
-            </label>
-          </div>
-
-          {campaignData.creatives.length > 0 && (
-            <div>
-              <p className="text-sm text-gray-400 mb-3">{campaignData.creatives.length} files uploaded</p>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                {campaignData.creatives.map((file, index) => (
-                  <div key={index} className="bg-slate-700 rounded-lg p-3">
-                    <div className="flex items-center gap-3">
-                      <ImageIcon className="text-gray-400" size={20} />
-                      <div className="flex-1 min-w-0">
-                        <p className="text-white text-sm truncate">{file.name}</p>
-                        <p className="text-gray-400 text-xs">{(file.size / 1024 / 1024).toFixed(1)}MB</p>
-                      </div>
-                      <button
-                        onClick={() => {
-                          setCampaignData({ 
-                            ...campaignData, 
-                            creatives: campaignData.creatives.filter((_, i) => i !== index) 
-                          });
-                        }}
-                        className="text-red-400 hover:text-red-300"
-                      >
-                        <X size={16} />
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-        </>
-      )}
-    </div>
-  );
-
-  const renderStep5 = () => (
-    <div className="space-y-6">
-      <div>
-        <label className="block text-sm font-medium text-gray-300 mb-3">Budget Type</label>
-        <div className="grid grid-cols-2 gap-4">
-          <button
-            onClick={() => setCampaignData({...campaignData, budgetType: 'daily'})}
-            className={`p-4 rounded-xl border-2 transition-all text-left ${
-              campaignData.budgetType === 'daily'
-                ? 'border-blue-500 bg-blue-500/10'
-                : 'border-slate-600 hover:border-slate-500'
-            }`}
-          >
-            <DollarSign className={campaignData.budgetType === 'daily' ? 'text-blue-400' : 'text-gray-400'} size={24} />
-            <h3 className="text-white font-bold mt-2">Daily Budget</h3>
-            <p className="text-gray-400 text-sm">Spend per day</p>
-          </button>
-          <button
-            onClick={() => setCampaignData({...campaignData, budgetType: 'lifetime'})}
-            className={`p-4 rounded-xl border-2 transition-all text-left ${
-              campaignData.budgetType === 'lifetime'
-                ? 'border-blue-500 bg-blue-500/10'
-                : 'border-slate-600 hover:border-slate-500'
-            }`}
-          >
-            <Calendar className={campaignData.budgetType === 'lifetime' ? 'text-blue-400' : 'text-gray-400'} size={24} />
-            <h3 className="text-white font-bold mt-2">Lifetime Budget</h3>
-            <p className="text-gray-400 text-sm">Total campaign spend</p>
-          </button>
-        </div>
-      </div>
-
-      <div>
-        <label className="block text-sm font-medium text-gray-300 mb-2">
-          {campaignData.budgetType === 'daily' ? 'Daily Budget (₹)' : 'Lifetime Budget (₹)'}
-        </label>
-        <input
-          type="number"
-          value={campaignData.budgetType === 'daily' ? campaignData.dailyBudget : campaignData.lifetimeBudget}
-          onChange={(e) => setCampaignData({
-            ...campaignData,
-            [campaignData.budgetType === 'daily' ? 'dailyBudget' : 'lifetimeBudget']: e.target.value
-          })}
-          placeholder={campaignData.budgetType === 'daily' ? 'e.g., 5000' : 'e.g., 150000'}
-          className="w-full bg-slate-700 text-white rounded-lg px-4 py-3 border border-slate-600 focus:border-blue-500 focus:outline-none"
-        />
-      </div>
-
-      <div className="bg-green-500/10 border border-green-500/30 rounded-lg p-4">
-        <h3 className="text-green-300 font-bold mb-2">Estimated Results</h3>
-        <div className="grid grid-cols-3 gap-4 text-center">
-          <div>
-            <p className="text-2xl font-bold text-white">50K-80K</p>
-            <p className="text-gray-400 text-sm">Reach</p>
-          </div>
-          <div>
-            <p className="text-2xl font-bold text-white">2K-4K</p>
-            <p className="text-gray-400 text-sm">Clicks</p>
-          </div>
-          <div>
-            <p className="text-2xl font-bold text-white">₹8-12</p>
-            <p className="text-gray-400 text-sm">CPM</p>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-
-  const renderStep6 = () => (
-    <div className="space-y-6">
-      <div>
-        <h3 className="text-2xl font-bold text-white mb-2">Review & Preview</h3>
-        <p className="text-gray-400">See how your ad will appear across different platforms</p>
-      </div>
-
-      <div className="bg-slate-800 rounded-xl border border-slate-700 p-6">
-        <h4 className="text-lg font-bold text-white mb-4">Platform Previews</h4>
-        
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {/* Preview card */}
-          <div className="bg-slate-900 rounded-lg p-4 border border-slate-700">
-            <p className="text-white font-medium mb-3">{selectedPlatform?.name || 'Platform'} Preview</p>
-            <div className="bg-slate-800 rounded aspect-square flex items-center justify-center mb-3">
-              <ImageIcon className="w-12 h-12 text-gray-600" />
-            </div>
-            <p className="text-gray-300 text-sm mb-2">{campaignData.name}</p>
-            <button className="w-full bg-blue-500 text-white py-2 rounded text-sm">
-              {selectedFormat?.cta || 'Shop Now'}
-            </button>
-          </div>
-        </div>
-
-        <div className="mt-6 pt-6 border-t border-slate-700">
-          <h5 className="text-white font-medium mb-3">Select Placements</h5>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            <label className="p-3 bg-slate-900 border border-slate-700 rounded-lg cursor-pointer hover:border-blue-500">
-              <input type="checkbox" defaultChecked className="mr-2" />
-              <span className="text-white text-sm">Feed</span>
-            </label>
-            <label className="p-3 bg-slate-900 border border-slate-700 rounded-lg cursor-pointer hover:border-blue-500">
-              <input type="checkbox" defaultChecked className="mr-2" />
-              <span className="text-white text-sm">Stories</span>
-            </label>
-            <label className="p-3 bg-slate-900 border border-slate-700 rounded-lg cursor-pointer hover:border-blue-500">
-              <input type="checkbox" className="mr-2" />
-              <span className="text-white text-sm">Reels</span>
-            </label>
-            <label className="p-3 bg-slate-900 border border-slate-700 rounded-lg cursor-pointer hover:border-blue-500">
-              <input type="checkbox" className="mr-2" />
-              <span className="text-white text-sm">Explore</span>
-            </label>
-          </div>
-        </div>
-      </div>
-
-      <div className="bg-slate-800 rounded-xl p-6 border border-slate-700">
-        <h4 className="text-lg font-bold text-white mb-4">Campaign Summary</h4>
-        <div className="grid md:grid-cols-3 gap-4">
-          <div>
-            <p className="text-gray-400 text-sm">Campaign</p>
-            <p className="text-white font-medium">{campaignData.name || 'Not set'}</p>
-          </div>
-          <div>
-            <p className="text-gray-400 text-sm">Platform</p>
-            <p className="text-white font-medium">{selectedPlatform?.name || 'Not set'}</p>
-          </div>
-          <div>
-            <p className="text-gray-400 text-sm">Budget</p>
-            <p className="text-white font-medium">₹{campaignData.dailyBudget || campaignData.lifetimeBudget || '0'}/day</p>
-          </div>
-        </div>
-      </div>
-
-      <div className="bg-green-500/10 border border-green-500/30 rounded-xl p-4">
-        <p className="text-green-300 font-bold">✨ Ready to Launch!</p>
-        <p className="text-gray-400 text-sm">Campaign will be submitted to {selectedPlatform?.name}</p>
-      </div>
-    </div>
-  );
-
-
-
-  const canProceed = () => {
-    switch (currentStep) {
-      case 1: return campaignData.name && campaignData.objective && campaignData.schedule.startDate;
-      case 2: return campaignData.platform;
-      case 3: return campaignData.targeting.cities.length > 0;
-      case 4: return campaignData.adFormat;
-      case 5: return (campaignData.budgetType === 'daily' && campaignData.dailyBudget) || 
-                     (campaignData.budgetType === 'lifetime' && campaignData.lifetimeBudget);
-      default: return true;
-    }
+  const formatCurrency = (amount) => {
+    if (!amount) return '₹0';
+    return '₹' + Math.round(amount).toLocaleString();
   };
+
+  const steps = [
+    { number: 1, name: 'Select Products', icon: Package },
+    { number: 2, name: 'Campaign Details', icon: Info },
+    { number: 3, name: 'Targeting', icon: Filter },
+    { number: 4, name: 'Review & Launch', icon: CheckCircle }
+  ];
 
   return (
-    <div className="min-h-screen bg-slate-900">
-      
-      <div className="max-w-6xl mx-auto px-4 py-8">
-        <div className="flex items-center gap-4 mb-8">
-          <button onClick={() => navigate('/campaigns')} className="p-2 hover:bg-slate-700 rounded-lg transition-colors">
-            <ArrowLeft className="text-gray-400" size={24} />
-          </button>
-          <div>
-            <h1 className="text-3xl font-bold text-white">Create Campaign</h1>
-            <p className="text-gray-400">Launch ads across multiple platforms</p>
+    <div className="min-h-screen bg-gray-900 p-6">
+      <div className="max-w-7xl mx-auto">
+        {/* Header */}
+        <div className="mb-8 flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <button 
+              onClick={() => navigate('/campaigns')}
+              className="text-gray-400 hover:text-white">
+              <ArrowLeft size={24} />
+            </button>
+            <div>
+              <h1 className="text-3xl font-bold text-white">Create Campaign</h1>
+              <p className="text-gray-400 mt-1">Launch your retail media campaign</p>
+            </div>
           </div>
         </div>
 
+        {/* Progress Steps */}
         <div className="mb-8">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between max-w-4xl mx-auto">
             {steps.map((step, idx) => {
               const Icon = step.icon;
               const isActive = currentStep === step.number;
               const isCompleted = currentStep > step.number;
               
               return (
-                <div key={step.number} className="flex items-center flex-1">
-                  <div className="flex flex-col items-center flex-1">
-                    <div className={`w-12 h-12 rounded-full flex items-center justify-center transition-all ${
-                      isActive ? 'bg-blue-500 text-white' : isCompleted ? 'bg-green-500 text-white' : 'bg-slate-700 text-gray-400'
+                <React.Fragment key={step.number}>
+                  <div className="flex flex-col items-center">
+                    <div className={`w-12 h-12 rounded-full flex items-center justify-center border-2 ${
+                      isCompleted ? 'bg-green-600 border-green-600' :
+                      isActive ? 'bg-blue-600 border-blue-600' :
+                      'bg-gray-800 border-gray-700'
                     }`}>
-                      {isCompleted ? <Check size={20} /> : <Icon size={20} />}
+                      {isCompleted ? (
+                        <CheckCircle className="text-white" size={24} />
+                      ) : (
+                        <Icon className="text-white" size={24} />
+                      )}
                     </div>
-                    <p className={`text-sm mt-2 font-medium ${isActive ? 'text-white' : 'text-gray-400'}`}>
-                      {step.title}
+                    <p className={`mt-2 text-sm font-medium ${
+                      isActive ? 'text-blue-400' : 'text-gray-400'
+                    }`}>
+                      {step.name}
                     </p>
                   </div>
                   {idx < steps.length - 1 && (
-                    <div className={`h-1 flex-1 ${currentStep > step.number ? 'bg-green-500' : 'bg-slate-700'}`} />
+                    <div className={`flex-1 h-0.5 mx-4 ${
+                      isCompleted ? 'bg-green-600' : 'bg-gray-700'
+                    }`} />
                   )}
-                </div>
+                </React.Fragment>
               );
             })}
           </div>
         </div>
 
-        <div className="bg-slate-800 rounded-xl p-8 border border-slate-700 mb-6">
-          {currentStep === 1 && renderStep1()}
-          {currentStep === 2 && renderStep2()}
-          {currentStep === 3 && renderStep3()}
-          {currentStep === 4 && renderStep4()}
-          {currentStep === 5 && renderStep5()}
-          {currentStep === 6 && renderStep6()}
-        </div>
+        {/* Step 1: Product Selection */}
+        {currentStep === 1 && (
+          <div className="bg-gray-800 rounded-xl border border-gray-700 p-6">
+            <div className="mb-6">
+              <h2 className="text-2xl font-bold text-white mb-2">Select Products for Campaign</h2>
+              <p className="text-gray-400">Choose which products you want to advertise in this campaign</p>
+              <div className="mt-3 p-3 bg-blue-900/20 border border-blue-700 rounded-lg">
+                <p className="text-sm text-blue-400">
+                  📦 Showing {userBrand} products only ({products.length} available). You can only create campaigns for your own products.
+                </p>
+              </div>
+            </div>
 
-        <div className="flex justify-between">
-          <button
-            onClick={() => setCurrentStep(Math.max(1, currentStep - 1))}
-            disabled={currentStep === 1}
-            className="flex items-center gap-2 px-6 py-3 bg-slate-700 hover:bg-slate-600 disabled:opacity-50 text-white rounded-lg font-medium transition-colors"
-          >
-            <ArrowLeft size={20} />
-            Back
-          </button>
-          
-          {currentStep < 6 ? (
-            <button
-              onClick={() => setCurrentStep(Math.min(6, currentStep + 1))}
-              disabled={!canProceed()}
-              className="flex items-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white rounded-lg font-medium transition-colors"
-            >
-              Next
-              <ArrowRight size={20} />
-            </button>
-          ) : (
-            <button
-              onClick={() => {
-                alert(`Campaign "${campaignData.name}" created successfully!`);
-                navigate('/campaigns');
-              }}
-              className="flex items-center gap-2 px-8 py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium transition-colors"
-            >
-              <Zap size={20} />
-              Launch Campaign
-            </button>
-          )}
-        </div>
+            {/* Selected Products Summary */}
+            {selectedProducts.length > 0 && (
+              <div className="mb-6 p-4 bg-blue-900/20 border border-blue-700 rounded-lg">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <ShoppingCart className="text-blue-400" size={20} />
+                    <span className="text-white font-medium">
+                      {selectedProducts.length} product{selectedProducts.length > 1 ? 's' : ''} selected
+                    </span>
+                  </div>
+                  <button 
+                    onClick={() => setSelectedProducts([])}
+                    className="text-sm text-red-400 hover:text-red-300">
+                    Clear All
+                  </button>
+                </div>
+                <div className="flex flex-wrap gap-2 mt-3">
+                  {selectedProducts.map(p => (
+                    <div key={p.sku_id} className="flex items-center gap-2 px-3 py-1 bg-gray-800 rounded-lg">
+                      <span className="text-sm text-white">{p.sku_name}</span>
+                      <button onClick={() => toggleProductSelection(p)} className="text-gray-400 hover:text-red-400">
+                        <X size={14} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Filters */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
+                <input
+                  type="text"
+                  placeholder="Search products..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full pl-10 pr-4 py-2 bg-gray-900 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-blue-500"
+                />
+              </div>
+
+              <select 
+                value={selectedCategory}
+                onChange={(e) => setSelectedCategory(e.target.value)}
+                className="px-4 py-2 bg-gray-900 border border-gray-700 rounded-lg text-white focus:outline-none focus:border-blue-500">
+                <option value="all">All Categories</option>
+                {categories.map(c => <option key={c} value={c}>{c}</option>)}
+              </select>
+            </div>
+
+            {/* Products Grid */}
+            {loading ? (
+              <div className="text-center py-12 text-gray-400">Loading products...</div>
+            ) : products.length === 0 ? (
+              <div className="text-center py-12 text-gray-400">No products found</div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 max-h-96 overflow-y-auto">
+                {products.map(product => {
+                  const isSelected = isProductSelected(product);
+                  return (
+                    <div 
+                      key={product.sku_id}
+                      onClick={() => toggleProductSelection(product)}
+                      className={`p-4 rounded-lg border-2 cursor-pointer transition-all ${
+                        isSelected 
+                          ? 'border-blue-500 bg-blue-900/20' 
+                          : 'border-gray-700 bg-gray-900 hover:border-gray-600'
+                      }`}>
+                      <div className="flex items-start justify-between mb-3">
+                        <div className="flex-1">
+                          <h3 className="text-white font-medium text-sm mb-1">{product.sku_name}</h3>
+                          <p className="text-xs text-gray-500">{product.sku_id}</p>
+                        </div>
+                        <div className={`${isSelected ? 'text-blue-400' : 'text-gray-600'}`}>
+                          {isSelected ? <CheckCircle size={20} /> : <Circle size={20} />}
+                        </div>
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs text-gray-500">Brand:</span>
+                          <span className="text-xs text-gray-300">{product.brand}</span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs text-gray-500">Category:</span>
+                          <span className="text-xs text-gray-300">{product.category_level_1}</span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs text-gray-500">Price:</span>
+                          <span className="text-sm font-bold text-green-400">{formatCurrency(product.price)}</span>
+                        </div>
+                        {product.rating && (
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs text-gray-500">Rating:</span>
+                            <span className="text-xs text-yellow-400">★ {product.rating}</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
+            {/* Navigation Buttons */}
+            <div className="mt-8 flex items-center justify-between pt-6 border-t border-gray-700">
+              <button 
+                onClick={() => navigate('/campaigns')}
+                className="flex items-center gap-2 px-6 py-3 bg-gray-700 text-white rounded-lg hover:bg-gray-600">
+                <ArrowLeft size={20} /> Cancel
+              </button>
+              <button 
+                onClick={() => setCurrentStep(2)}
+                disabled={selectedProducts.length === 0}
+                className="flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed">
+                Continue <ArrowRight size={20} />
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Step 2-4: Placeholder for now */}
+        {currentStep > 1 && (
+          <div className="bg-gray-800 rounded-xl border border-gray-700 p-6 text-center">
+            <h2 className="text-2xl font-bold text-white mb-4">Step {currentStep} - Coming Soon</h2>
+            <p className="text-gray-400 mb-6">This step will be implemented next</p>
+            <div className="flex gap-4 justify-center">
+              <button 
+                onClick={() => setCurrentStep(currentStep - 1)}
+                className="px-6 py-3 bg-gray-700 text-white rounded-lg hover:bg-gray-600">
+                Back
+              </button>
+              {currentStep < 4 && (
+                <button 
+                  onClick={() => setCurrentStep(currentStep + 1)}
+                  className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                  Continue
+                </button>
+              )}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

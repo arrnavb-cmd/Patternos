@@ -51,9 +51,9 @@ export default function Header() {
             {isAggregator ? (
               <React.Fragment>
                 <button
-                  onClick={() => navigate(`/brand/${brand}/dashboard`)}
+                  onClick={() => navigate('/dashboard')}
                   className={`text-sm font-medium transition-colors ${
-                    location.pathname.includes('/brand/') && location.pathname.includes('/dashboard')
+                    location.pathname === '/dashboard'
                       ? 'text-blue-400'
                       : 'text-slate-400 hover:text-white'
                   }`}
@@ -71,9 +71,9 @@ export default function Header() {
                   Intent Intelligence
                 </button>
                 <button
-                  onClick={() => navigate(`/brand/${brand}/analytics`)}
+                  onClick={() => navigate('/analytics')}
                   className={`text-sm font-medium transition-colors ${
-                    location.pathname.includes('/brand/') && location.pathname.includes('/analytics')
+                    location.pathname === '/analytics'
                       ? 'text-blue-400'
                       : 'text-slate-400 hover:text-white'
                   }`}
@@ -81,10 +81,20 @@ export default function Header() {
                   Analytics
                 </button>
                 <button
+                  onClick={() => navigate('/campaigns')}
+                  className={`text-sm font-medium transition-colors ${
+                    location.pathname.startsWith('/campaigns')
+                      ? 'text-green-400'
+                      : 'text-slate-400 hover:text-white'
+                  }`}
+                >
+                  Campaigns
+                </button>
+                <button
                   onClick={() => navigate('/ad-approval')}
                   className={`text-sm font-medium transition-colors ${
                     location.pathname === '/ad-approval'
-                      ? 'text-green-400'
+                      ? 'text-orange-400'
                       : 'text-slate-400 hover:text-white'
                   }`}
                 >

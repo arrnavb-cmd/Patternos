@@ -1,33 +1,79 @@
 INFO:     Will watch for changes in these directories: ['/Users/arrnavb/Desktop/ARRNAVB/SaaS/PatternOS']
 INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
-INFO:     Started reloader process [47881] using WatchFiles
-INFO:     Started server process [47889]
+INFO:     Started reloader process [61491] using WatchFiles
+INFO:     Started server process [61494]
 INFO:     Waiting for application startup.
 INFO:     Application startup complete.
-INFO:     127.0.0.1:57687 - "GET /api/v1/brand/Himalaya/analytics/products HTTP/1.1" 200 OK
-INFO:     127.0.0.1:57720 - "GET /api/v1/brand/Himalaya/analytics/summary?date_range=last_30_days HTTP/1.1" 200 OK
-INFO:     127.0.0.1:57722 - "GET /api/v1/brand/Himalaya/analytics/channel-performance?date_range=last_30_days HTTP/1.1" 200 OK
-INFO:     127.0.0.1:57724 - "GET /api/v1/brand/Himalaya/analytics/campaigns?date_range=last_30_days HTTP/1.1" 200 OK
-INFO:     127.0.0.1:57726 - "GET /api/v1/brand/Himalaya/analytics/products?date_range=last_30_days HTTP/1.1" 200 OK
-INFO:     127.0.0.1:57727 - "GET /api/v1/brand/Himalaya/analytics/monthly-trends HTTP/1.1" 200 OK
-INFO:     127.0.0.1:58764 - "GET /api/v1/brand/Himalaya/analytics/summary?date_range=last_30_days HTTP/1.1" 200 OK
-INFO:     127.0.0.1:58766 - "GET /api/v1/brand/Himalaya/analytics/channel-performance?date_range=last_30_days HTTP/1.1" 200 OK
-INFO:     127.0.0.1:58768 - "GET /api/v1/brand/Himalaya/analytics/campaigns?date_range=last_30_days HTTP/1.1" 200 OK
-INFO:     127.0.0.1:58769 - "GET /api/v1/brand/Himalaya/analytics/products?date_range=last_30_days HTTP/1.1" 200 OK
-INFO:     127.0.0.1:58771 - "GET /api/v1/brand/Himalaya/analytics/monthly-trends HTTP/1.1" 200 OK
-INFO:     127.0.0.1:58864 - "GET /api/master/brand/Nike/metrics HTTP/1.1" 404 Not Found
-INFO:     127.0.0.1:58865 - "GET /api/organizations/Himalaya HTTP/1.1" 404 Not Found
-INFO:     127.0.0.1:58865 - "GET /api/campaigns?organization_id=undefined HTTP/1.1" 404 Not Found
-INFO:     127.0.0.1:58907 - "GET /api/master/brand/Nike/metrics HTTP/1.1" 404 Not Found
-INFO:     127.0.0.1:58909 - "GET /api/organizations/Himalaya HTTP/1.1" 404 Not Found
-INFO:     127.0.0.1:58909 - "GET /api/campaigns?organization_id=undefined HTTP/1.1" 404 Not Found
-INFO:     127.0.0.1:58909 - "GET /api/master/brand/Nike/metrics HTTP/1.1" 404 Not Found
-INFO:     127.0.0.1:58907 - "GET /api/organizations/Himalaya HTTP/1.1" 404 Not Found
-INFO:     127.0.0.1:58907 - "GET /api/campaigns?organization_id=undefined HTTP/1.1" 404 Not Found
-INFO:     127.0.0.1:59116 - "GET /api/v1/analytics/platform-summary?date_range=last_30_days HTTP/1.1" 200 OK
-INFO:     127.0.0.1:59118 - "GET /api/v1/analytics/channel-performance?date_range=last_30_days HTTP/1.1" 200 OK
-INFO:     127.0.0.1:59120 - "GET /api/v1/analytics/brand-comparison?date_range=last_30_days HTTP/1.1" 200 OK
-INFO:     127.0.0.1:59121 - "GET /api/v1/analytics/monthly-trends HTTP/1.1" 200 OK
-INFO:     127.0.0.1:59733 - "GET /api/master/brand/Nike/metrics HTTP/1.1" 404 Not Found
-INFO:     127.0.0.1:59734 - "GET /api/organizations/Himalaya HTTP/1.1" 404 Not Found
-INFO:     127.0.0.1:59734 - "GET /api/campaigns?organization_id=undefined HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:63519 - "GET /api/v1/products/search?limit=5 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63521 - "GET /api/v1/products/search?search=Dog&limit=3 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63523 - "GET /api/v1/products/search?brand=Himalaya&limit=3 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63598 - "GET /api/v1/products/search?limit=50&brand=zepto&category=Medical%20&%20Wellness HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63598 - "GET /api/v1/products/search?limit=50&brand=zepto&search=Zepto%20Vitamins%20500g&category=Medical%20&%20Wellness HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63941 - "GET /api/v1/products/search?limit=50&brand=zepto HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63967 - "GET /api/v1/products/search?limit=50&brand=zepto&category=Medical%20&%20Wellness HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64001 - "GET /api/v1/products/search?limit=50&brand=zepto&search=Zepto%20Vitamins%20500g&category=Medical%20&%20Wellness HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64024 - "GET /api/v1/products/search?limit=50&brand=zepto&search=Zepto%20Vitamins%20500g HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64024 - "GET /api/v1/products/search?limit=50&brand=zepto&search=Vitamins%20500g HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64208 - "GET /api/master/brand/Nike/metrics HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:64210 - "GET /api/organizations/Himalaya HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:64210 - "GET /api/campaigns?organization_id=undefined HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:64210 - "GET /api/v1/brand/Himalaya/analytics/summary?date_range=last_30_days HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64208 - "GET /api/v1/brand/Himalaya/analytics/channel-performance?date_range=last_30_days HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64223 - "GET /api/v1/brand/Himalaya/analytics/campaigns?date_range=last_30_days HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64225 - "GET /api/v1/brand/Himalaya/analytics/products?date_range=last_30_days HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64226 - "GET /api/v1/brand/Himalaya/analytics/monthly-trends HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64601 - "GET /api/v1/products/search?limit=50&brand=zepto&search=Vitamins%20500 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64601 - "GET /api/v1/products/search?limit=50&brand=zepto&search=Vitamins%2050 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64601 - "GET /api/v1/products/search?limit=50&brand=zepto&search=Vitamins%205 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64601 - "GET /api/v1/products/search?limit=50&brand=zepto&search=Vitamins HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64601 - "GET /api/v1/products/search?limit=50&brand=zepto&search=Vitamins HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64601 - "GET /api/v1/products/search?limit=50&brand=zepto&search=Vitamin HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64601 - "GET /api/v1/products/search?limit=50&brand=zepto&search=Vitami HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64601 - "GET /api/v1/products/search?limit=50&brand=zepto&search=Vitam HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64601 - "GET /api/v1/products/search?limit=50&brand=zepto&search=Vita HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64601 - "GET /api/v1/products/search?limit=50&brand=zepto&search=Vit HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64601 - "GET /api/v1/products/search?limit=50&brand=zepto&search=Vi HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64601 - "GET /api/v1/products/search?limit=50&brand=zepto&search=V HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64601 - "GET /api/v1/products/search?limit=50&brand=zepto HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64613 - "GET /api/v1/products/search?limit=50&brand=zepto&search=e HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64613 - "GET /api/v1/products/search?limit=50&brand=zepto&search=ep HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64613 - "GET /api/v1/products/search?limit=50&brand=zepto&search=ept HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64613 - "GET /api/v1/products/search?limit=50&brand=zepto&search=epto HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64613 - "GET /api/v1/products/search?limit=50&brand=zepto&search=ept HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64613 - "GET /api/v1/products/search?limit=50&brand=zepto&search=ep HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64613 - "GET /api/v1/products/search?limit=50&brand=zepto&search=e HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64613 - "GET /api/v1/products/search?limit=50&brand=zepto HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64613 - "GET /api/v1/products/search?limit=50&brand=zepto&search=Z HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64613 - "GET /api/v1/products/search?limit=50&brand=zepto&search=Ze HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64613 - "GET /api/v1/products/search?limit=50&brand=zepto&search=Zep HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64613 - "GET /api/v1/products/search?limit=50&brand=zepto&search=Zept HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64625 - "GET /api/v1/products/search?limit=50&brand=zepto&search=Zepto HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64625 - "GET /api/v1/products/search?limit=50&brand=zepto&search=Zepto HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64625 - "GET /api/v1/products/search?limit=50&brand=zepto&search=Zepto%20V HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64625 - "GET /api/v1/products/search?limit=50&brand=zepto&search=Zepto%20Vi HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64625 - "GET /api/v1/products/search?limit=50&brand=zepto&search=Zepto%20Vim HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64625 - "GET /api/v1/products/search?limit=50&brand=zepto&search=Zepto%20Vima HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64625 - "GET /api/v1/products/search?limit=50&brand=zepto&search=Zepto%20Vim HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64625 - "GET /api/v1/products/search?limit=50&brand=zepto&search=Zepto%20Vi HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64625 - "GET /api/v1/products/search?limit=50&brand=zepto&search=Zepto%20Vit HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64625 - "GET /api/v1/products/search?limit=50&brand=zepto&search=Zepto%20Vita HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64625 - "GET /api/v1/products/search?limit=50&brand=zepto&search=Zepto%20Vitam HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64625 - "GET /api/v1/products/search?limit=50&brand=zepto&search=Zepto%20Vitami HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64625 - "GET /api/v1/products/search?limit=50&brand=zepto&search=Zepto%20Vitamin HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64637 - "GET /api/v1/products/search?limit=50&brand=zepto&search=Zepto%20Vitami HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64637 - "GET /api/v1/products/search?limit=50&brand=zepto&search=Zepto%20Vitam HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64637 - "GET /api/v1/products/search?limit=50&brand=zepto&search=Zepto%20Vita HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64637 - "GET /api/v1/products/search?limit=50&brand=zepto&search=Zepto%20Vit HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64637 - "GET /api/v1/products/search?limit=50&brand=zepto&search=Zepto%20Vi HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64637 - "GET /api/v1/products/search?limit=50&brand=zepto&search=Zepto%20V HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64637 - "GET /api/v1/products/search?limit=50&brand=zepto&search=Zepto HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64637 - "GET /api/v1/products/search?limit=50&brand=zepto&search=Zepto HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64637 - "GET /api/v1/products/search?limit=50&brand=zepto&search=Zept HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64637 - "GET /api/v1/products/search?limit=50&brand=zepto&search=Zep HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64637 - "GET /api/v1/products/search?limit=50&brand=zepto&search=Ze HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64637 - "GET /api/v1/products/search?limit=50&brand=zepto&search=Z HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64637 - "GET /api/v1/products/search?limit=50&brand=zepto HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64982 - "GET /api/v1/products/search?limit=50&brand=Zepto HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49187 - "GET /api/v1/products/search?limit=50&brand=Zepto HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49187 - "GET /api/v1/products/search?limit=50&brand=Zepto&category=Beauty%20&%20Personal%20Care HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49187 - "GET /api/v1/products/search?limit=50&brand=Zepto&category=Baby%20Care HTTP/1.1" 200 OK

@@ -1779,3 +1779,167 @@ async def attribution_conversion_value_analysis(brand_name: str = None):
         return {"value_analysis": analysis}
     except Exception as e:
         return {"error": str(e)}
+
+@app.get("/api/v1/campaigns/all")
+async def get_all_campaigns(
+    brand: str = None,
+    channel: str = None, 
+    intent_level: str = None,
+    date_range: str = "last_30_days"
+):
+    """Get all campaigns with performance metrics"""
+    try:
+        import sqlite3
+        conn = sqlite3.connect("patternos_campaign_data.db")
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
+        
+        # Build filters
+        filters = []
+        params = []
+        
+        if brand:
+            filters.append("c.brand = ?")
+            params.append(brand)
+        if channel:
+            filters.append("c.channel = ?")
+            params.append(channel)
+        if intent_level:
+            filters.append("c.intent_level = ?")
+            params.append(intent_level)
+            
+        where_clause = " AND " + " AND ".join(filters) if filters else ""
+        
+        # Get campaigns with aggregated performance
+        query = f"""
+            SELECT 
+                c.campaign_id,
+                COALESCE(c.campaign_name, c.brand || ' ' || c.category || ' Campaign') as campaign_name,
+                c.brand,
+                c.category,
+                c.intent_level,
+                c.channel,
+                c.start_date,
+                c.end_date,
+                c.spend_value as budget,
+                COALESCE(SUM(a.spend_value), 0) as total_spend,
+                COALESCE(SUM(a.impressions), 0) as impressions,
+                COALESCE(SUM(a.clicks), 0) as clicks,
+                COALESCE(SUM(a.conversions), 0) as conversions,
+                COALESCE(SUM(a.conversions * 500), 0) as revenue,
+                CASE 
+                    WHEN SUM(a.spend_value) > 0 
+                    THEN ROUND((SUM(a.conversions * 500) / SUM(a.spend_value)), 2)
+                    ELSE 0 
+                END as roas,
+                CASE 
+                    WHEN SUM(a.impressions) > 0 
+                    THEN ROUND((SUM(a.clicks) * 100.0 / SUM(a.impressions)), 2)
+                    ELSE 0 
+                END as ctr,
+                CASE
+                    WHEN date('now') BETWEEN c.start_date AND c.end_date THEN 'Active'
+                    WHEN date('now') > c.end_date THEN 'Completed'
+                    ELSE 'Scheduled'
+                END as status
+            FROM campaigns_master c
+            LEFT JOIN ad_spend_daily a ON c.campaign_id = a.campaign_id
+            WHERE 1=1 {where_clause}
+            GROUP BY c.campaign_id, c.brand, c.category, c.intent_level, c.channel, 
+                     c.start_date, c.end_date, c.spend_value
+            ORDER BY total_spend DESC
+        """
+        
+        cursor.execute(query, params)
+        campaigns = [dict(row) for row in cursor.fetchall()]
+        
+        # Calculate summary metrics
+        total_campaigns = len(campaigns)
+        active_campaigns = len([c for c in campaigns if c['status'] == 'Active'])
+        total_spend = sum(c['total_spend'] for c in campaigns)
+        total_revenue = sum(c['revenue'] for c in campaigns)
+        avg_roas = round(total_revenue / total_spend, 2) if total_spend > 0 else 0
+        
+        conn.close()
+        
+        return {
+            "campaigns": campaigns,
+            "summary": {
+                "total_campaigns": total_campaigns,
+                "active_campaigns": active_campaigns,
+                "total_spend": total_spend,
+                "total_revenue": total_revenue,
+                "avg_roas": avg_roas
+            }
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/v1/products/search")
+async def search_products(
+    search: str = None,
+    brand: str = None,
+    category: str = None,
+    limit: int = 50
+):
+    """Search products from SKU library for campaign creation"""
+    try:
+        import sqlite3
+        conn = sqlite3.connect("patternos_campaign_data.db")
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
+        
+        filters = []
+        params = []
+        
+        if search:
+            filters.append("(sku_name LIKE ? OR sku_id LIKE ?)")
+            params.extend([f"%{search}%", f"%{search}%"])
+        if brand:
+            filters.append("brand = ?")
+            params.append(brand)
+        if category:
+            filters.append("category_level_1 = ?")
+            params.append(category)
+        
+        where_clause = " AND ".join(filters) if filters else "1=1"
+        
+        query = f"""
+            SELECT 
+                sku_id,
+                sku_name,
+                brand,
+                category_level_1,
+                category_level_2,
+                CAST(selling_price AS REAL) as price,
+                CAST(mrp AS REAL) as mrp,
+                availability_status,
+                rating,
+                ad_visibility_flag
+            FROM sku_library
+            WHERE {where_clause}
+            ORDER BY rating DESC
+            LIMIT ?
+        """
+        
+        params.append(limit)
+        cursor.execute(query, params)
+        products = [dict(row) for row in cursor.fetchall()]
+        
+        # Get available categories and brands for filters
+        cursor.execute("SELECT DISTINCT category_level_1 FROM sku_library WHERE category_level_1 IS NOT NULL ORDER BY category_level_1")
+        categories = [row[0] for row in cursor.fetchall()]
+        
+        cursor.execute("SELECT DISTINCT brand FROM sku_library WHERE brand IS NOT NULL ORDER BY brand")
+        brands = [row[0] for row in cursor.fetchall()]
+        
+        conn.close()
+        
+        return {
+            "products": products,
+            "categories": categories,
+            "brands": brands,
+            "total": len(products)
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
