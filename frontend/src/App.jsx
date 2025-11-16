@@ -7,6 +7,7 @@ import BrandDashboard from './pages/BrandDashboard';
 import BrandAnalytics from './pages/BrandAnalytics';
 import Campaigns from './pages/Campaigns';
 import CreateCampaign from './pages/CreateCampaign';
+import BrandCampaigns from './pages/BrandCampaigns';
 import Products from './pages/Products';
 import Analytics from './pages/Analytics';
 import Profile from './pages/Profile';

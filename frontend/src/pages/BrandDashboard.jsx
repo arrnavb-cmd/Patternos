@@ -33,8 +33,8 @@ export default function BrandDashboard() {
     // Fetch real metrics from API
     const fetchMetrics = async () => {
       try {
-        console.log('🔍 Fetching Nike metrics from API...');
-        const response = await fetch('http://localhost:8000/api/master/brand/Nike/metrics');
+        console.log(`🔍 Fetching ${brand} metrics from API...`);
+        const response = await fetch(`http://localhost:8000/api/master/brand/${brand}/metrics`);
         console.log('📡 Response status:', response.status);
         if (response.ok) {
           const data = await response.json();

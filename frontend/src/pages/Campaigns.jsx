@@ -5,6 +5,7 @@ import {
   DollarSign, Target, Users, ChevronDown, Search, Calendar,
   Activity, CheckCircle, Clock, XCircle
 } from 'lucide-react';
+import CampaignDetailModal from '../components/CampaignDetailModal';
 
 export default function Campaigns() {
   const navigate = useNavigate();
@@ -17,6 +18,7 @@ export default function Campaigns() {
   const [selectedIntent, setSelectedIntent] = useState('all');
   const [selectedStatus, setSelectedStatus] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
+  const [selectedCampaign, setSelectedCampaign] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [sortBy, setSortBy] = useState('start_date');
   const [sortOrder, setSortOrder] = useState('desc');
@@ -321,7 +323,10 @@ export default function Campaigns() {
                       <td className="px-6 py-4 text-right text-sm text-gray-300">{Math.round(campaign.ctr)}%</td>
                       <td className="px-6 py-4">
                         <div className="flex items-center justify-center gap-2">
-                          <button className="p-2 hover:bg-gray-700 rounded-lg">
+                          <button 
+                            onClick={() => setSelectedCampaign(campaign)}
+                            className="p-2 hover:bg-gray-700 rounded-lg"
+                            title="View Report">
                             <BarChart3 size={16} className="text-blue-400" />
                           </button>
                           <button onClick={() => downloadCSV()} className="p-2 hover:bg-gray-700 rounded-lg">
@@ -384,6 +389,14 @@ export default function Campaigns() {
           )}
         </div>
       </div>
+
+      {/* Campaign Detail Modal */}
+      {selectedCampaign && (
+        <CampaignDetailModal 
+          campaign={selectedCampaign} 
+          onClose={() => setSelectedCampaign(null)} 
+        />
+      )}
     </div>
   );
 }

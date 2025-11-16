@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { 
   ArrowLeft, ArrowRight, Search, Filter, Package, 
   CheckCircle, Circle, ShoppingCart, X, Info, Target
@@ -7,9 +7,10 @@ import {
 
 export default function CreateCampaign() {
   const navigate = useNavigate();
+  const { brandName } = useParams();
   const user = JSON.parse(localStorage.getItem('user') || '{}');
   const isAggregator = user.role === 'platform_admin' || user.username === 'admin' || user.username === 'zepto';
-  const userBrand = isAggregator ? 'Zepto' : (localStorage.getItem('brand') || user.username);
+  const userBrand = isAggregator ? 'Zepto' : (brandName || localStorage.getItem('brand') || user.username);
   
   const [currentStep, setCurrentStep] = useState(1);
   
@@ -140,7 +141,7 @@ export default function CreateCampaign() {
         <div className="mb-8 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <button 
-              onClick={() => navigate('/campaigns')}
+              onClick={() => isAggregator ? navigate('/campaigns') : navigate(`/brand/${userBrand}/campaigns`)}
               className="text-gray-400 hover:text-white">
               <ArrowLeft size={24} />
             </button>
@@ -311,7 +312,7 @@ export default function CreateCampaign() {
             {/* Navigation Buttons */}
             <div className="mt-8 flex items-center justify-between pt-6 border-t border-gray-700">
               <button 
-                onClick={() => navigate('/campaigns')}
+                onClick={() => isAggregator ? navigate('/campaigns') : navigate(`/brand/${userBrand}/campaigns`)}
                 className="flex items-center gap-2 px-6 py-3 bg-gray-700 text-white rounded-lg hover:bg-gray-600">
                 <ArrowLeft size={20} /> Cancel
               </button>
@@ -827,7 +828,7 @@ export default function CreateCampaign() {
                 onClick={() => {
                   // TODO: Submit campaign for approval
                   alert('Campaign submitted for approval! You will be redirected to campaigns list.');
-                  navigate('/campaigns');
+                  isAggregator ? navigate('/campaigns') : navigate(`/brand/${userBrand}/campaigns`);
                 }}
                 className="flex items-center gap-2 px-8 py-3 bg-gradient-to-r from-green-600 to-blue-600 text-white rounded-lg hover:from-green-700 hover:to-blue-700 font-semibold text-lg">
                 Submit for Approval ✓
