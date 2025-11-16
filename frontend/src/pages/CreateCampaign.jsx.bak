@@ -36,8 +36,6 @@ export default function CreateCampaign() {
   const [ageGroups, setAgeGroups] = useState([]);
   const [locations, setLocations] = useState([]);
   
-  const isStep3Valid = selectedChannels.length > 0 && intentLevel;
-
 
   const isStep2Valid = campaignName && totalBudget && startDate && endDate;
 
