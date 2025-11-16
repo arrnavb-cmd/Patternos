@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   ArrowLeft, ArrowRight, Search, Filter, Package, 
-  CheckCircle, Circle, ShoppingCart, X, Info
+  CheckCircle, Circle, ShoppingCart, X, Info, Target
 } from 'lucide-react';
 
 export default function CreateCampaign() {
@@ -67,13 +67,13 @@ export default function CreateCampaign() {
                        'Kakinada', 'Nizamabad', 'Parbhani', 'Tumkur', 'Khammam', 'Ozhukarai', 'Bihar Sharif',
                        'Panipat', 'Darbhanga', 'Bally', 'Aizawl', 'Dewas', 'Ichalkaranji', 'Karnal', 'Bathinda',
                        'Jalna', 'Eluru', 'Kirari Suleman Nagar', 'Barasat', 'Purnia', 'Satna', 'Mau', 'Sonipat',
-                       'Farrukhabad', 'Sagar', 'Rourkela', 'Durg', 'Imphal', 'Ratlam', 'Hapur', 'Arrah',
+                       'Farrukhabad', 'Sagar', 'Durg', 'Imphal', 'Ratlam', 'Hapur', 'Arrah',
                        'Karimnagar', 'Anantapur', 'Etawah', 'Ambernath', 'North Dumdum', 'Bharatpur', 'Begusarai',
                        'New Delhi', 'Gandhidham', 'Baranagar', 'Tiruvottiyur', 'Puducherry', 'Sikar', 'Thoothukudi',
-                       'Raurkela Industrial Township', 'Sri Ganganagar', 'Karawal Nagar', 'Mango', 'Thanjavur', 
+                       'Sri Ganganagar', 'Karawal Nagar', 'Mango', 'Thanjavur', 
                        'Bulandshahr', 'Uluberia', 'Murwara', 'Sambhal', 'Singrauli', 'Nadiad', 'Secunderabad',
                        'Naihati', 'Yamunanagar', 'Bidhan Nagar', 'Pallavaram', 'Bidar', 'Munger', 'Panchkula',
-                       'Burhanpur', 'Raurkela', 'Kharagpur', 'Dindigul', 'Gandhinagar', 'Hospet', 'Nangloi Jat',
+                       'Burhanpur', 'Kharagpur', 'Dindigul', 'Gandhinagar', 'Hospet', 'Nangloi Jat',
                        'Malda', 'Ongole', 'Deoghar', 'Chapra', 'Haldia', 'Khandwa', 'Nandyal', 'Morena', 'Amroha'];
 
   useEffect(() => {
@@ -646,15 +646,193 @@ export default function CreateCampaign() {
           </div>
         )}
 
-        {/* Step 4: Placeholder */}
+        {/* Step 4: Review & Launch */}
         {currentStep === 4 && (
-          <div className="bg-gray-800 rounded-xl border border-gray-700 p-6 text-center">
-            <h2 className="text-2xl font-bold text-white mb-4">Step 4: Review & Launch</h2>
-            <p className="text-gray-400 mb-6">Coming next - review all details and submit</p>
-            <button onClick={() => setCurrentStep(3)}
-              className="px-6 py-3 bg-gray-700 text-white rounded-lg hover:bg-gray-600">
-              Back
-            </button>
+          <div className="bg-gray-800 rounded-xl border border-gray-700 p-6">
+            <div className="mb-6">
+              <h2 className="text-2xl font-bold text-white mb-2">Review & Launch Campaign</h2>
+              <p className="text-gray-400">Review all details before submitting for approval</p>
+            </div>
+
+            <div className="max-w-4xl mx-auto space-y-6">
+              
+              {/* Products Summary */}
+              <div className="bg-gray-900 border border-gray-700 rounded-lg p-5">
+                <div className="flex items-center gap-2 mb-4">
+                  <Package className="text-blue-400" size={20} />
+                  <h3 className="text-lg font-semibold text-white">Selected Products</h3>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  {selectedProducts.slice(0, 10).map(p => (
+                    <div key={p.sku_id} className="p-3 bg-gray-800 rounded flex items-start gap-3">
+                      <div className="flex-1">
+                        <p className="text-sm text-white font-medium">{p.sku_name}</p>
+                        <p className="text-xs text-gray-500">{p.sku_id}</p>
+                      </div>
+                      <span className="text-sm text-green-400 font-medium">₹{Math.round(p.price)}</span>
+                    </div>
+                  ))}
+                  {selectedProducts.length > 10 && (
+                    <div className="p-3 bg-gray-800 rounded text-center text-gray-400">
+                      +{selectedProducts.length - 10} more products
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Campaign Details Summary */}
+              <div className="bg-gray-900 border border-gray-700 rounded-lg p-5">
+                <div className="flex items-center gap-2 mb-4">
+                  <Info className="text-purple-400" size={20} />
+                  <h3 className="text-lg font-semibold text-white">Campaign Details</h3>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-xs text-gray-500 mb-1">Campaign Name</p>
+                    <p className="text-white font-medium">{campaignName}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-500 mb-1">Objective</p>
+                    <p className="text-white font-medium">
+                      {objectives.find(o => o.value === objective)?.label}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-500 mb-1">Total Budget</p>
+                    <p className="text-green-400 font-bold text-lg">₹{Number(totalBudget).toLocaleString()}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-500 mb-1">Duration</p>
+                    <p className="text-white font-medium">
+                      {new Date(startDate).toLocaleDateString()} - {new Date(endDate).toLocaleDateString()}
+                      <span className="text-gray-400 text-sm ml-2">
+                        ({Math.ceil((new Date(endDate) - new Date(startDate)) / (1000 * 60 * 60 * 24))} days)
+                      </span>
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Targeting Summary */}
+              <div className="bg-gray-900 border border-gray-700 rounded-lg p-5">
+                <div className="flex items-center gap-2 mb-4">
+                  <Target className="text-orange-400" size={20} />
+                  <h3 className="text-lg font-semibold text-white">Targeting & Channels</h3>
+                </div>
+                <div className="space-y-4">
+                  <div>
+                    <p className="text-xs text-gray-500 mb-2">Selected Channels</p>
+                    <div className="flex flex-wrap gap-2">
+                      {selectedChannels.map(channel => (
+                        <span key={channel} className="px-3 py-1 bg-blue-900/20 border border-blue-700 rounded text-sm text-blue-400">
+                          {channel}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-500 mb-2">Intent Level</p>
+                    <span className={`px-3 py-1 rounded text-sm font-medium ${
+                      intentLevel === 'High' ? 'bg-red-900/20 text-red-400' :
+                      intentLevel === 'Medium' ? 'bg-yellow-900/20 text-yellow-400' :
+                      'bg-blue-900/20 text-blue-400'
+                    }`}>
+                      {intentLevel} Intent
+                    </span>
+                  </div>
+                  {ageGroups.length > 0 && (
+                    <div>
+                      <p className="text-xs text-gray-500 mb-2">Target Age Groups</p>
+                      <div className="flex flex-wrap gap-2">
+                        {ageGroups.map(age => (
+                          <span key={age} className="px-3 py-1 bg-gray-800 rounded text-sm text-gray-300">
+                            {age}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  {locations.length > 0 && (
+                    <div>
+                      <p className="text-xs text-gray-500 mb-2">Target Locations</p>
+                      <div className="flex flex-wrap gap-2">
+                        {locations.slice(0, 10).map(loc => (
+                          <span key={loc} className="px-3 py-1 bg-gray-800 rounded text-sm text-gray-300">
+                            {loc}
+                          </span>
+                        ))}
+                        {locations.length > 10 && (
+                          <span className="px-3 py-1 bg-gray-800 rounded text-sm text-gray-400">
+                            +{locations.length - 10} more
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Important Notice */}
+              <div className="bg-yellow-900/20 border border-yellow-700 rounded-lg p-5">
+                <div className="flex items-start gap-3">
+                  <div className="text-yellow-400 mt-1">⚠️</div>
+                  <div>
+                    <h4 className="text-white font-medium mb-2">Campaign Approval Required</h4>
+                    <p className="text-sm text-gray-300">
+                      Your campaign will be submitted to the Aggregator for review. The approval process typically takes 24-48 hours. 
+                      You'll be notified once your campaign is approved or if any changes are required.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Estimated Performance (Optional Preview) */}
+              <div className="bg-gradient-to-br from-blue-900/20 to-purple-900/20 border border-blue-700 rounded-lg p-5">
+                <h4 className="text-white font-semibold mb-3">📊 Estimated Performance</h4>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <div>
+                    <p className="text-xs text-gray-400">Est. Impressions</p>
+                    <p className="text-xl font-bold text-white">
+                      {(Number(totalBudget) * 100).toLocaleString()}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-400">Est. Clicks</p>
+                    <p className="text-xl font-bold text-white">
+                      {(Number(totalBudget) * 5).toLocaleString()}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-400">Est. Conversions</p>
+                    <p className="text-xl font-bold text-white">
+                      {(Number(totalBudget) * 0.5).toLocaleString()}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-400">Target ROAS</p>
+                    <p className="text-xl font-bold text-green-400">3-5x</p>
+                  </div>
+                </div>
+                <p className="text-xs text-gray-500 mt-3">* Estimates based on historical performance data</p>
+              </div>
+            </div>
+
+            {/* Navigation */}
+            <div className="mt-8 flex items-center justify-between pt-6 border-t border-gray-700">
+              <button onClick={() => setCurrentStep(3)}
+                className="flex items-center gap-2 px-6 py-3 bg-gray-700 text-white rounded-lg hover:bg-gray-600">
+                <ArrowLeft size={20} /> Back
+              </button>
+              <button 
+                onClick={() => {
+                  // TODO: Submit campaign for approval
+                  alert('Campaign submitted for approval! You will be redirected to campaigns list.');
+                  navigate('/campaigns');
+                }}
+                className="flex items-center gap-2 px-8 py-3 bg-gradient-to-r from-green-600 to-blue-600 text-white rounded-lg hover:from-green-700 hover:to-blue-700 font-semibold text-lg">
+                Submit for Approval ✓
+              </button>
+            </div>
           </div>
         )}
       </div>

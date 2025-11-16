@@ -12,3 +12,6 @@ INFO:     127.0.0.1:51378 - "GET /api/v1/products/search?limit=50&brand=Zepto HT
 INFO:     127.0.0.1:54187 - "GET /api/v1/products/search?limit=50&brand=Zepto HTTP/1.1" 200 OK
 INFO:     127.0.0.1:55628 - "GET /api/v1/products/search?limit=50&brand=Zepto HTTP/1.1" 200 OK
 INFO:     127.0.0.1:57365 - "GET /api/v1/products/search?limit=50&brand=Zepto HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59063 - "GET /api/v1/products/search?limit=50&brand=Zepto HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60587 - "GET /api/v1/products/search?limit=50&brand=Zepto HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60918 - "GET /api/v1/campaigns/all HTTP/1.1" 200 OK
