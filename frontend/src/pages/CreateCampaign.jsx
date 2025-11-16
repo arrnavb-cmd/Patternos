@@ -46,6 +46,36 @@ export default function CreateCampaign() {
     { value: 'awareness', label: '📢 Brand Awareness', description: 'Build brand visibility and reach. Increase impressions and brand recall.' }
   ];
 
+  const indianCities = ['All India', 'Mumbai', 'Delhi', 'Bangalore', 'Hyderabad', 'Chennai', 'Kolkata', 'Pune', 'Ahmedabad', 'Surat', 'Jaipur', 
+                       'Lucknow', 'Kanpur', 'Nagpur', 'Indore', 'Thane', 'Bhopal', 'Visakhapatnam', 'Patna', 'Vadodara', 
+                       'Ghaziabad', 'Ludhiana', 'Agra', 'Nashik', 'Faridabad', 'Meerut', 'Rajkot', 'Kalyan', 'Vasai-Virar', 
+                       'Varanasi', 'Srinagar', 'Aurangabad', 'Dhanbad', 'Amritsar', 'Navi Mumbai', 'Allahabad', 'Ranchi', 
+                       'Howrah', 'Coimbatore', 'Jabalpur', 'Gwalior', 'Vijayawada', 'Jodhpur', 'Madurai', 'Raipur', 
+                       'Kota', 'Chandigarh', 'Guwahati', 'Solapur', 'Hubli-Dharwad', 'Mysore', 'Tiruchirappalli', 
+                       'Bareilly', 'Aligarh', 'Tiruppur', 'Moradabad', 'Jalandhar', 'Bhubaneswar', 'Salem', 'Warangal',
+                       'Guntur', 'Bhiwandi', 'Saharanpur', 'Gorakhpur', 'Bikaner', 'Amravati', 'Noida', 'Jamshedpur',
+                       'Bhilai', 'Cuttack', 'Firozabad', 'Kochi', 'Nellore', 'Bhavnagar', 'Dehradun', 'Durgapur',
+                       'Asansol', 'Rourkela', 'Nanded', 'Kolhapur', 'Ajmer', 'Akola', 'Gulbarga', 'Jamnagar',
+                       'Ujjain', 'Loni', 'Siliguri', 'Jhansi', 'Ulhasnagar', 'Jammu', 'Sangli-Miraj', 'Mangalore',
+                       'Erode', 'Belgaum', 'Ambattur', 'Tirunelveli', 'Malegaon', 'Gaya', 'Jalgaon', 'Udaipur',
+                       'Maheshtala', 'Davanagere', 'Kozhikode', 'Kurnool', 'Rajpur Sonarpur', 'Rajahmundry', 'Bokaro',
+                       'South Dumdum', 'Bellary', 'Patiala', 'Gopalpur', 'Agartala', 'Bhagalpur', 'Muzaffarnagar',
+                       'Bhatpara', 'Panihati', 'Latur', 'Dhule', 'Tirupati', 'Rohtak', 'Korba', 'Bhilwara',
+                       'Berhampur', 'Muzaffarpur', 'Ahmednagar', 'Mathura', 'Kollam', 'Avadi', 'Kadapa',
+                       'Kamarhati', 'Sambalpur', 'Bilaspur', 'Shahjahanpur', 'Satara', 'Bijapur', 'Rampur',
+                       'Shivamogga', 'Chandrapur', 'Junagadh', 'Thrissur', 'Alwar', 'Bardhaman', 'Kulti',
+                       'Kakinada', 'Nizamabad', 'Parbhani', 'Tumkur', 'Khammam', 'Ozhukarai', 'Bihar Sharif',
+                       'Panipat', 'Darbhanga', 'Bally', 'Aizawl', 'Dewas', 'Ichalkaranji', 'Karnal', 'Bathinda',
+                       'Jalna', 'Eluru', 'Kirari Suleman Nagar', 'Barasat', 'Purnia', 'Satna', 'Mau', 'Sonipat',
+                       'Farrukhabad', 'Sagar', 'Rourkela', 'Durg', 'Imphal', 'Ratlam', 'Hapur', 'Arrah',
+                       'Karimnagar', 'Anantapur', 'Etawah', 'Ambernath', 'North Dumdum', 'Bharatpur', 'Begusarai',
+                       'New Delhi', 'Gandhidham', 'Baranagar', 'Tiruvottiyur', 'Puducherry', 'Sikar', 'Thoothukudi',
+                       'Raurkela Industrial Township', 'Sri Ganganagar', 'Karawal Nagar', 'Mango', 'Thanjavur', 
+                       'Bulandshahr', 'Uluberia', 'Murwara', 'Sambhal', 'Singrauli', 'Nadiad', 'Secunderabad',
+                       'Naihati', 'Yamunanagar', 'Bidhan Nagar', 'Pallavaram', 'Bidar', 'Munger', 'Panchkula',
+                       'Burhanpur', 'Raurkela', 'Kharagpur', 'Dindigul', 'Gandhinagar', 'Hospet', 'Nangloi Jat',
+                       'Malda', 'Ongole', 'Deoghar', 'Chapra', 'Haldia', 'Khandwa', 'Nandyal', 'Morena', 'Amroha'];
+
   useEffect(() => {
     fetchProducts();
   }, [searchQuery, selectedBrand, selectedCategory]);
@@ -456,22 +486,31 @@ export default function CreateCampaign() {
               {/* Channel Selection */}
               <div>
                 <label className="block text-lg font-semibold text-white mb-4">Select Channels *</label>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {['YouTube', 'Google', 'Instagram', 'Facebook', 'OTT', 'Display Ads'].map(channel => {
-                    const isSelected = selectedChannels.includes(channel);
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {[
+                    { name: 'Zepto App', desc: 'Homepage, Search, Product pages' },
+                    { name: 'Google Display', desc: 'Banner ads across Google network' },
+                    { name: 'Facebook', desc: 'Feed ads, Stories' },
+                    { name: 'Instagram', desc: 'Feed, Stories, Reels' },
+                    { name: 'YouTube', desc: 'Video ads, In-stream, Discovery' }
+                  ].map(channel => {
+                    const isSelected = selectedChannels.includes(channel.name);
                     return (
-                      <div key={channel} onClick={() => {
+                      <div key={channel.name} onClick={() => {
                         if (isSelected) {
-                          setSelectedChannels(selectedChannels.filter(c => c !== channel));
+                          setSelectedChannels(selectedChannels.filter(c => c !== channel.name));
                         } else {
-                          setSelectedChannels([...selectedChannels, channel]);
+                          setSelectedChannels([...selectedChannels, channel.name]);
                         }
                       }}
                         className={`p-4 rounded-lg border-2 cursor-pointer transition-all ${
                           isSelected ? 'border-blue-500 bg-blue-900/20' : 'border-gray-700 bg-gray-900 hover:border-gray-600'
                         }`}>
-                        <div className="flex items-center justify-between">
-                          <span className="text-white font-medium">{channel}</span>
+                        <div className="flex items-start justify-between">
+                          <div>
+                            <div className="text-white font-medium mb-1">{channel.name}</div>
+                            <div className="text-xs text-gray-400">{channel.desc}</div>
+                          </div>
                           {isSelected ? <CheckCircle className="text-blue-400" size={20} /> : <Circle className="text-gray-600" size={20} />}
                         </div>
                       </div>
@@ -538,25 +577,30 @@ export default function CreateCampaign() {
               {/* Locations (Optional) */}
               <div>
                 <label className="block text-lg font-semibold text-white mb-4">Target Locations (Optional)</label>
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                  {['Mumbai', 'Delhi', 'Bangalore', 'Hyderabad', 'Chennai', 'Kolkata', 'Pune', 'Ahmedabad'].map(loc => {
-                    const isSelected = locations.includes(loc);
-                    return (
-                      <div key={loc} onClick={() => {
-                        if (isSelected) {
-                          setLocations(locations.filter(l => l !== loc));
-                        } else {
-                          setLocations([...locations, loc]);
-                        }
-                      }}
-                        className={`p-3 rounded-lg border cursor-pointer text-center ${
-                          isSelected ? 'border-blue-500 bg-blue-900/20 text-blue-400' : 'border-gray-700 bg-gray-900 text-gray-400'
-                        }`}>
+                <select 
+                  multiple
+                  value={locations}
+                  onChange={(e) => {
+                    const selected = Array.from(e.target.selectedOptions, option => option.value);
+                    setLocations(selected);
+                  }}
+                  className="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-lg text-white focus:outline-none focus:border-blue-500"
+                  size="8">
+                  {indianCities.map(city => (
+                    <option key={city} value={city} className="py-2">{city}</option>
+                  ))}
+                </select>
+                <p className="text-xs text-gray-500 mt-2">Hold Ctrl/Cmd to select multiple cities</p>
+                {locations.length > 0 && (
+                  <div className="flex flex-wrap gap-2 mt-3">
+                    {locations.map(loc => (
+                      <div key={loc} className="px-3 py-1 bg-blue-900/20 border border-blue-700 rounded text-sm text-blue-400">
                         {loc}
+                        <button onClick={() => setLocations(locations.filter(l => l !== loc))} className="ml-2 text-blue-300 hover:text-blue-100">×</button>
                       </div>
-                    );
-                  })}
-                </div>
+                    ))}
+                  </div>
+                )}
               </div>
 
               {/* Summary */}
