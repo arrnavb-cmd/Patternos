@@ -1,14 +1,27 @@
 import React, { useState, useEffect } from 'react';
+import SuperEgoSection from '../../components/SuperEgoSection';
 import { Users, Activity, Brain, TrendingUp, Search, MousePointer, ShoppingCart, Eye, Clock, Target } from 'lucide-react';
 
 export default function IntentDashboard() {
   const [stats, setStats] = useState(null);
   const [behavioralData, setBehavioralData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [superEgoData, setSuperEgoData] = useState(null);
+  const [premiumReadyCustomers, setPremiumReadyCustomers] = useState([]);
   const [visualData, setVisualData] = useState(null);
   const [voiceData, setVoiceData] = useState(null);
 
   useEffect(() => {
+    // Fetch Super-Ego data
+    Promise.all([
+      fetch('http://localhost:8000/api/v1/superego/distribution'),
+      fetch('http://localhost:8000/api/v1/superego/premium-ready?min_score=25')
+    ]).then(([distRes, premRes]) => 
+      Promise.all([distRes.json(), premRes.json()])
+    ).then(([distData, premData]) => {
+      setSuperEgoData(distData);
+      setPremiumReadyCustomers(premData.premium_ready_customers?.slice(0, 10) || []);
+    }).catch(err => console.error('Super-Ego fetch error:', err));
     fetchData();
     const interval = setInterval(fetchData, 30000);
     return () => clearInterval(interval);
@@ -67,8 +80,8 @@ export default function IntentDashboard() {
           <StatCard 
             icon={Brain} 
             label="Behavioral Signals" 
-            value={stats.totalScores} 
-            subtext="Active intent tracking"
+            value={behavioralData?.behaviorStats?.total_users?.toLocaleString() || "0"} 
+            subtext="Active users tracked"
             color="blue" 
           />
           <StatCard 
@@ -285,6 +298,12 @@ export default function IntentDashboard() {
           </div>
         )}
       </div>
+
+      {/* Super-Ego Intelligence Section */}
+      <SuperEgoSection 
+        superEgoData={superEgoData}
+        premiumReadyCustomers={premiumReadyCustomers}
+      />
     </div>
   );
 }

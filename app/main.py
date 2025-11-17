@@ -2125,10 +2125,20 @@ async def get_premium_ready_customers(min_score: float = 60):
         ORDER BY premium_readiness_score DESC
     """, (min_score,)).fetchall()
     
-    conn.close()
-    
     result = []
     for customer in customers:
+        # Get top categories for this customer
+        top_categories = conn.execute("""
+            SELECT category_level_1, COUNT(*) as cnt
+            FROM order_products
+            WHERE customer_id = ?
+            GROUP BY category_level_1
+            ORDER BY cnt DESC
+            LIMIT 3
+        """, (customer[0],)).fetchall()
+        
+        recommended_categories = [cat[0] for cat in top_categories if cat[0]]
+        
         uplift = ((customer[4] - customer[3]) / customer[3] * 100) if customer[3] > 0 else 0
         result.append({
             "customer_id": customer[0],
@@ -2139,8 +2149,11 @@ async def get_premium_ready_customers(min_score: float = 60):
             "uplift_percentage": round(uplift, 1),
             "total_orders": customer[5],
             "identity_confidence": round(customer[6], 1),
+            "recommended_categories": recommended_categories,
             "recommended_action": "Target with premium products" if customer[2] >= 70 else "Nurture with mid-premium products"
         })
+    
+    conn.close()
     
     return {
         "premium_ready_customers": result,
