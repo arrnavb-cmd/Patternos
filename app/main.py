@@ -1943,3 +1943,330 @@ async def search_products(
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+# ============================================
+# SUPER-EGO INTELLIGENCE ENDPOINTS
+# ============================================
+
+@app.get("/api/v1/superego/profiles")
+async def get_superego_profiles(
+    limit: int = 100,
+    min_premium_readiness: float = 0,
+    identity: str = None
+):
+    """Get Super-Ego customer profiles with filtering"""
+    conn = sqlite3.connect('patternos_campaign_data.db')
+    
+    query = """
+        SELECT 
+            customer_id,
+            eco_conscious_score,
+            health_oriented_score,
+            aspirational_score,
+            minimalist_score,
+            parenting_score,
+            fitness_score,
+            primary_identity,
+            secondary_identity,
+            identity_confidence,
+            premium_readiness_score,
+            current_aov,
+            potential_aov,
+            total_orders,
+            signal_count,
+            data_completeness
+        FROM superego_profiles
+        WHERE premium_readiness_score >= ?
+    """
+    
+    params = [min_premium_readiness]
+    
+    if identity:
+        query += " AND primary_identity = ?"
+        params.append(identity)
+    
+    query += " ORDER BY premium_readiness_score DESC LIMIT ?"
+    params.append(limit)
+    
+    profiles = conn.execute(query, params).fetchall()
+    conn.close()
+    
+    result = []
+    for profile in profiles:
+        result.append({
+            "customer_id": profile[0],
+            "identity_scores": {
+                "eco_conscious": round(profile[1], 1),
+                "health_oriented": round(profile[2], 1),
+                "aspirational": round(profile[3], 1),
+                "minimalist": round(profile[4], 1),
+                "parenting": round(profile[5], 1),
+                "fitness": round(profile[6], 1)
+            },
+            "primary_identity": profile[7],
+            "secondary_identity": profile[8],
+            "identity_confidence": round(profile[9], 1),
+            "premium_readiness_score": round(profile[10], 1),
+            "current_aov": round(profile[11], 2),
+            "potential_aov": round(profile[12], 2),
+            "total_orders": profile[13],
+            "signal_count": profile[14],
+            "data_completeness": round(profile[15], 1)
+        })
+    
+    return {"profiles": result, "count": len(result)}
+
+
+@app.get("/api/v1/superego/distribution")
+async def get_superego_distribution():
+    """Get Super-Ego identity distribution statistics"""
+    conn = sqlite3.connect('patternos_campaign_data.db')
+    
+    # Identity distribution
+    identity_dist = conn.execute("""
+        SELECT 
+            primary_identity,
+            COUNT(*) as customer_count,
+            ROUND(AVG(identity_confidence), 1) as avg_confidence,
+            ROUND(AVG(premium_readiness_score), 1) as avg_premium_readiness,
+            ROUND(AVG(current_aov), 2) as avg_aov
+        FROM superego_profiles
+        GROUP BY primary_identity
+        ORDER BY customer_count DESC
+    """).fetchall()
+    
+    # Overall stats
+    overall = conn.execute("""
+        SELECT 
+            COUNT(*) as total_customers,
+            ROUND(AVG(premium_readiness_score), 1) as avg_premium_readiness,
+            COUNT(CASE WHEN premium_readiness_score >= 70 THEN 1 END) as high_premium_ready,
+            COUNT(CASE WHEN premium_readiness_score >= 50 THEN 1 END) as medium_premium_ready,
+            ROUND(AVG(data_completeness), 1) as avg_completeness,
+            ROUND(AVG(current_aov), 2) as avg_aov,
+            ROUND(AVG(potential_aov), 2) as avg_potential_aov
+        FROM superego_profiles
+    """).fetchone()
+    
+    # Premium readiness segments
+    segments = conn.execute("""
+        SELECT 
+            CASE 
+                WHEN premium_readiness_score >= 70 THEN 'High (70-100)'
+                WHEN premium_readiness_score >= 40 THEN 'Medium (40-69)'
+                ELSE 'Low (0-39)'
+            END as segment,
+            COUNT(*) as count,
+            ROUND(AVG(current_aov), 2) as avg_aov,
+            ROUND(AVG(potential_aov), 2) as potential_aov
+        FROM superego_profiles
+        GROUP BY segment
+        ORDER BY 
+            CASE 
+                WHEN premium_readiness_score >= 70 THEN 1
+                WHEN premium_readiness_score >= 40 THEN 2
+                ELSE 3
+            END
+    """).fetchall()
+    
+    conn.close()
+    
+    return {
+        "identity_distribution": [
+            {
+                "identity": row[0],
+                "customer_count": row[1],
+                "avg_confidence": row[2],
+                "avg_premium_readiness": row[3],
+                "avg_aov": row[4]
+            }
+            for row in identity_dist
+        ],
+        "overall_stats": {
+            "total_customers": overall[0],
+            "avg_premium_readiness": overall[1],
+            "high_premium_ready": overall[2],
+            "medium_premium_ready": overall[3],
+            "avg_data_completeness": overall[4],
+            "avg_aov": overall[5],
+            "avg_potential_aov": overall[6],
+            "potential_revenue_increase": round((overall[6] - overall[5]) * overall[0], 2)
+        },
+        "premium_segments": [
+            {
+                "segment": row[0],
+                "count": row[1],
+                "avg_aov": row[2],
+                "potential_aov": row[3],
+                "uplift_potential": round(row[3] - row[2], 2)
+            }
+            for row in segments
+        ]
+    }
+
+
+@app.get("/api/v1/superego/premium-ready")
+async def get_premium_ready_customers(min_score: float = 60):
+    """Get customers ready for premium product targeting"""
+    conn = sqlite3.connect('patternos_campaign_data.db')
+    
+    customers = conn.execute("""
+        SELECT 
+            customer_id,
+            primary_identity,
+            premium_readiness_score,
+            current_aov,
+            potential_aov,
+            total_orders,
+            identity_confidence
+        FROM superego_profiles
+        WHERE premium_readiness_score >= ?
+        ORDER BY premium_readiness_score DESC
+    """, (min_score,)).fetchall()
+    
+    conn.close()
+    
+    result = []
+    for customer in customers:
+        uplift = ((customer[4] - customer[3]) / customer[3] * 100) if customer[3] > 0 else 0
+        result.append({
+            "customer_id": customer[0],
+            "primary_identity": customer[1],
+            "premium_readiness_score": round(customer[2], 1),
+            "current_aov": round(customer[3], 2),
+            "potential_aov": round(customer[4], 2),
+            "uplift_percentage": round(uplift, 1),
+            "total_orders": customer[5],
+            "identity_confidence": round(customer[6], 1),
+            "recommended_action": "Target with premium products" if customer[2] >= 70 else "Nurture with mid-premium products"
+        })
+    
+    return {
+        "premium_ready_customers": result,
+        "count": len(result),
+        "total_potential_revenue_increase": sum(r["potential_aov"] - r["current_aov"] for r in result)
+    }
+
+
+@app.get("/api/v1/superego/signals/{customer_id}")
+async def get_customer_signals(customer_id: str):
+    """Get detailed signals for a specific customer"""
+    conn = sqlite3.connect('patternos_campaign_data.db')
+    
+    # Get profile
+    profile = conn.execute("""
+        SELECT * FROM superego_profiles WHERE customer_id = ?
+    """, (customer_id,)).fetchone()
+    
+    if not profile:
+        conn.close()
+        raise HTTPException(status_code=404, detail="Customer not found")
+    
+    # Get signals
+    signals = conn.execute("""
+        SELECT 
+            identity_indicator,
+            signal_strength,
+            COUNT(*) as signal_count
+        FROM superego_signals
+        WHERE customer_id = ?
+        GROUP BY identity_indicator, signal_strength
+        ORDER BY signal_count DESC
+    """, (customer_id,)).fetchall()
+    
+    # Get purchase history
+    purchases = conn.execute("""
+        SELECT 
+            brand,
+            category_level_1,
+            price_band,
+            COUNT(*) as purchase_count
+        FROM order_products
+        WHERE customer_id = ?
+        GROUP BY brand, category_level_1, price_band
+        ORDER BY purchase_count DESC
+        LIMIT 10
+    """, (customer_id,)).fetchall()
+    
+    conn.close()
+    
+    return {
+        "customer_id": customer_id,
+        "signals": [
+            {
+                "identity": s[0],
+                "strength": s[1],
+                "count": s[2]
+            }
+            for s in signals
+        ],
+        "top_purchases": [
+            {
+                "brand": p[0],
+                "category": p[1],
+                "price_band": p[2],
+                "count": p[3]
+            }
+            for p in purchases
+        ]
+    }
+
+
+@app.get("/api/v1/superego/insights")
+async def get_superego_insights():
+    """Get actionable Super-Ego insights for campaigns"""
+    conn = sqlite3.connect('patternos_campaign_data.db')
+    
+    # High-value opportunities
+    high_value = conn.execute("""
+        SELECT 
+            primary_identity,
+            COUNT(*) as customer_count,
+            ROUND(AVG(premium_readiness_score), 1) as avg_readiness,
+            ROUND(SUM(potential_aov - current_aov), 2) as total_opportunity
+        FROM superego_profiles
+        WHERE premium_readiness_score >= 50
+        GROUP BY primary_identity
+        ORDER BY total_opportunity DESC
+    """).fetchall()
+    
+    # Identity-category alignment
+    categories = conn.execute("""
+        SELECT 
+            sp.primary_identity,
+            op.category_level_1,
+            COUNT(*) as purchase_count,
+            ROUND(AVG(op.selling_price), 2) as avg_price
+        FROM superego_profiles sp
+        JOIN order_products op ON sp.customer_id = op.customer_id
+        GROUP BY sp.primary_identity, op.category_level_1
+        HAVING purchase_count >= 5
+        ORDER BY purchase_count DESC
+        LIMIT 20
+    """).fetchall()
+    
+    conn.close()
+    
+    return {
+        "high_value_opportunities": [
+            {
+                "identity": row[0],
+                "customer_count": row[1],
+                "avg_premium_readiness": row[2],
+                "total_revenue_opportunity": row[3],
+                "recommended_campaign": f"Premium {row[0].title()} Products"
+            }
+            for row in high_value
+        ],
+        "identity_category_affinity": [
+            {
+                "identity": row[0],
+                "category": row[1],
+                "purchase_count": row[2],
+                "avg_price": row[3],
+                "recommendation": f"Target {row[0]} customers with {row[1]} products"
+            }
+            for row in categories
+        ]
+    }
