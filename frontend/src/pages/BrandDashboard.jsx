@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { 
   DollarSign, TrendingUp, Eye, MousePointer, ShoppingCart, 
   Target, BarChart3, Zap, Mic, Brain, ArrowRight, Calendar
-} from 'lucide-react';
+, Package } from 'lucide-react';
 
 export default function BrandDashboard() {
   const [loading, setLoading] = useState(true);
@@ -19,11 +19,17 @@ export default function BrandDashboard() {
     totalSpend: 0,
     impressions: 0,
     clicks: 0,
+    conversions: 0,
     attributedSales: 0,
     roas: 0,
     activeCampaigns: 0,
     ctr: 0,
     conversionRate: 0
+  });
+  const [intentData, setIntentData] = useState({
+    highIntent: 0,
+    mediumIntent: 0,
+    lowIntent: 0
   });
 
   useEffect(() => {
@@ -33,22 +39,25 @@ export default function BrandDashboard() {
     // Fetch real metrics from API
     const fetchMetrics = async () => {
       try {
-        console.log(`🔍 Fetching ${brand} metrics from API...`);
-        const response = await fetch(`http://localhost:8000/api/master/brand/${brand}/metrics`);
+        console.log(`�� Fetching ${brand} metrics from API...`);
+        const response = await fetch(`http://localhost:8000/api/v1/campaigns/all?brand=${brand}`);
         console.log('📡 Response status:', response.status);
         if (response.ok) {
           const data = await response.json();
           console.log('✅ API data received:', data);
+          const summary = data.summary || {};
+          console.log('📊 Summary data:', summary);
           setMetrics({
-            totalSpend: data.totalSpend,
-            impressions: data.impressions,
-            clicks: data.clicks,
-            ctr: data.ctr,
-            conversionRate: data.conversionRate,
-            attributedSales: data.attributedSales,
-            roas: data.roas,
-            activeCampaigns: data.activeCampaigns
+            totalSpend: summary.total_spend || 0,
+            impressions: summary.total_impressions || 0,
+            clicks: summary.total_clicks || 0,
+            ctr: summary.avg_ctr || 0,
+            conversionRate: summary.avg_conversion_rate || 0,
+            attributedSales: summary.total_revenue || 0,
+            roas: summary.avg_roas || 0,
+            activeCampaigns: summary.active_campaigns || summary.total_campaigns || 0
           });
+          setCampaigns(data.campaigns || []);
         }
       } catch (error) {
         console.error('Failed to fetch metrics:', error);
@@ -58,65 +67,6 @@ export default function BrandDashboard() {
     fetchMetrics();
     
     // Fetch brand performance data
-    const fetchBrandData = async () => {
-      setLoading(true);
-      try {
-        // Get brand slug from stored user (default to nike)
-        const brandSlug = storedUser.username || 'nike';
-        
-        // Fetch organization info
-        const orgResponse = await fetch(`http://localhost:8000/api/organizations/${brandSlug}`);
-        const orgData = await orgResponse.json();
-        
-        // Fetch campaigns for this brand
-        const campaignsResponse = await fetch(`http://localhost:8000/api/campaigns?organization_id=${orgData.id}`);
-        const campaignsData = await campaignsResponse.json();
-        
-        // Calculate aggregate metrics
-        let totalSpend = 0;
-        let totalImpressions = 0;
-        let totalClicks = 0;
-        let totalConversions = 0;
-        let totalRevenue = 0;
-        let activeCampaigns = 0;
-        
-        campaignsData.forEach(campaign => {
-          totalSpend += campaign.spent_amount || 0;
-          totalImpressions += campaign.impressions || 0;
-          totalClicks += campaign.clicks || 0;
-          totalConversions += campaign.conversions || 0;
-          totalRevenue += campaign.revenue_generated || 0;
-          if (campaign.status === 'active') activeCampaigns++;
-        });
-        
-        const ctr = totalImpressions > 0 ? (totalClicks / totalImpressions) * 100 : 0;
-        const roas = totalSpend > 0 ? parseFloat((totalRevenue / totalSpend).toFixed(1)) : 0;
-        
-        /* OLD CALCULATION DISABLED
-        setMetrics({
-          totalSpend: totalSpend,
-          impressions: totalImpressions,
-          clicks: totalClicks,
-          ctr: ctr,
-          conversionRate: totalConversions,
-          attributedSales: totalRevenue,
-          roas: roas,
-          activeCampaigns: activeCampaigns
-        });
-        */
-        
-        setBrandData(orgData);
-        setCampaigns(campaignsData);
-        
-      } catch (error) {
-        console.error('Failed to fetch brand data:', error);
-        setError(error.message);
-      } finally {
-        setLoading(false);
-      }
-    };
-    
-    fetchBrandData();
   }, []);
   const handleLogout = () => {
     localStorage.removeItem("user");
@@ -167,16 +117,39 @@ export default function BrandDashboard() {
   ];
 
   // Use real campaigns from API, sorted by spend
-  const topCampaigns = campaigns
-    .sort((a, b) => (b.spent_amount || 0) - (a.spent_amount || 0))
-    .slice(0, 5)
-    .map(c => ({
-      name: c.name,
-      spend: c.spent_amount,
-      sales: c.revenue_generated || 0,
-      roas: parseFloat((c.roas || ((c.revenue_generated || 0) / (c.spent_amount || 1))).toFixed(1)),
-      status: c.status
-    }));
+  // Aggregate product data by category (treating each category as product line)
+  const productsByCategory = {};
+  campaigns.forEach(c => {
+    const cat = c.category || 'Other';
+    if (!productsByCategory[cat]) {
+      productsByCategory[cat] = {
+        name: `${brand} ${cat}`,
+        category: cat,
+        spend: 0,
+        revenue: 0,
+        conversions: 0,
+        impressions: 0,
+        clicks: 0,
+        campaigns: 0
+      };
+    }
+    productsByCategory[cat].spend += c.total_spend || 0;
+    productsByCategory[cat].revenue += c.revenue || 0;
+    productsByCategory[cat].conversions += c.conversions || 0;
+    productsByCategory[cat].impressions += c.impressions || 0;
+    productsByCategory[cat].clicks += c.clicks || 0;
+    productsByCategory[cat].campaigns += 1;
+  });
+
+  const topProducts = Object.values(productsByCategory)
+    .map(p => ({
+      ...p,
+      roas: p.spend > 0 ? (p.revenue / p.spend).toFixed(2) : 0,
+      ctr: p.impressions > 0 ? ((p.clicks / p.impressions) * 100).toFixed(2) : 0,
+      conversionRate: p.clicks > 0 ? ((p.conversions / p.clicks) * 100).toFixed(2) : 0
+    }))
+    .sort((a, b) => b.revenue - a.revenue)
+    .slice(0, 6);
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 py-8">
 
@@ -273,7 +246,7 @@ export default function BrandDashboard() {
         {/* Campaign Performance */}
         <div className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-xl p-6 border border-gray-700 shadow-xl mb-8">
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-bold text-white">Top Performing Campaigns</h2>
+            <h2 className="text-xl font-bold text-white">Top Performing Products</h2>
             <button
               onClick={() => navigate('/campaigns')}
               className="text-blue-400 hover:text-blue-300 text-sm font-medium flex items-center gap-2"
@@ -284,7 +257,7 @@ export default function BrandDashboard() {
           </div>
           
           <div className="space-y-3">
-            {topCampaigns.map((campaign, idx) => (
+            {topProducts.map((product, idx) => (
               <div
                 key={idx}
                 className="bg-gray-900/50 rounded-lg p-4 border border-gray-700 hover:border-purple-500 transition flex items-center justify-between"
@@ -294,17 +267,17 @@ export default function BrandDashboard() {
                     #{idx + 1}
                   </div>
                   <div>
-                    <h3 className="font-bold text-white">{campaign.name}</h3>
+                    <h3 className="font-bold text-white">{product.name}</h3>
                     <p className="text-sm text-gray-400">
-                      Spend: ₹{(campaign.spend / 100000).toFixed(1)}L • {campaign.status}
+                      Spend: ₹{(product.spend / 100000).toFixed(1)}L • {product.status}
                     </p>
                   </div>
                 </div>
                 <div className="text-right">
                   <p className="text-xl font-bold text-white">
-                    ₹{(campaign.sales / 100000).toFixed(1)}L
+                    ₹{(product.sales / 100000).toFixed(1)}L
                   </p>
-                  <p className="text-sm text-green-400">{campaign.roas}x ROAS</p>
+                  <p className="text-sm text-green-400">{product.roas}x ROAS</p>
                 </div>
               </div>
             ))}
