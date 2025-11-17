@@ -14,6 +14,26 @@ export default function BrandDashboard() {
 
   const navigate = useNavigate();
   const brand = localStorage.getItem("brand") || "Himalaya";
+  const formatCurrency = (amount) => {
+    if (!amount || isNaN(amount) || amount === 0) return '₹0';
+    if (amount >= 10000000) return '₹' + (amount / 10000000).toFixed(1) + 'Cr';
+    if (amount >= 100000) return '₹' + (amount / 100000).toFixed(1) + 'L';
+    if (amount >= 1000) return '₹' + (amount / 1000).toFixed(1) + 'K';
+    return '₹' + Math.round(amount).toLocaleString();
+  };
+
+  const formatNumber = (num) => {
+    if (!num || isNaN(num) || num === 0) return '0';
+    if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M';
+    if (num >= 1000) return (num / 1000).toFixed(1) + 'K';
+    return Math.round(num).toLocaleString();
+  };
+
+  const formatPercentage = (num) => {
+    if (!num || isNaN(num)) return '0%';
+    return num.toFixed(2) + '%';
+  };
+
   const [user, setUser] = useState(null);
   const [metrics, setMetrics] = useState({
     totalSpend: 0,
@@ -157,10 +177,10 @@ export default function BrandDashboard() {
         {/* Welcome Banner */}
         <div className="bg-gradient-to-r from-orange-600 to-red-600 rounded-2xl p-8 mb-8 shadow-2xl">
           <h1 className="text-3xl font-bold text-white mb-2">
-            Welcome back, {user?.brand_name || 'Brand'}! 👟
+            Welcome back, {brand}! 👟
           </h1>
           <p className="text-orange-100">
-            Your campaigns are performing {metrics.roas > 5 ? 'excellently' : 'well'} - {metrics.roas.toFixed(1)}x ROAS
+            Your campaigns are performing {metrics.roas > 5 ? 'excellently' : 'well'} - {metrics.roas ? metrics.roas.toFixed(1) : "0"}x ROAS
           </p>
         </div>
 
@@ -173,7 +193,7 @@ export default function BrandDashboard() {
             </div>
             <p className="text-gray-400 text-sm">Total Ad Spend</p>
             <p className="text-3xl font-bold text-white mt-1">
-              ₹{(metrics.totalSpend / 100000).toFixed(1)}L
+              {formatCurrency(metrics.totalSpend)}
             </p>
             <p className="text-xs text-gray-400 mt-2">This month</p>
           </div>
@@ -184,7 +204,7 @@ export default function BrandDashboard() {
             </div>
             <p className="text-gray-400 text-sm">Total Impressions</p>
             <p className="text-3xl font-bold text-white mt-1">
-              {(metrics.impressions / 1000000).toFixed(1)}M
+              {formatNumber(metrics.impressions)}
             </p>
             <p className="text-xs text-blue-400 mt-2">CTR: {metrics.ctr}%</p>
           </div>
@@ -195,7 +215,7 @@ export default function BrandDashboard() {
             </div>
             <p className="text-gray-400 text-sm">Attributed Sales</p>
             <p className="text-3xl font-bold text-white mt-1">
-              ₹{(metrics.attributedSales / 10000000).toFixed(2)}Cr
+              {formatCurrency(metrics.attributedSales)}
             </p>
             <p className="text-xs text-green-400 mt-2">Conv: {metrics.conversionRate}%</p>
           </div>
@@ -205,7 +225,7 @@ export default function BrandDashboard() {
               <TrendingUp className="text-yellow-400" size={28} />
             </div>
             <p className="text-gray-400 text-sm">ROAS</p>
-            <p className="text-3xl font-bold text-white mt-1">{metrics.roas.toFixed(1)}x</p>
+            <p className="text-3xl font-bold text-white mt-1">{metrics.roas ? metrics.roas.toFixed(1) : "0"}x</p>
             <p className="text-xs text-yellow-400 mt-2">{metrics.activeCampaigns} active campaigns</p>
           </div>
         </div>

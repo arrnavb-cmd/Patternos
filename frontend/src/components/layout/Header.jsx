@@ -7,7 +7,8 @@ export default function Header() {
   const location = useLocation();
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const user = JSON.parse(localStorage.getItem('user') || '{}');
-  const brand = localStorage.getItem('brand') || user.username || 'Himalaya';
+  const brand = localStorage.getItem('brand') || user.brand || user.username || 'Brand';
+  console.log('🏷️ Current brand:', brand, 'User:', user);
   
   // Check if user is Zepto admin (aggregator)
   const isAggregator = user?.username === 'zepto' || user?.username === 'admin' || user?.role === 'platform_admin';
@@ -102,7 +103,7 @@ export default function Header() {
                 </button>
               </React.Fragment>
             ) : (
-              /* BRAND MENU (Nike, Adidas, etc.) */
+              /* BRAND MENU ({brand}, Adidas, etc.) */
               <React.Fragment>
                 <button
                   onClick={() => navigate(`/brand/${brand}/dashboard`)}
@@ -164,7 +165,7 @@ export default function Header() {
               </div>
               <div className="hidden md:block text-left">
                 <p className="text-sm font-medium text-white">
-                  {isAggregator ? 'Zepto Admin' : (user.brand || 'Nike')}
+                  {isAggregator ? 'Zepto Admin' : (user.brand || '{brand}')}
                 </p>
                 <p className="text-xs text-slate-400">{user.username || 'admin'}@zepto.com</p>
               </div>
@@ -179,7 +180,7 @@ export default function Header() {
                   </p>
                   <p className="text-xs text-slate-400">{user.username}@zepto.com</p>
                   <p className="text-xs text-slate-500 mt-1">
-                    {isAggregator ? 'Full Platform Access' : 'Brand Nike'}
+                    {isAggregator ? 'Full Platform Access' : 'Brand {brand}'}
                   </p>
                 </div>
 

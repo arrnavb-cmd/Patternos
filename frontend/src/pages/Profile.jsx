@@ -5,6 +5,7 @@ import Header from '../components/layout/Header';
 import { User, Building2, Mail, Phone, MapPin, Globe, Calendar, Edit2, Save, X } from 'lucide-react';
 
 export default function Profile() {
+  const brand = localStorage.getItem('brand') || 'Brand';
   const navigate = useNavigate();
   const [user] = useState(JSON.parse(localStorage.getItem('user') || '{}'));
   const [isEditing, setIsEditing] = useState(false);
@@ -16,8 +17,8 @@ export default function Profile() {
   };
 
   const [profileData, setProfileData] = useState({
-    companyName: 'Nike India',
-    brandName: 'Nike',
+    companyName: brand + ' India',
+    brandName: brand,
     email: 'nike@zepto.com',
     phone: '+91 98765 43210',
     gstin: '29ABCDE1234F1Z5',
