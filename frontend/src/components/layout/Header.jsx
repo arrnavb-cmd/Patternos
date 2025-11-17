@@ -135,88 +135,52 @@ export default function Header() {
                 >
                   Analytics
                 </button>
-                <button
-                  onClick={() => navigate('/social')}
-                  className={`text-sm font-medium transition-colors ${
-                    location.pathname.startsWith('/social')
-                      ? 'text-blue-400'
-                      : 'text-slate-400 hover:text-white'
-                  }`}
-                >
-                  Social Media
-                </button>
               </React.Fragment>
             )}
           </nav>
 
           <div className="relative">
             <button
-              onClick={() => setShowProfileMenu(!showProfileMenu)}
-              className="flex items-center gap-3 p-2 hover:bg-slate-700 rounded-lg transition-colors"
-            >
-              <div className={`w-8 h-8 rounded-full ${
-                isAggregator 
-                  ? 'bg-gradient-to-br from-purple-500 to-pink-500' 
-                  : 'bg-gradient-to-br from-blue-500 to-purple-500'
-              } flex items-center justify-center`}>
-                <span className="text-white font-bold text-sm">
-                  {user.username?.[0]?.toUpperCase() || 'U'}
-                </span>
-              </div>
-              <div className="hidden md:block text-left">
-                <p className="text-sm font-medium text-white">
-                  {isAggregator ? 'Zepto Admin' : (user.brand || '{brand}')}
-                </p>
-                <p className="text-xs text-slate-400">{user.username || 'admin'}@zepto.com</p>
-              </div>
-              <ChevronDown className="text-slate-400" size={16} />
-            </button>
+                onClick={() => setShowProfileMenu(!showProfileMenu)}
+                className="flex items-center gap-3 px-4 py-2 bg-slate-800 rounded-lg hover:bg-slate-700 transition"
+              >
+                <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-blue-600 rounded-full flex items-center justify-center text-white font-bold">
+                  {brand ? brand[0].toUpperCase() : 'B'}
+                </div>
+                <div className="text-left">
+                  <p className="text-sm font-medium text-white">{brand}</p>
+                  <p className="text-xs text-slate-400">{user?.email || 'user@brand.com'}</p>
+                </div>
+              </button>
 
             {showProfileMenu && (
-              <div className="absolute right-0 mt-2 w-64 bg-slate-800 border border-slate-700 rounded-xl shadow-xl py-2">
-                <div className="px-4 py-3 border-b border-slate-700">
-                  <p className="text-sm font-medium text-white">
-                    {isAggregator ? 'Zepto Platform Admin' : user.brand}
-                  </p>
-                  <p className="text-xs text-slate-400">{user.username}@zepto.com</p>
-                  <p className="text-xs text-slate-500 mt-1">
-                    {isAggregator ? 'Full Platform Access' : 'Brand {brand}'}
-                  </p>
+                <div className="absolute right-0 mt-2 w-64 bg-slate-800 border border-slate-700 rounded-lg shadow-xl z-50">
+                  <div className="p-4 border-b border-slate-700">
+                    <p className="text-sm font-medium text-white">{user?.email || brand + '@brand.com'}</p>
+                    <p className="text-xs text-slate-400 mt-1">{brand}</p>
+                  </div>
+                  <div className="p-2">
+                    <button
+                      onClick={() => {
+                        navigate('/profile');
+                        setShowProfileMenu(false);
+                      }}
+                      className="w-full text-left px-3 py-2 text-sm text-slate-300 hover:bg-slate-700 rounded transition"
+                    >
+                      Profile Settings
+                    </button>
+                    <button
+                      onClick={() => {
+                        localStorage.clear();
+                        navigate('/login');
+                      }}
+                      className="w-full text-left px-3 py-2 text-sm text-red-400 hover:bg-slate-700 rounded transition"
+                    >
+                      Logout
+                    </button>
+                  </div>
                 </div>
-
-                <button
-                  onClick={() => {
-                    navigate('/profile');
-                    setShowProfileMenu(false);
-                  }}
-                  className="w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-slate-700 transition-colors"
-                >
-                  <User className="text-slate-400" size={18} />
-                  <span className="text-sm text-white">Profile Settings</span>
-                </button>
-
-                <button
-                  onClick={() => {
-                    navigate('/settings');
-                    setShowProfileMenu(false);
-                  }}
-                  className="w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-slate-700 transition-colors"
-                >
-                  <Settings className="text-slate-400" size={18} />
-                  <span className="text-sm text-white">Settings</span>
-                </button>
-
-                <div className="border-t border-slate-700 mt-2 pt-2">
-                  <button
-                    onClick={handleLogout}
-                    className="w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-slate-700 transition-colors text-red-400"
-                  >
-                    <LogOut size={18} />
-                    <span className="text-sm">Logout</span>
-                  </button>
-                </div>
-              </div>
-            )}
+              )}
           </div>
         </div>
       </div>
