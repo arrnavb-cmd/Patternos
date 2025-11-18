@@ -15,12 +15,12 @@ export default function IntentDashboard() {
     // Fetch Super-Ego data
     Promise.all([
       fetch('http://localhost:8000/api/v1/superego/distribution'),
-      fetch('http://localhost:8000/api/v1/superego/premium-ready?min_score=25')
+      fetch('http://localhost:8000/api/v1/superego/premium-ready?min_score=0')
     ]).then(([distRes, premRes]) => 
       Promise.all([distRes.json(), premRes.json()])
     ).then(([distData, premData]) => {
       setSuperEgoData(distData);
-      setPremiumReadyCustomers(premData.premium_ready_customers?.slice(0, 10) || []);
+      setPremiumReadyCustomers(premData.premium_ready_customers?.slice(0, 50) || []);
     }).catch(err => console.error('Super-Ego fetch error:', err));
     fetchData();
     const interval = setInterval(fetchData, 30000);

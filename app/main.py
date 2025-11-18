@@ -11,7 +11,8 @@ DB_PATH = os.path.join(os.getcwd(), "intent_intelligence.db")
 # CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=["*",
+        "http://localhost:3000"],
     allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -2111,119 +2112,79 @@ async def get_premium_ready_customers(min_score: float = 60):
     """Get customers ready for premium product targeting"""
     conn = sqlite3.connect('patternos_campaign_data.db')
     
-    customers = conn.execute("""
-        SELECT 
-            customer_id,
-            primary_identity,
-            premium_readiness_score,
-            current_aov,
-            potential_aov,
-            total_orders,
-            identity_confidence
-        FROM superego_profiles
-        WHERE premium_readiness_score >= ?
-        ORDER BY premium_readiness_score DESC
-    """, (min_score,)).fetchall()
-    
-    result = []
-    for customer in customers:
-        # Get top categories for this customer
-        top_categories = conn.execute("""
-            SELECT category_level_1, COUNT(*) as cnt
-            FROM order_products
-            WHERE customer_id = ?
-            GROUP BY category_level_1
-            ORDER BY cnt DESC
-            LIMIT 3
-        """, (customer[0],)).fetchall()
+    try:
+        customers = conn.execute("""
+            SELECT 
+                customer_id,
+                primary_identity,
+                premium_readiness_score,
+                current_aov,
+                potential_aov,
+                total_orders,
+                identity_confidence
+            FROM superego_profiles
+            WHERE premium_readiness_score >= ?
+            ORDER BY premium_readiness_score DESC
+        """, (min_score,)).fetchall()
         
-        recommended_categories = [cat[0] for cat in top_categories if cat[0]]
+        result = []
+        for customer in customers:
+            # Get top categories
+            top_categories = conn.execute("""
+                SELECT category_level_1, COUNT(*) as cnt
+                FROM order_products
+                WHERE customer_id = ?
+                GROUP BY category_level_1
+                ORDER BY cnt DESC
+                LIMIT 3
+            """, (customer[0],)).fetchall()
+            
+            recommended_categories = [cat[0] for cat in top_categories if cat[0]]
+            
+            # Get premium products based on customer's identity and interests
+            # For all identities, get premium products in their preferred categories
+            premium_products = conn.execute("""
+                SELECT DISTINCT s.brand, s.category_level_1, s.selling_price
+                FROM sku_library s
+                WHERE s.premium_flag = 1
+                AND s.price_band = 'High'
+                AND s.category_level_1 IN (
+                    SELECT category_level_1 FROM order_products 
+                    WHERE customer_id = ? 
+                    LIMIT 3
+                )
+                ORDER BY s.selling_price DESC
+                LIMIT 3
+            """, (customer[0],)).fetchall()
+            
+            # Rename to premium_products to better reflect it works for all identities
+            aspirational_items = [
+                {"brand": p[0], "category": p[1], "price": round(float(p[2]) if p[2] else 0, 0)} 
+                for p in premium_products
+            ]
+            
+            uplift = ((customer[4] - customer[3]) / customer[3] * 100) if customer[3] > 0 else 0
+            result.append({
+                "customer_id": customer[0],
+                "primary_identity": customer[1],
+                "premium_readiness_score": round(customer[2], 1),
+                "current_aov": round(customer[3], 2),
+                "potential_aov": round(customer[4], 2),
+                "uplift_percentage": round(uplift, 1),
+                "total_orders": customer[5],
+                "identity_confidence": round(customer[6], 1),
+                "recommended_categories": recommended_categories,
+                "aspirational_products": aspirational_items,
+                "recommended_action": "Target with premium products" if customer[2] >= 70 else "Nurture with mid-premium products"
+            })
         
-        uplift = ((customer[4] - customer[3]) / customer[3] * 100) if customer[3] > 0 else 0
-        result.append({
-            "customer_id": customer[0],
-            "primary_identity": customer[1],
-            "premium_readiness_score": round(customer[2], 1),
-            "current_aov": round(customer[3], 2),
-            "potential_aov": round(customer[4], 2),
-            "uplift_percentage": round(uplift, 1),
-            "total_orders": customer[5],
-            "identity_confidence": round(customer[6], 1),
-            "recommended_categories": recommended_categories,
-            "recommended_action": "Target with premium products" if customer[2] >= 70 else "Nurture with mid-premium products"
-        })
-    
-    conn.close()
-    
-    return {
-        "premium_ready_customers": result,
-        "count": len(result),
-        "total_potential_revenue_increase": sum(r["potential_aov"] - r["current_aov"] for r in result)
-    }
-
-
-@app.get("/api/v1/superego/signals/{customer_id}")
-async def get_customer_signals(customer_id: str):
-    """Get detailed signals for a specific customer"""
-    conn = sqlite3.connect('patternos_campaign_data.db')
-    
-    # Get profile
-    profile = conn.execute("""
-        SELECT * FROM superego_profiles WHERE customer_id = ?
-    """, (customer_id,)).fetchone()
-    
-    if not profile:
+        return {
+            "premium_ready_customers": result,
+            "count": len(result),
+            "total_potential_revenue_increase": sum(r["potential_aov"] - r["current_aov"] for r in result)
+        }
+    finally:
         conn.close()
-        raise HTTPException(status_code=404, detail="Customer not found")
-    
-    # Get signals
-    signals = conn.execute("""
-        SELECT 
-            identity_indicator,
-            signal_strength,
-            COUNT(*) as signal_count
-        FROM superego_signals
-        WHERE customer_id = ?
-        GROUP BY identity_indicator, signal_strength
-        ORDER BY signal_count DESC
-    """, (customer_id,)).fetchall()
-    
-    # Get purchase history
-    purchases = conn.execute("""
-        SELECT 
-            brand,
-            category_level_1,
-            price_band,
-            COUNT(*) as purchase_count
-        FROM order_products
-        WHERE customer_id = ?
-        GROUP BY brand, category_level_1, price_band
-        ORDER BY purchase_count DESC
-        LIMIT 10
-    """, (customer_id,)).fetchall()
-    
-    conn.close()
-    
-    return {
-        "customer_id": customer_id,
-        "signals": [
-            {
-                "identity": s[0],
-                "strength": s[1],
-                "count": s[2]
-            }
-            for s in signals
-        ],
-        "top_purchases": [
-            {
-                "brand": p[0],
-                "category": p[1],
-                "price_band": p[2],
-                "count": p[3]
-            }
-            for p in purchases
-        ]
-    }
 
 
 @app.get("/api/v1/superego/insights")
