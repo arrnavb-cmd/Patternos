@@ -2244,3 +2244,382 @@ async def get_superego_insights():
             for row in categories
         ]
     }
+
+
+# ============================================
+# AD APPROVAL & VALIDATION ENDPOINTS
+# ============================================
+
+@app.post("/api/v1/ad-approval/submit")
+async def submit_campaign_for_approval(campaign_data: dict):
+    """Submit a campaign for AI validation and approval"""
+    import sqlite3
+    import uuid
+    from datetime import datetime
+    
+    conn = sqlite3.connect('patternos_campaign_data.db')
+    cursor = conn.cursor()
+    
+    submission_id = str(uuid.uuid4())[:16]
+    
+    # Store submission
+    cursor.execute("""
+        INSERT INTO campaign_submissions 
+        (submission_id, campaign_id, brand_name, campaign_name, objective, 
+         start_date, end_date, budget, status, submitted_at, submitted_by)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?, ?)
+    """, (
+        submission_id,
+        campaign_data.get('campaign_id', str(uuid.uuid4())[:16]),
+        campaign_data.get('brand_name'),
+        campaign_data.get('campaign_name'),
+        campaign_data.get('objective'),
+        campaign_data.get('start_date'),
+        campaign_data.get('end_date'),
+        campaign_data.get('budget'),
+        datetime.now().isoformat(),
+        campaign_data.get('submitted_by', 'unknown')
+    ))
+    
+    conn.commit()
+    conn.close()
+    
+    # Trigger AI validation
+    validation_result = await validate_campaign(submission_id, campaign_data)
+    
+    return {
+        "submission_id": submission_id,
+        "status": "submitted",
+        "validation_triggered": True,
+        "initial_assessment": validation_result
+    }
+
+
+@app.post("/api/v1/ad-approval/validate/{submission_id}")
+async def validate_campaign(submission_id: str, campaign_data: dict = None):
+    """Run AI validation on submitted campaign"""
+    import sqlite3
+    from datetime import datetime
+    
+    conn = sqlite3.connect('patternos_campaign_data.db')
+    cursor = conn.cursor()
+    
+    # If campaign_data not provided, fetch from DB
+    if not campaign_data:
+        cursor.execute("""
+            SELECT * FROM campaign_submissions WHERE submission_id = ?
+        """, (submission_id,))
+        # Fetch and convert to dict (simplified)
+        campaign_data = {}
+    
+    validator = AdValidationEngine()
+    
+    # Pillar 1: Creative Text Validation
+    creative_text = campaign_data.get('ad_copy', '')
+    text_validation = validator.validate_text_content(creative_text)
+    
+    # Store result
+    cursor.execute("""
+        INSERT INTO ai_validation_results 
+        (validation_id, submission_id, pillar_name, check_name, status, confidence_score, details, timestamp)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    """, (
+        str(uuid.uuid4())[:16],
+        submission_id,
+        'Creative_Text',
+        'Text Compliance',
+        text_validation['status'],
+        text_validation['score'],
+        str(text_validation.get('issues', [])),
+        datetime.now().isoformat()
+    ))
+    
+    # Pillar 2: SKU Validation
+    skus = campaign_data.get('skus', [])
+    sku_validations = []
+    for sku in skus:
+        sku_data = {'exists': True, 'stock': 100, 'price': 500, 'category': 'Grocery'}  # Mock
+        sku_result = validator.validate_sku(sku, sku_data)
+        sku_validations.append(sku_result)
+        
+        cursor.execute("""
+            INSERT INTO ai_validation_results 
+            (validation_id, submission_id, pillar_name, check_name, status, confidence_score, details, timestamp)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        """, (
+            str(uuid.uuid4())[:16],
+            submission_id,
+            'SKU_Validation',
+            f'SKU: {sku}',
+            sku_result['status'],
+            sku_result['score'],
+            str(sku_result.get('issues', [])),
+            datetime.now().isoformat()
+        ))
+    
+    # Pillar 3: Landing Page
+    landing_page = campaign_data.get('landing_page_url', '')
+    landing_validation = validator.validate_landing_page(landing_page)
+    
+    cursor.execute("""
+        INSERT INTO ai_validation_results 
+        (validation_id, submission_id, pillar_name, check_name, status, confidence_score, details, timestamp)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    """, (
+        str(uuid.uuid4())[:16],
+        submission_id,
+        'Landing_Page',
+        'Landing Page Check',
+        landing_validation['status'],
+        landing_validation['score'],
+        str(landing_validation.get('checks', {})),
+        datetime.now().isoformat()
+    ))
+    
+    # Pillar 4: Legal Compliance
+    category = campaign_data.get('category', 'general')
+    claims = campaign_data.get('claims', [])
+    legal_validation = validator.validate_legal_compliance(category, claims)
+    
+    cursor.execute("""
+        INSERT INTO ai_validation_results 
+        (validation_id, submission_id, pillar_name, check_name, status, confidence_score, details, timestamp)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    """, (
+        str(uuid.uuid4())[:16],
+        submission_id,
+        'Legal_Compliance',
+        'Regulatory Check',
+        legal_validation['status'],
+        legal_validation['score'],
+        str(legal_validation.get('issues', [])),
+        datetime.now().isoformat()
+    ))
+    
+    # Pillar 5: Value Intelligence
+    if campaign_data.get('use_value_intelligence'):
+        identity = campaign_data.get('target_identity', 'aspirational')
+        product_attrs = {'description': campaign_data.get('product_description', '')}
+        value_validation = validator.validate_value_intelligence_alignment(
+            category, identity, product_attrs
+        )
+        
+        cursor.execute("""
+            INSERT INTO ai_validation_results 
+            (validation_id, submission_id, pillar_name, check_name, status, confidence_score, details, timestamp)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        """, (
+            str(uuid.uuid4())[:16],
+            submission_id,
+            'Value_Intelligence',
+            'Identity Alignment',
+            value_validation['status'],
+            value_validation['score'],
+            str(value_validation),
+            datetime.now().isoformat()
+        ))
+    else:
+        value_validation = {'status': 'skipped', 'score': 100}
+    
+    # Calculate overall risk
+    all_validations = {
+        'creative': text_validation,
+        'sku': sku_validations[0] if sku_validations else {'score': 100},
+        'landing_page': landing_validation,
+        'legal': legal_validation,
+        'value_intelligence': value_validation
+    }
+    
+    risk_assessment = validator.calculate_overall_risk_score(all_validations)
+    
+    # Store risk score
+    cursor.execute("""
+        INSERT INTO risk_scores 
+        (score_id, submission_id, overall_risk_score, creative_risk, sku_risk, 
+         landing_page_risk, legal_risk, value_alignment_risk, recommendation, auto_approve_eligible)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    """, (
+        str(uuid.uuid4())[:16],
+        submission_id,
+        risk_assessment['risk_score'],
+        100 - text_validation['score'],
+        100 - (sku_validations[0]['score'] if sku_validations else 100),
+        100 - landing_validation['score'],
+        100 - legal_validation['score'],
+        100 - value_validation['score'],
+        risk_assessment['recommendation'],
+        1 if risk_assessment['auto_approve_eligible'] else 0
+    ))
+    
+    conn.commit()
+    conn.close()
+    
+    return {
+        "submission_id": submission_id,
+        "validation_complete": True,
+        "pillar_results": {
+            "creative_text": text_validation,
+            "sku_validation": sku_validations,
+            "landing_page": landing_validation,
+            "legal_compliance": legal_validation,
+            "value_intelligence": value_validation
+        },
+        "risk_assessment": risk_assessment
+    }
+
+
+@app.get("/api/v1/ad-approval/pending")
+async def get_pending_approvals():
+    """Get all campaigns pending approval"""
+    import sqlite3
+    
+    conn = sqlite3.connect('patternos_campaign_data.db')
+    cursor = conn.cursor()
+    
+    submissions = cursor.execute("""
+        SELECT 
+            cs.submission_id,
+            cs.brand_name,
+            cs.campaign_name,
+            cs.objective,
+            cs.budget,
+            cs.submitted_at,
+            cs.status,
+            rs.overall_risk_score,
+            rs.recommendation,
+            rs.auto_approve_eligible
+        FROM campaign_submissions cs
+        LEFT JOIN risk_scores rs ON cs.submission_id = rs.submission_id
+        WHERE cs.status = 'pending'
+        ORDER BY cs.submitted_at DESC
+    """).fetchall()
+    
+    conn.close()
+    
+    result = []
+    for sub in submissions:
+        result.append({
+            "submission_id": sub[0],
+            "brand_name": sub[1],
+            "campaign_name": sub[2],
+            "objective": sub[3],
+            "budget": sub[4],
+            "submitted_at": sub[5],
+            "status": sub[6],
+            "risk_score": sub[7] if sub[7] else 0,
+            "recommendation": sub[8] if sub[8] else "Pending validation",
+            "auto_approve_eligible": bool(sub[9]) if sub[9] else False
+        })
+    
+    return {"pending_approvals": result, "count": len(result)}
+
+
+@app.get("/api/v1/ad-approval/{submission_id}/details")
+async def get_approval_details(submission_id: str):
+    """Get detailed validation results for a submission"""
+    import sqlite3
+    
+    conn = sqlite3.connect('patternos_campaign_data.db')
+    cursor = conn.cursor()
+    
+    # Get submission details
+    submission = cursor.execute("""
+        SELECT * FROM campaign_submissions WHERE submission_id = ?
+    """, (submission_id,)).fetchone()
+    
+    if not submission:
+        conn.close()
+        return {"error": "Submission not found"}
+    
+    # Get all validation results
+    validations = cursor.execute("""
+        SELECT pillar_name, check_name, status, confidence_score, details, timestamp
+        FROM ai_validation_results
+        WHERE submission_id = ?
+        ORDER BY pillar_name, timestamp
+    """, (submission_id,)).fetchall()
+    
+    # Get risk score
+    risk = cursor.execute("""
+        SELECT * FROM risk_scores WHERE submission_id = ?
+    """, (submission_id,)).fetchone()
+    
+    # Get compliance rules
+    rules = cursor.execute("""
+        SELECT rule_id, pillar, rule_name, severity
+        FROM compliance_rules
+        WHERE is_active = 1
+        ORDER BY pillar, severity DESC
+    """).fetchall()
+    
+    conn.close()
+    
+    return {
+        "submission_id": submission_id,
+        "brand_name": submission[2],
+        "campaign_name": submission[3],
+        "objective": submission[4],
+        "budget": submission[7],
+        "status": submission[8],
+        "validation_results": [
+            {
+                "pillar": v[0],
+                "check": v[1],
+                "status": v[2],
+                "score": v[3],
+                "details": v[4],
+                "timestamp": v[5]
+            } for v in validations
+        ],
+        "risk_assessment": {
+            "overall_risk": risk[2] if risk else 0,
+            "creative_risk": risk[3] if risk else 0,
+            "sku_risk": risk[4] if risk else 0,
+            "landing_page_risk": risk[5] if risk else 0,
+            "legal_risk": risk[6] if risk else 0,
+            "value_risk": risk[7] if risk else 0,
+            "recommendation": risk[8] if risk else "Pending",
+            "auto_approve": bool(risk[9]) if risk and risk[9] else False
+        },
+        "compliance_rules": [
+            {"rule_id": r[0], "pillar": r[1], "name": r[2], "severity": r[3]}
+            for r in rules
+        ]
+    }
+
+
+@app.post("/api/v1/ad-approval/{submission_id}/approve")
+async def approve_campaign(submission_id: str, approval_data: dict):
+    """Approve or reject a campaign submission"""
+    import sqlite3
+    from datetime import datetime
+    
+    conn = sqlite3.connect('patternos_campaign_data.db')
+    cursor = conn.cursor()
+    
+    action = approval_data.get('action', 'approve')  # approve or reject
+    notes = approval_data.get('notes', '')
+    reviewer = approval_data.get('reviewer', 'aggregator')
+    
+    cursor.execute("""
+        UPDATE campaign_submissions
+        SET status = ?, reviewed_at = ?, reviewed_by = ?, approval_notes = ?
+        WHERE submission_id = ?
+    """, (
+        'approved' if action == 'approve' else 'rejected',
+        datetime.now().isoformat(),
+        reviewer,
+        notes,
+        submission_id
+    ))
+    
+    conn.commit()
+    conn.close()
+    
+    return {
+        "submission_id": submission_id,
+        "action": action,
+        "status": "approved" if action == "approve" else "rejected",
+        "message": f"Campaign {action}d successfully"
+    }
+

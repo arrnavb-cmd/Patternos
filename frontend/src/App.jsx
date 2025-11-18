@@ -25,7 +25,7 @@ import EventIngestion from './pages/intent/EventIngestion';
 import CreateAudience from './pages/intent/CreateAudience';
 import MasterDashboard from './pages/aggregator/MasterDashboard';
 import AttributionDashboard from './pages/AttributionDashboard';
-import AdApproval from './pages/aggregator/AdApproval';
+import AdApproval from './pages/AdApproval';
 import ProtectedRoute from './components/ProtectedRoute';
 
 function AppContent() {

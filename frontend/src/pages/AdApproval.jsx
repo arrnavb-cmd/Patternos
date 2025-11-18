@@ -1,340 +1,377 @@
 import React, { useState, useEffect } from 'react';
-import { CheckCircle, XCircle, AlertCircle, Clock, Eye, MessageSquare } from 'lucide-react';
+import { 
+  CheckCircle, XCircle, AlertCircle, Clock, Eye, Shield,
+  FileText, Package, Globe, Scale, Brain, TrendingUp,
+  ChevronDown, ChevronUp, ThumbsUp, ThumbsDown
+} from 'lucide-react';
 
 export default function AdApproval() {
-  const [submissions, setSubmissions] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [pendingApprovals, setPendingApprovals] = useState([]);
   const [selectedSubmission, setSelectedSubmission] = useState(null);
-  const [actionNotes, setActionNotes] = useState('');
-  const [actionType, setActionType] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [approvalAction, setApprovalAction] = useState(null);
+  const [notes, setNotes] = useState('');
 
   useEffect(() => {
-    fetchPendingSubmissions();
+    fetchPendingApprovals();
   }, []);
 
-  const fetchPendingSubmissions = async () => {
+  const fetchPendingApprovals = async () => {
     try {
-      const res = await fetch('http://localhost:8000/api/v1/campaigns/pending');
-      const data = await res.json();
-      setSubmissions(data.submissions || []);
+      const response = await fetch('http://localhost:8000/api/v1/ad-approval/pending');
+      const data = await response.json();
+      setPendingApprovals(data.pending_approvals || []);
       setLoading(false);
-    } catch (err) {
-      console.error('Failed to fetch submissions:', err);
+    } catch (error) {
+      console.error('Failed to fetch approvals:', error);
       setLoading(false);
     }
   };
 
-  const handleAction = async (action) => {
+  const fetchSubmissionDetails = async (submissionId) => {
+    try {
+      const response = await fetch(`http://localhost:8000/api/v1/ad-approval/${submissionId}/details`);
+      const data = await response.json();
+      setSelectedSubmission(data);
+    } catch (error) {
+      console.error('Failed to fetch details:', error);
+    }
+  };
+
+  const handleApproval = async (action) => {
     if (!selectedSubmission) return;
 
     try {
-      const endpoint = action === 'approve' 
-        ? `/api/v1/campaigns/${selectedSubmission.submission_id}/approve`
-        : action === 'reject'
-        ? `/api/v1/campaigns/${selectedSubmission.submission_id}/reject`
-        : `/api/v1/campaigns/${selectedSubmission.submission_id}/request-changes`;
+      const response = await fetch(
+        `http://localhost:8000/api/v1/ad-approval/${selectedSubmission.submission_id}/${action}`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action,
+            notes,
+            reviewer: 'aggregator_manager'
+          })
+        }
+      );
 
-      const body = action === 'approve'
-        ? { approver: 'admin', notes: actionNotes }
-        : action === 'reject'
-        ? { rejector: 'admin', reason: actionNotes }
-        : { reviewer: 'admin', changes: actionNotes };
-
-      const res = await fetch(`http://localhost:8000${endpoint}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body)
-      });
-
-      const result = await res.json();
-
-      if (result.success) {
-        // Refresh submissions
-        fetchPendingSubmissions();
+      if (response.ok) {
+        alert(`Campaign ${action}d successfully!`);
         setSelectedSubmission(null);
-        setActionNotes('');
-        setActionType(null);
+        setNotes('');
+        fetchPendingApprovals();
       }
-    } catch (err) {
-      console.error('Action failed:', err);
+    } catch (error) {
+      console.error('Approval action failed:', error);
     }
   };
 
-  const getComplianceStatusColor = (passed) => {
-    return passed ? 'text-green-400' : 'text-red-400';
+  const getRiskColor = (score) => {
+    if (score < 20) return 'text-green-500';
+    if (score < 40) return 'text-yellow-500';
+    return 'text-red-500';
   };
 
-  const ComplianceCheck = ({ check, label }) => (
-    <div className="flex items-start gap-3 p-3 bg-gray-900/50 rounded-lg">
-      <div className={`mt-1 ${check.passed ? 'text-green-400' : 'text-red-400'}`}>
-        {check.passed ? <CheckCircle size={20} /> : <XCircle size={20} />}
-      </div>
-      <div className="flex-1">
-        <p className={`font-semibold ${check.passed ? 'text-green-400' : 'text-red-400'}`}>
-          {label}
-        </p>
-        <p className="text-gray-500 text-sm mt-1">{check.rule}</p>
-        <p className="text-gray-400 text-sm mt-1">{check.details}</p>
-      </div>
-    </div>
-  );
+  const getStatusIcon = (status) => {
+    if (status === 'pass') return <CheckCircle className="w-5 h-5 text-green-500" />;
+    if (status === 'fail') return <XCircle className="w-5 h-5 text-red-500" />;
+    return <AlertCircle className="w-5 h-5 text-yellow-500" />;
+  };
+
+  const getPillarIcon = (pillar) => {
+    const icons = {
+      'Creative_Text': <FileText className="w-5 h-5" />,
+      'SKU_Validation': <Package className="w-5 h-5" />,
+      'Landing_Page': <Globe className="w-5 h-5" />,
+      'Legal_Compliance': <Scale className="w-5 h-5" />,
+      'Value_Intelligence': <Brain className="w-5 h-5" />
+    };
+    return icons[pillar] || <Shield className="w-5 h-5" />;
+  };
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-900 flex items-center justify-center">
-        <div className="text-white text-xl">Loading submissions...</div>
+      <div className="flex items-center justify-center h-screen bg-gray-900">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-900 p-8">
+    <div className="min-h-screen bg-gray-900 p-6">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-white mb-2">Ad Campaign Approval</h1>
-          <p className="text-gray-400">Review and approve brand campaign submissions</p>
+          <h1 className="text-3xl font-bold text-white mb-2">Ad Approval Center</h1>
+          <p className="text-gray-400">AI-powered campaign validation & approval</p>
         </div>
 
-        {/* Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <div className="bg-gray-800 rounded-xl p-6 border border-gray-700">
-            <Clock className="text-yellow-400 mb-2" size={24} />
-            <p className="text-gray-400 text-sm">Pending Review</p>
-            <p className="text-2xl font-bold text-white">{submissions.length}</p>
-          </div>
-          <div className="bg-gray-800 rounded-xl p-6 border border-gray-700">
-            <CheckCircle className="text-green-400 mb-2" size={24} />
-            <p className="text-gray-400 text-sm">Auto-Passed Checks</p>
-            <p className="text-2xl font-bold text-white">
-              {submissions.filter(s => s.compliance_checks?.all_passed).length}
-            </p>
-          </div>
-          <div className="bg-gray-800 rounded-xl p-6 border border-gray-700">
-            <AlertCircle className="text-red-400 mb-2" size={24} />
-            <p className="text-gray-400 text-sm">Requires Attention</p>
-            <p className="text-2xl font-bold text-white">
-              {submissions.filter(s => !s.compliance_checks?.all_passed).length}
-            </p>
-          </div>
-          <div className="bg-gray-800 rounded-xl p-6 border border-gray-700">
-            <Eye className="text-blue-400 mb-2" size={24} />
-            <p className="text-gray-400 text-sm">Avg Review Time</p>
-            <p className="text-2xl font-bold text-white">24h</p>
-          </div>
-        </div>
+        <div className="grid grid-cols-3 gap-6">
+          {/* Left Panel - Pending Approvals List */}
+          <div className="col-span-1 bg-gray-800 rounded-xl p-6 border border-gray-700">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-bold text-white">Pending Approvals</h2>
+              <span className="px-3 py-1 bg-yellow-500/20 text-yellow-400 rounded-full text-sm font-semibold">
+                {pendingApprovals.length}
+              </span>
+            </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* Submissions List */}
-          <div>
-            <h2 className="text-xl font-bold text-white mb-4">Pending Submissions</h2>
-            <div className="space-y-4">
-              {submissions.length === 0 ? (
-                <div className="bg-gray-800 rounded-xl p-8 border border-gray-700 text-center">
-                  <CheckCircle className="mx-auto text-green-400 mb-4" size={48} />
-                  <p className="text-white font-semibold mb-2">All Caught Up!</p>
-                  <p className="text-gray-400">No pending campaign submissions</p>
+            <div className="space-y-3">
+              {pendingApprovals.length === 0 ? (
+                <div className="text-center py-8 text-gray-500">
+                  <Clock className="w-12 h-12 mx-auto mb-2 opacity-50" />
+                  <p>No pending approvals</p>
                 </div>
               ) : (
-                submissions.map((submission, idx) => (
-                  <div
-                    key={idx}
-                    onClick={() => setSelectedSubmission(submission)}
-                    className={`bg-gray-800 rounded-xl p-6 border cursor-pointer transition-colors ${
+                pendingApprovals.map((submission) => (
+                  <button
+                    key={submission.submission_id}
+                    onClick={() => fetchSubmissionDetails(submission.submission_id)}
+                    className={`w-full text-left p-4 rounded-lg border-2 transition-all ${
                       selectedSubmission?.submission_id === submission.submission_id
-                        ? 'border-orange-600'
-                        : 'border-gray-700 hover:border-gray-600'
+                        ? 'border-blue-500 bg-blue-500/10'
+                        : 'border-gray-700 bg-gray-900 hover:border-gray-600'
                     }`}
                   >
-                    <div className="flex items-start justify-between mb-3">
+                    <div className="flex items-start justify-between mb-2">
                       <div>
-                        <h3 className="text-white font-semibold mb-1">{submission.campaign_name}</h3>
-                        <p className="text-gray-400 text-sm">{submission.brand}</p>
+                        <div className="font-semibold text-white text-sm">
+                          {submission.brand_name}
+                        </div>
+                        <div className="text-xs text-gray-400 mt-1">
+                          {submission.campaign_name}
+                        </div>
                       </div>
-                      <div className={`px-3 py-1 rounded text-xs font-semibold ${
-                        submission.compliance_checks?.all_passed
-                          ? 'bg-green-900/30 text-green-400'
-                          : 'bg-red-900/30 text-red-400'
-                      }`}>
-                        {submission.compliance_checks?.all_passed ? 'All Checks Passed' : 'Needs Review'}
+                      {submission.auto_approve_eligible && (
+                        <span className="px-2 py-1 bg-green-500/20 text-green-400 rounded text-xs">
+                          Auto-OK
+                        </span>
+                      )}
+                    </div>
+                    
+                    <div className="flex items-center justify-between mt-3">
+                      <span className="text-xs text-gray-500">
+                        Risk: {submission.risk_score?.toFixed(0) || 0}%
+                      </span>
+                      <div className={`text-xs font-semibold ${getRiskColor(submission.risk_score || 0)}`}>
+                        {submission.risk_score < 20 ? 'Low' : submission.risk_score < 40 ? 'Medium' : 'High'}
                       </div>
                     </div>
-
-                    <div className="grid grid-cols-2 gap-4 text-sm">
-                      <div>
-                        <p className="text-gray-500">Budget</p>
-                        <p className="text-white">₹{parseInt(submission.budget).toLocaleString()}</p>
-                      </div>
-                      <div>
-                        <p className="text-gray-500">Duration</p>
-                        <p className="text-white">{submission.duration_days} days</p>
-                      </div>
-                      <div>
-                        <p className="text-gray-500">Channels</p>
-                        <p className="text-white">{submission.channels?.length || 0}</p>
-                      </div>
-                      <div>
-                        <p className="text-gray-500">Submitted</p>
-                        <p className="text-white">{new Date(submission.submitted_at).toLocaleDateString()}</p>
-                      </div>
-                    </div>
-                  </div>
+                  </button>
                 ))
               )}
             </div>
           </div>
 
-          {/* Submission Details */}
-          <div>
-            {selectedSubmission ? (
-              <div className="bg-gray-800 rounded-xl p-6 border border-gray-700 sticky top-8">
-                <h2 className="text-xl font-bold text-white mb-6">Campaign Review</h2>
-
-                {/* Campaign Details */}
-                <div className="mb-6">
-                  <h3 className="text-lg font-semibold text-white mb-3">{selectedSubmission.campaign_name}</h3>
-                  <div className="space-y-2 text-sm">
-                    <div className="flex justify-between">
-                      <span className="text-gray-400">Brand:</span>
-                      <span className="text-white">{selectedSubmission.brand}</span>
+          {/* Right Panel - Approval Details */}
+          <div className="col-span-2">
+            {!selectedSubmission ? (
+              <div className="bg-gray-800 rounded-xl p-12 border border-gray-700 text-center">
+                <Eye className="w-16 h-16 mx-auto mb-4 text-gray-600" />
+                <p className="text-gray-400 text-lg">Select a campaign to review</p>
+              </div>
+            ) : (
+              <div className="space-y-6">
+                {/* Campaign Overview */}
+                <div className="bg-gray-800 rounded-xl p-6 border border-gray-700">
+                  <h2 className="text-2xl font-bold text-white mb-4">
+                    {selectedSubmission.campaign_name}
+                  </h2>
+                  
+                  <div className="grid grid-cols-2 gap-4 mb-6">
+                    <div>
+                      <p className="text-gray-400 text-sm">Brand</p>
+                      <p className="text-white font-semibold">{selectedSubmission.brand_name}</p>
                     </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-400">Objective:</span>
-                      <span className="text-white capitalize">{selectedSubmission.objective}</span>
+                    <div>
+                      <p className="text-gray-400 text-sm">Objective</p>
+                      <p className="text-white font-semibold">{selectedSubmission.objective}</p>
                     </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-400">Budget:</span>
-                      <span className="text-white">₹{parseInt(selectedSubmission.budget).toLocaleString()}</span>
+                    <div>
+                      <p className="text-gray-400 text-sm">Budget</p>
+                      <p className="text-white font-semibold">₹{selectedSubmission.budget?.toLocaleString()}</p>
                     </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-400">Start Date:</span>
-                      <span className="text-white">{selectedSubmission.start_date}</span>
+                    <div>
+                      <p className="text-gray-400 text-sm">Status</p>
+                      <p className="text-yellow-400 font-semibold capitalize">{selectedSubmission.status}</p>
                     </div>
                   </div>
-                </div>
 
-                {/* Ad Copy */}
-                <div className="mb-6">
-                  <h4 className="text-white font-semibold mb-2">Ad Copy</h4>
-                  <div className="bg-gray-900/50 rounded-lg p-4">
-                    <p className="text-white font-semibold mb-2">{selectedSubmission.headline}</p>
-                    <p className="text-gray-400 text-sm">{selectedSubmission.ad_copy}</p>
-                  </div>
-                </div>
+                  {/* Overall Risk Score */}
+                  <div className="bg-gradient-to-r from-blue-900/30 to-purple-900/30 border border-blue-700 rounded-lg p-6">
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 className="text-white font-semibold">Overall Risk Assessment</h3>
+                      <div className={`text-3xl font-bold ${getRiskColor(selectedSubmission.risk_assessment?.overall_risk || 0)}`}>
+                        {selectedSubmission.risk_assessment?.overall_risk?.toFixed(0) || 0}%
+                      </div>
+                    </div>
+                    
+                    <p className="text-gray-300 text-sm mb-4">
+                      {selectedSubmission.risk_assessment?.recommendation}
+                    </p>
 
-                {/* Compliance Checks */}
-                <div className="mb-6">
-                  <h4 className="text-white font-semibold mb-3">Automated Compliance Checks</h4>
-                  <div className="space-y-3">
-                    {selectedSubmission.compliance_checks?.checks && (
-                      <>
-                        <ComplianceCheck 
-                          check={selectedSubmission.compliance_checks.checks.image_text_ratio}
-                          label="Image to Text Ratio"
-                        />
-                        <ComplianceCheck 
-                          check={selectedSubmission.compliance_checks.checks.content_moderation}
-                          label="Content Moderation"
-                        />
-                        <ComplianceCheck 
-                          check={selectedSubmission.compliance_checks.checks.brand_safety}
-                          label="Brand Safety"
-                        />
-                        <ComplianceCheck 
-                          check={selectedSubmission.compliance_checks.checks.technical_specs}
-                          label="Technical Specifications"
-                        />
-                        <ComplianceCheck 
-                          check={selectedSubmission.compliance_checks.checks.legal_compliance}
-                          label="Legal Compliance"
-                        />
-                      </>
+                    {selectedSubmission.risk_assessment?.auto_approve && (
+                      <div className="flex items-center gap-2 text-green-400 text-sm">
+                        <CheckCircle className="w-4 h-4" />
+                        <span>Eligible for auto-approval</span>
+                      </div>
                     )}
                   </div>
                 </div>
 
-                {/* Action Buttons */}
-                {!actionType && (
-                  <div className="grid grid-cols-3 gap-3">
-                    <button
-                      onClick={() => setActionType('approve')}
-                      className="flex items-center justify-center gap-2 px-4 py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg font-semibold"
-                    >
-                      <CheckCircle size={18} />
-                      Approve
-                    </button>
-                    <button
-                      onClick={() => setActionType('changes')}
-                      className="flex items-center justify-center gap-2 px-4 py-3 bg-yellow-600 hover:bg-yellow-700 text-white rounded-lg font-semibold"
-                    >
-                      <MessageSquare size={18} />
-                      Changes
-                    </button>
-                    <button
-                      onClick={() => setActionType('reject')}
-                      className="flex items-center justify-center gap-2 px-4 py-3 bg-red-600 hover:bg-red-700 text-white rounded-lg font-semibold"
-                    >
-                      <XCircle size={18} />
-                      Reject
-                    </button>
-                  </div>
-                )}
+                {/* AI Validation Results - 5 Pillars */}
+                <div className="bg-gray-800 rounded-xl p-6 border border-gray-700">
+                  <h3 className="text-xl font-bold text-white mb-4">
+                    AI Validation Checklist
+                  </h3>
 
-                {/* Action Form */}
-                {actionType && (
                   <div className="space-y-4">
-                    <div>
-                      <label className="block text-gray-400 mb-2">
-                        {actionType === 'approve' ? 'Approval Notes (Optional)' : 
-                         actionType === 'reject' ? 'Rejection Reason *' : 
-                         'Requested Changes *'}
-                      </label>
-                      <textarea
-                        value={actionNotes}
-                        onChange={(e) => setActionNotes(e.target.value)}
-                        rows={4}
-                        placeholder={
-                          actionType === 'approve' ? 'Any additional notes...' : 
-                          actionType === 'reject' ? 'Please provide detailed reason for rejection...' :
-                          'Specify what changes are needed...'
-                        }
-                        className="w-full bg-gray-700 text-white px-4 py-3 rounded-lg border border-gray-600 focus:border-orange-500 focus:outline-none"
-                      />
-                    </div>
-                    <div className="flex gap-3">
-                      <button
-                        onClick={() => {
-                          setActionType(null);
-                          setActionNotes('');
-                        }}
-                        className="flex-1 px-4 py-3 bg-gray-700 hover:bg-gray-600 text-white rounded-lg"
-                      >
-                        Cancel
-                      </button>
-                      <button
-                        onClick={() => handleAction(actionType)}
-                        disabled={actionType !== 'approve' && !actionNotes}
-                        className={`flex-1 px-4 py-3 rounded-lg text-white font-semibold disabled:opacity-50 ${
-                          actionType === 'approve' ? 'bg-green-600 hover:bg-green-700' :
-                          actionType === 'reject' ? 'bg-red-600 hover:bg-red-700' :
-                          'bg-yellow-600 hover:bg-yellow-700'
-                        }`}
-                      >
-                        Confirm {actionType === 'approve' ? 'Approval' : actionType === 'reject' ? 'Rejection' : 'Changes'}
-                      </button>
-                    </div>
+                    {/* Pillar 1: Creative Text */}
+                    <PillarCard
+                      title="Creative Compliance"
+                      icon={<FileText className="w-5 h-5 text-blue-400" />}
+                      score={100 - (selectedSubmission.risk_assessment?.creative_risk || 0)}
+                      validations={selectedSubmission.validation_results?.filter(v => v.pillar === 'Creative_Text')}
+                    />
+
+                    {/* Pillar 2: SKU Validation */}
+                    <PillarCard
+                      title="SKU Validation"
+                      icon={<Package className="w-5 h-5 text-purple-400" />}
+                      score={100 - (selectedSubmission.risk_assessment?.sku_risk || 0)}
+                      validations={selectedSubmission.validation_results?.filter(v => v.pillar === 'SKU_Validation')}
+                    />
+
+                    {/* Pillar 3: Landing Page */}
+                    <PillarCard
+                      title="Landing Page Check"
+                      icon={<Globe className="w-5 h-5 text-green-400" />}
+                      score={100 - (selectedSubmission.risk_assessment?.landing_page_risk || 0)}
+                      validations={selectedSubmission.validation_results?.filter(v => v.pillar === 'Landing_Page')}
+                    />
+
+                    {/* Pillar 4: Legal Compliance */}
+                    <PillarCard
+                      title="Legal & Compliance"
+                      icon={<Scale className="w-5 h-5 text-yellow-400" />}
+                      score={100 - (selectedSubmission.risk_assessment?.legal_risk || 0)}
+                      validations={selectedSubmission.validation_results?.filter(v => v.pillar === 'Legal_Compliance')}
+                    />
+
+                    {/* Pillar 5: Value Intelligence */}
+                    <PillarCard
+                      title="Value Intelligence Alignment"
+                      icon={<Brain className="w-5 h-5 text-pink-400" />}
+                      score={100 - (selectedSubmission.risk_assessment?.value_risk || 0)}
+                      validations={selectedSubmission.validation_results?.filter(v => v.pillar === 'Value_Intelligence')}
+                    />
                   </div>
-                )}
-              </div>
-            ) : (
-              <div className="bg-gray-800 rounded-xl p-8 border border-gray-700 text-center">
-                <Eye className="mx-auto text-gray-600 mb-4" size={48} />
-                <p className="text-gray-400">Select a submission to review</p>
+                </div>
+
+                {/* Approval Actions */}
+                <div className="bg-gray-800 rounded-xl p-6 border border-gray-700">
+                  <h3 className="text-lg font-semibold text-white mb-4">Approval Decision</h3>
+                  
+                  <textarea
+                    value={notes}
+                    onChange={(e) => setNotes(e.target.value)}
+                    placeholder="Add notes or feedback (optional)..."
+                    className="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-lg text-white mb-4 focus:outline-none focus:border-blue-500"
+                    rows={3}
+                  />
+
+                  <div className="flex gap-4">
+                    <button
+                      onClick={() => handleApproval('approve')}
+                      className="flex-1 px-6 py-3 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white rounded-lg font-semibold flex items-center justify-center gap-2"
+                    >
+                      <ThumbsUp className="w-5 h-5" />
+                      Approve Campaign
+                    </button>
+                    
+                    <button
+                      onClick={() => handleApproval('reject')}
+                      className="flex-1 px-6 py-3 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white rounded-lg font-semibold flex items-center justify-center gap-2"
+                    >
+                      <ThumbsDown className="w-5 h-5" />
+                      Reject Campaign
+                    </button>
+                  </div>
+                </div>
               </div>
             )}
           </div>
         </div>
       </div>
+    </div>
+  );
+}
+
+// Pillar Card Component
+function PillarCard({ title, icon, score, validations }) {
+  const [expanded, setExpanded] = useState(false);
+
+  return (
+    <div className="border border-gray-700 rounded-lg overflow-hidden">
+      <button
+        onClick={() => setExpanded(!expanded)}
+        className="w-full p-4 bg-gray-900 hover:bg-gray-800 transition-colors flex items-center justify-between"
+      >
+        <div className="flex items-center gap-3">
+          {icon}
+          <span className="text-white font-medium">{title}</span>
+        </div>
+        
+        <div className="flex items-center gap-3">
+          <div className="text-right">
+            <div className={`text-lg font-bold ${
+              score >= 80 ? 'text-green-400' : 
+              score >= 60 ? 'text-yellow-400' : 
+              'text-red-400'
+            }`}>
+              {score?.toFixed(0)}%
+            </div>
+            <div className="text-xs text-gray-500">Score</div>
+          </div>
+          
+          {score >= 80 ? (
+            <CheckCircle className="w-6 h-6 text-green-500" />
+          ) : score >= 60 ? (
+            <AlertCircle className="w-6 h-6 text-yellow-500" />
+          ) : (
+            <XCircle className="w-6 h-6 text-red-500" />
+          )}
+          
+          {expanded ? (
+            <ChevronUp className="w-5 h-5 text-gray-400" />
+          ) : (
+            <ChevronDown className="w-5 h-5 text-gray-400" />
+          )}
+        </div>
+      </button>
+
+      {expanded && validations && validations.length > 0 && (
+        <div className="p-4 bg-gray-800 border-t border-gray-700">
+          <div className="space-y-2">
+            {validations.map((validation, idx) => (
+              <div key={idx} className="flex items-start gap-2 text-sm">
+                {validation.status === 'pass' ? (
+                  <CheckCircle className="w-4 h-4 text-green-500 mt-0.5" />
+                ) : (
+                  <XCircle className="w-4 h-4 text-red-500 mt-0.5" />
+                )}
+                <div className="flex-1">
+                  <p className="text-white">{validation.check}</p>
+                  {validation.details && (
+                    <p className="text-gray-400 text-xs mt-1">{validation.details}</p>
+                  )}
+                </div>
+                <span className="text-gray-500 text-xs">{validation.score?.toFixed(0)}%</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
