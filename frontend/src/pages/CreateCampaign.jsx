@@ -4,6 +4,8 @@ import {
   ArrowLeft, ArrowRight, Search, Filter, Package, 
   CheckCircle, Circle, ShoppingCart, X, Info, Target
 } from 'lucide-react';
+import ValueIntelligenceTab from '../components/ValueIntelligenceTab';
+import DistributionChannels from '../components/DistributionChannels';
 
 export default function CreateCampaign() {
   const navigate = useNavigate();
@@ -26,6 +28,12 @@ export default function CreateCampaign() {
 
   // Step 2: Campaign Details State
   const [campaignName, setCampaignName] = useState('');
+  const [targetingType, setTargetingType] = useState('intent'); // 'intent' or 'value_intelligence'
+  const [valueIntelligenceConfig, setValueIntelligenceConfig] = useState({
+    identity: 'all',
+    premiumLevel: 'all',
+    selectedCustomers: []
+  });
   const [totalBudget, setTotalBudget] = useState('');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
@@ -36,6 +44,10 @@ export default function CreateCampaign() {
   const [intentLevel, setIntentLevel] = useState('High');
   const [ageGroups, setAgeGroups] = useState([]);
   const [locations, setLocations] = useState([]);
+  const [valueIntelligenceTab, setValueIntelligenceTab] = useState('high');
+  const [selectedIdentities, setSelectedIdentities] = useState([]);
+  const [premiumReadinessMin, setPremiumReadinessMin] = useState(60);
+  const [valueIntelligenceData, setValueIntelligenceData] = useState(null);
   
   const isStep3Valid = selectedChannels.length > 0 && intentLevel;
 
@@ -451,197 +463,107 @@ export default function CreateCampaign() {
 
         {/* Step 3: Targeting */}
         {currentStep === 3 && (
-          <div className="bg-gray-800 rounded-xl border border-gray-700 p-6">
-            
-            {/* Selected Products Panel */}
-            {selectedProducts.length > 0 && (
-              <div className="mb-6 p-4 bg-gray-900 border border-gray-700 rounded-lg">
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center gap-2">
-                    <Package className="text-blue-400" size={20} />
-                    <span className="text-white font-medium">Selected Products ({selectedProducts.length})</span>
-                  </div>
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  {selectedProducts.slice(0, 5).map(p => (
-                    <div key={p.sku_id} className="px-3 py-1 bg-gray-800 border border-gray-600 rounded text-sm text-gray-300">
-                      {p.sku_name}
-                    </div>
-                  ))}
-                  {selectedProducts.length > 5 && (
-                    <div className="px-3 py-1 bg-gray-800 border border-gray-600 rounded text-sm text-gray-400">
-                      +{selectedProducts.length - 5} more
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
-
-            <div className="mb-6">
+          <div className="space-y-8">
+            <div>
               <h2 className="text-2xl font-bold text-white mb-2">Targeting & Channels</h2>
               <p className="text-gray-400">Choose where and how to reach your audience</p>
             </div>
 
-            <div className="max-w-4xl mx-auto space-y-8">
-              
-              {/* Channel Selection */}
-              <div>
-                <label className="block text-lg font-semibold text-white mb-4">Select Channels *</label>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {[
-                    { name: 'Zepto App', desc: 'Homepage, Search, Product pages' },
-                    { name: 'Google Display', desc: 'Banner ads across Google network' },
-                    { name: 'Facebook', desc: 'Feed ads, Stories' },
-                    { name: 'Instagram', desc: 'Feed, Stories, Reels' },
-                    { name: 'YouTube', desc: 'Video ads, In-stream, Discovery' }
-                  ].map(channel => {
-                    const isSelected = selectedChannels.includes(channel.name);
-                    return (
-                      <div key={channel.name} onClick={() => {
-                        if (isSelected) {
-                          setSelectedChannels(selectedChannels.filter(c => c !== channel.name));
-                        } else {
-                          setSelectedChannels([...selectedChannels, channel.name]);
-                        }
-                      }}
-                        className={`p-4 rounded-lg border-2 cursor-pointer transition-all ${
-                          isSelected ? 'border-blue-500 bg-blue-900/20' : 'border-gray-700 bg-gray-900 hover:border-gray-600'
-                        }`}>
-                        <div className="flex items-start justify-between">
-                          <div>
-                            <div className="text-white font-medium mb-1">{channel.name}</div>
-                            <div className="text-xs text-gray-400">{channel.desc}</div>
-                          </div>
-                          {isSelected ? <CheckCircle className="text-blue-400" size={20} /> : <Circle className="text-gray-600" size={20} />}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* Intent Level */}
-              <div>
-                <label className="block text-lg font-semibold text-white mb-4">Intent Level *</label>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  {['High', 'Medium', 'Low'].map(level => {
-                    const colors = {
-                      High: 'border-red-500 bg-red-900/20 text-red-400',
-                      Medium: 'border-yellow-500 bg-yellow-900/20 text-yellow-400',
-                      Low: 'border-blue-500 bg-blue-900/20 text-blue-400'
-                    };
-                    const descriptions = {
-                      High: 'Ready to purchase - high conversion intent',
-                      Medium: 'Considering options - mid-funnel',
-                      Low: 'Early awareness - top-funnel'
-                    };
-                    return (
-                      <div key={level} onClick={() => setIntentLevel(level)}
-                        className={`p-4 rounded-lg border-2 cursor-pointer transition-all ${
-                          intentLevel === level ? colors[level] : 'border-gray-700 bg-gray-900 hover:border-gray-600'
-                        }`}>
-                        <div className="flex items-center justify-between mb-2">
-                          <span className="text-white font-medium">{level} Intent</span>
-                          {intentLevel === level && <CheckCircle className={intentLevel === level ? 'text-current' : 'text-gray-600'} size={20} />}
-                        </div>
-                        <p className="text-xs text-gray-400">{descriptions[level]}</p>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* Age Groups (Optional) */}
-              <div>
-                <label className="block text-lg font-semibold text-white mb-4">Age Groups (Optional)</label>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                  {['18-24', '25-34', '35-44', '45-54', '55+'].map(age => {
-                    const isSelected = ageGroups.includes(age);
-                    return (
-                      <div key={age} onClick={() => {
-                        if (isSelected) {
-                          setAgeGroups(ageGroups.filter(a => a !== age));
-                        } else {
-                          setAgeGroups([...ageGroups, age]);
-                        }
-                      }}
-                        className={`p-3 rounded-lg border cursor-pointer text-center ${
-                          isSelected ? 'border-blue-500 bg-blue-900/20 text-blue-400' : 'border-gray-700 bg-gray-900 text-gray-400'
-                        }`}>
-                        {age}
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* Locations (Optional) */}
-              <div>
-                <label className="block text-lg font-semibold text-white mb-4">Target Locations (Optional)</label>
-                <select 
-                  multiple
-                  value={locations}
-                  onChange={(e) => {
-                    const selected = Array.from(e.target.selectedOptions, option => option.value);
-                    setLocations(selected);
-                  }}
-                  className="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-lg text-white focus:outline-none focus:border-blue-500"
-                  size="8">
-                  {indianCities.map(city => (
-                    <option key={city} value={city} className="py-2">{city}</option>
-                  ))}
-                </select>
-                <p className="text-xs text-gray-500 mt-2">Hold Ctrl/Cmd to select multiple cities</p>
-                {locations.length > 0 && (
-                  <div className="flex flex-wrap gap-2 mt-3">
-                    {locations.map(loc => (
-                      <div key={loc} className="px-3 py-1 bg-blue-900/20 border border-blue-700 rounded text-sm text-blue-400">
-                        {loc}
-                        <button onClick={() => setLocations(locations.filter(l => l !== loc))} className="ml-2 text-blue-300 hover:text-blue-100">×</button>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              {/* Summary */}
-              {selectedChannels.length > 0 && (
-                <div className="p-4 bg-blue-900/20 border border-blue-700 rounded-lg">
-                  <h4 className="text-white font-medium mb-3">Targeting Summary</h4>
-                  <div className="space-y-2 text-sm">
-                    <div className="flex justify-between">
-                      <span className="text-gray-400">Channels:</span>
-                      <span className="text-white font-medium">{selectedChannels.join(', ')}</span>
+            {/* Intent Level */}
+            <div className="bg-gray-800 rounded-xl p-6 border border-gray-700">
+              <label className="block text-lg font-semibold text-white mb-4">Intent Level *</label>
+              <div className="grid grid-cols-3 gap-4">
+                {['High', 'Medium', 'Low'].map(level => (
+                  <div
+                    key={level}
+                    onClick={() => setIntentLevel(level)}
+                    className={`p-6 rounded-xl border-2 cursor-pointer transition-all ${
+                      intentLevel === level
+                        ? level === 'High' ? 'border-green-500 bg-green-500/10'
+                        : level === 'Medium' ? 'border-yellow-500 bg-yellow-500/10'
+                        : 'border-gray-500 bg-gray-500/10'
+                        : 'border-gray-700 bg-gray-900 hover:border-gray-600'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-white font-medium">{level} Intent</span>
+                      <div className={`w-4 h-4 rounded-full border-2 ${
+                        intentLevel === level 
+                          ? level === 'High' ? 'border-green-500 bg-green-500'
+                          : level === 'Medium' ? 'border-yellow-500 bg-yellow-500'
+                          : 'border-gray-500 bg-gray-500'
+                          : 'border-gray-600'
+                      }`} />
                     </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-400">Intent Level:</span>
-                      <span className="text-white font-medium">{intentLevel}</span>
-                    </div>
-                    {ageGroups.length > 0 && (
-                      <div className="flex justify-between">
-                        <span className="text-gray-400">Age Groups:</span>
-                        <span className="text-white font-medium">{ageGroups.join(', ')}</span>
-                      </div>
-                    )}
-                    {locations.length > 0 && (
-                      <div className="flex justify-between">
-                        <span className="text-gray-400">Locations:</span>
-                        <span className="text-white font-medium">{locations.join(', ')}</span>
-                      </div>
-                    )}
+                    <p className="text-sm text-gray-400">
+                      {level === 'High' && 'Ready to buy'}
+                      {level === 'Medium' && 'Considering'}
+                      {level === 'Low' && 'Browsing'}
+                    </p>
                   </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Value Intelligence */}
+            <div className="bg-gradient-to-br from-purple-900/30 to-indigo-900/30 border-2 border-purple-500 rounded-xl p-6">
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <h3 className="text-xl font-semibold text-white mb-2">Value Intelligence Targeting</h3>
+                  <p className="text-gray-300 text-sm">Target by identity, values & premium readiness</p>
+                </div>
+                <button
+                  onClick={() => setTargetingType(targetingType === 'value_intelligence' ? 'intent' : 'value_intelligence')}
+                  className={`px-4 py-2 rounded-lg font-medium ${
+                    targetingType === 'value_intelligence'
+                      ? 'bg-purple-600 text-white'
+                      : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                  }`}
+                >
+                  {targetingType === 'value_intelligence' ? 'Enabled' : 'Enable'}
+                </button>
+              </div>
+
+              {targetingType === 'value_intelligence' ? (
+                <div className="mt-6">
+                    onTargetingChange={(config) => setValueIntelligenceConfig(config)}
+                  />
+                </div>
+              ) : (
+                <div className="bg-gray-800/50 rounded-lg p-4 border border-gray-700">
+                  <p className="text-gray-400 text-sm">
+                    Enable to access advanced targeting by customer identity and values
+                  </p>
                 </div>
               )}
             </div>
 
-            <div className="mt-8 flex items-center justify-between pt-6 border-t border-gray-700">
-              <button onClick={() => setCurrentStep(2)}
-                className="flex items-center gap-2 px-6 py-3 bg-gray-700 text-white rounded-lg hover:bg-gray-600">
-                <ArrowLeft size={20} /> Back
+                        {/* Distribution Channels */}
+            <div className="bg-gray-800 rounded-xl p-6 border border-gray-700">
+              <DistributionChannels 
+                selectedChannels={selectedChannels}
+                onChannelChange={setSelectedChannels}
+              />
+            </div>
+
+            {/* Navigation */}
+            <div className="flex justify-between pt-6">
+              <button
+                onClick={() => setCurrentStep(2)}
+                className="px-6 py-3 bg-gray-700 hover:bg-gray-600 text-white rounded-lg font-medium"
+              >
+                Previous
               </button>
-              <button onClick={() => setCurrentStep(4)} disabled={!isStep3Valid}
-                className="flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed">
-                Continue <ArrowRight size={20} />
+              <button
+                onClick={() => setCurrentStep(4)}
+                disabled={selectedChannels.length === 0}
+                className={`px-6 py-3 rounded-lg font-medium ${
+                  selectedChannels.length === 0
+                    ? 'bg-gray-700 text-gray-500 cursor-not-allowed'
+                    : 'bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white'
+                }`}
+              >
+                Continue to Review
               </button>
             </div>
           </div>
