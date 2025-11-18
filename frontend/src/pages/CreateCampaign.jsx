@@ -5,6 +5,7 @@ import {
   CheckCircle, Circle, ShoppingCart, X, Info, Target
 } from 'lucide-react';
 import ValueIntelligenceTab from '../components/ValueIntelligenceTab';
+import PricingCalculator from '../components/PricingCalculator';
 import DistributionChannels from '../components/DistributionChannels';
 
 export default function CreateCampaign() {

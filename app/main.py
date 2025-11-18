@@ -2252,7 +2252,7 @@ async def get_superego_insights():
 
 @app.post("/api/v1/ad-approval/submit")
 async def submit_campaign_for_approval(campaign_data: dict):
-    """Submit a campaign for AI validation and approval"""
+    """Submit a campaign for AI validation and approval with pricing calculation"""
     import sqlite3
     import uuid
     from datetime import datetime
@@ -2262,7 +2262,16 @@ async def submit_campaign_for_approval(campaign_data: dict):
     
     submission_id = str(uuid.uuid4())[:16]
     
-    # Store submission
+    # Calculate pricing
+    pricing = PricingEngine.calculate_campaign_cost(
+        intent_level=campaign_data.get('intent_level', 'Medium'),
+        use_value_intelligence=campaign_data.get('use_value_intelligence', False),
+        channels=[{'name': ch, 'ad_types': ['default']} for ch in campaign_data.get('channels', [])],
+        budget=campaign_data.get('budget', 10000),
+        duration_days=30
+    )
+    
+    # Store submission with pricing data
     cursor.execute("""
         INSERT INTO campaign_submissions 
         (submission_id, campaign_id, brand_name, campaign_name, objective, 
@@ -2291,7 +2300,8 @@ async def submit_campaign_for_approval(campaign_data: dict):
         "submission_id": submission_id,
         "status": "submitted",
         "validation_triggered": True,
-        "initial_assessment": validation_result
+        "initial_assessment": validation_result,
+        "pricing_data": pricing
     }
 
 
@@ -2554,6 +2564,15 @@ async def get_approval_details(submission_id: str):
     
     conn.close()
     
+    # Calculate pricing for this submission
+    pricing = PricingEngine.calculate_campaign_cost(
+        intent_level='Medium',  # Default, should come from submission
+        use_value_intelligence=False,
+        channels=[{'name': 'Zepto', 'ad_types': ['sponsored_products']}],
+        budget=submission[7] if submission[7] else 10000,
+        duration_days=30
+    )
+    
     return {
         "submission_id": submission_id,
         "brand_name": submission[2],
@@ -2561,6 +2580,12 @@ async def get_approval_details(submission_id: str):
         "objective": submission[4],
         "budget": submission[7],
         "status": submission[8],
+        "pricing_data": pricing,
+        "pricing_strategy": pricing['pricing_strategy'],
+        "estimated_cpm": pricing['effective_cpm'],
+        "expected_conversions": pricing['expected_conversions'],
+        "cost_per_acquisition": pricing['cost_per_conversion'],
+        "estimated_reach": pricing['estimated_reach'],
         "validation_results": [
             {
                 "pillar": v[0],
@@ -2585,6 +2610,91 @@ async def get_approval_details(submission_id: str):
             {"rule_id": r[0], "pillar": r[1], "name": r[2], "severity": r[3]}
             for r in rules
         ]
+    }
+
+
+
+
+# ============================================
+# DYNAMIC PRICING ENGINE ENDPOINTS
+# ============================================
+
+@app.post("/api/v1/pricing/calculate")
+async def calculate_pricing(pricing_request: dict):
+    """Calculate campaign pricing based on Intent + Value Intelligence"""
+    
+    intent_level = pricing_request.get('intent_level', 'Medium')
+    use_value_intelligence = pricing_request.get('use_value_intelligence', False)
+    channels = pricing_request.get('channels', [])
+    budget = pricing_request.get('budget', 10000)
+    duration_days = pricing_request.get('duration_days', 30)
+    
+    pricing = PricingEngine.calculate_campaign_cost(
+        intent_level=intent_level,
+        use_value_intelligence=use_value_intelligence,
+        channels=channels,
+        budget=budget,
+        duration_days=duration_days
+    )
+    
+    return pricing
+
+
+@app.get("/api/v1/pricing/tiers")
+async def get_pricing_tiers():
+    """Get all available pricing tiers and multipliers"""
+    return PricingEngine.get_pricing_tiers()
+
+
+@app.post("/api/v1/pricing/compare")
+async def compare_pricing_strategies(comparison_request: dict):
+    """Compare all pricing strategies for given budget"""
+    
+    budget = comparison_request.get('budget', 10000)
+    channels = comparison_request.get('channels', [])
+    duration_days = comparison_request.get('duration_days', 30)
+    
+    comparison = PricingEngine.compare_pricing_strategies(
+        budget=budget,
+        channels=channels,
+        duration_days=duration_days
+    )
+    
+    return comparison
+
+
+@app.get("/api/v1/pricing/estimate")
+async def estimate_campaign_performance(
+    intent_level: str = "Medium",
+    use_vi: bool = False,
+    budget: float = 10000,
+    duration: int = 30
+):
+    """Quick estimate of campaign performance"""
+    
+    # Default channels for estimation
+    default_channels = [
+        {'name': 'Zepto', 'ad_types': ['sponsored_products']},
+        {'name': 'Instagram', 'ad_types': ['feed_ads']}
+    ]
+    
+    pricing = PricingEngine.calculate_campaign_cost(
+        intent_level=intent_level,
+        use_value_intelligence=use_vi,
+        channels=default_channels,
+        budget=budget,
+        duration_days=duration
+    )
+    
+    return {
+        'quick_estimate': {
+            'budget': budget,
+            'estimated_impressions': pricing['estimated_impressions'],
+            'estimated_clicks': pricing['expected_clicks'],
+            'estimated_conversions': pricing['expected_conversions'],
+            'cost_per_conversion': pricing['cost_per_conversion'],
+            'pricing_strategy': pricing['pricing_strategy']
+        }
     }
 
 

@@ -186,7 +186,56 @@ export default function AdApproval() {
                     <div>
                       <p className="text-gray-400 text-sm">Objective</p>
                       <p className="text-white font-semibold">{selectedSubmission.objective}</p>
+                    
+                  </div>
+
+                  {/* Pricing Details */}
+                  {selectedSubmission.pricing_data && (
+                    <div className="mt-6">
+                      <PricingSummary pricingData={selectedSubmission.pricing_data} />
                     </div>
+                  )}
+                  
+                  {!selectedSubmission.pricing_data && (
+                  <div className="mt-6 p-6 bg-gradient-to-r from-green-900/20 to-blue-900/20 border-2 border-green-700 rounded-lg">
+                    <h4 className="text-white font-semibold mb-4 flex items-center gap-2">
+                      <TrendingUp className="w-5 h-5 text-green-400" />
+                      Pricing Strategy & Estimates
+                    </h4>
+                    
+                    <div className="grid grid-cols-3 gap-4">
+                      <div className="bg-gray-900/50 p-4 rounded-lg">
+                        <div className="text-gray-400 text-sm mb-1">Pricing Model</div>
+                        <div className="text-white font-semibold">
+                          {selectedSubmission.pricing_strategy || 'Medium Intent'}
+                        </div>
+                      </div>
+                      
+                      <div className="bg-gray-900/50 p-4 rounded-lg">
+                        <div className="text-gray-400 text-sm mb-1">Estimated CPM</div>
+                        <div className="text-white font-semibold">
+                          ₹{selectedSubmission.estimated_cpm || '80.00'}
+                        </div>
+                      </div>
+                      
+                      <div className="bg-gray-900/50 p-4 rounded-lg">
+                        <div className="text-gray-400 text-sm mb-1">Est. Conversions</div>
+                        <div className="text-green-400 font-bold text-lg">
+                          {selectedSubmission.expected_conversions || 'TBD'}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="mt-4 p-3 bg-green-900/20 border border-green-700 rounded">
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-gray-300">Expected Cost per Acquisition (CPA)</span>
+                        <span className="text-green-400 font-bold text-lg">
+                          ₹{selectedSubmission.cost_per_acquisition || 'Calculating...'}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                  <div></div>
                     <div>
                       <p className="text-gray-400 text-sm">Budget</p>
                       <p className="text-white font-semibold">₹{selectedSubmission.budget?.toLocaleString()}</p>
