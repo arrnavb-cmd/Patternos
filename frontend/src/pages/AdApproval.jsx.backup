@@ -233,10 +233,9 @@ export default function AdApproval() {
                           ₹{selectedSubmission.cost_per_acquisition || 'Calculating...'}
                         </span>
                       </div>
+                    )} {/* Close !selectedSubmission.pricing_data conditional */}
                     </div>
                   </div>
-                    )}
-
                     <div>
                       <p className="text-gray-400 text-sm">Budget</p>
                       <p className="text-white font-semibold">₹{selectedSubmission?.budget || 0}</p>

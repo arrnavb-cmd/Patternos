@@ -527,6 +527,7 @@ export default function CreateCampaign() {
 
               {targetingType === 'value_intelligence' ? (
                 <div className="mt-6">
+                    <ValueIntelligence
                     onTargetingChange={(config) => setValueIntelligenceConfig(config)}
                   />
                 </div>
