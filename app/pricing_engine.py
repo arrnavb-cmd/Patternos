@@ -1,6 +1,8 @@
 """
-Dynamic Pricing Engine
-Calculates campaign costs based on Intent Level + Value Intelligence
+Dynamic Pricing Engine - CORRECTED MODEL
+Base CPM: ₹100
+Multipliers: High=1.0x, Medium=0.7x, Low=0.4x
+Value Intelligence: +0.5x ADDITIVE premium
 """
 
 from typing import Dict, List
@@ -8,19 +10,20 @@ from datetime import datetime
 
 class PricingEngine:
     
-    # Base CPM rates (Cost Per Mille/1000 impressions)
-    BASE_RATES = {
-        'intent': {
-            'High': 150,      # ₹150 per 1000 impressions
-            'Medium': 80,     # ₹80 per 1000 impressions
-            'Low': 40         # ₹40 per 1000 impressions
-        },
-        'value_intelligence': {
-            'multiplier': 1.5  # 50% premium for Value Intelligence targeting
-        }
+    # Base CPM (starting point for all calculations)
+    BASE_CPM = 100  # ₹100 per 1000 impressions
+    
+    # Intent multipliers (applied to base)
+    INTENT_MULTIPLIERS = {
+        'High': 1.0,      # ₹100 × 1.0 = ₹100
+        'Medium': 0.7,    # ₹100 × 0.7 = ₹70
+        'Low': 0.4        # ₹100 × 0.4 = ₹40
     }
     
-    # Channel-specific multipliers
+    # Value Intelligence premium (ADDITIVE, not multiplicative)
+    VALUE_INTELLIGENCE_PREMIUM = 0.5  # +₹50 when base is ₹100
+    
+    # Channel-specific multipliers (same as before)
     CHANNEL_MULTIPLIERS = {
         'Zepto': {
             'sponsored_products': 1.2,
@@ -65,43 +68,46 @@ class PricingEngine:
                                budget: float,
                                duration_days: int) -> Dict:
         """
-        Calculate campaign costs with detailed breakdown
+        Calculate campaign costs with CORRECTED additive VI model
         
-        Args:
-            intent_level: 'High', 'Medium', or 'Low'
-            use_value_intelligence: True if using Super-Ego targeting
-            channels: List of dicts with {channel_name, ad_types}
-            budget: Total campaign budget
-            duration_days: Campaign duration
-            
-        Returns:
-            Dict with pricing breakdown
+        Formula:
+        Effective CPM = (BASE_CPM × Intent_Multiplier + VI_Premium) × Channel_Multiplier
+        
+        Examples:
+        High Intent + VI + Zepto:
+        (₹100 × 1.0 + ₹50) × 1.2 = ₹180
+        
+        Medium Intent + VI:
+        (₹100 × 0.7 + ₹50) × 1.0 = ₹120
+        
+        Low Intent only:
+        (₹100 × 0.4 + ₹0) × 1.0 = ₹40
         """
         
-        # Get base CPM rate
-        base_cpm = cls.BASE_RATES['intent'].get(intent_level, 80)
+        # Step 1: Get intent multiplier
+        intent_multiplier = cls.INTENT_MULTIPLIERS.get(intent_level, 0.7)
+        base_with_intent = cls.BASE_CPM * intent_multiplier
         
-        # Apply Value Intelligence premium
+        # Step 2: Add Value Intelligence premium (ADDITIVE)
         if use_value_intelligence:
-            vi_multiplier = cls.BASE_RATES['value_intelligence']['multiplier']
-            effective_cpm = base_cpm * vi_multiplier
+            vi_premium = cls.BASE_CPM * cls.VALUE_INTELLIGENCE_PREMIUM
             pricing_strategy = f"{intent_level} Intent + Value Intelligence"
         else:
-            effective_cpm = base_cpm
+            vi_premium = 0
             pricing_strategy = f"{intent_level} Intent"
         
-        # Calculate channel-specific costs
+        # Effective CPM before channel multipliers
+        base_effective_cpm = base_with_intent + vi_premium
+        
+        # Step 3: Calculate channel-specific costs
         channel_breakdown = []
-        total_weighted_multiplier = 0
+        total_weighted_cpm = 0
         
         for channel_config in channels:
             channel_name = channel_config.get('name')
-            ad_types = channel_config.get('ad_types', [])
+            ad_types = channel_config.get('ad_types', ['default'])
             
-            if not ad_types:
-                ad_types = ['default']
-            
-            # Calculate average multiplier for this channel
+            # Get channel multipliers
             channel_multipliers = cls.CHANNEL_MULTIPLIERS.get(channel_name, {})
             if channel_multipliers:
                 avg_multiplier = sum(
@@ -110,23 +116,26 @@ class PricingEngine:
             else:
                 avg_multiplier = 1.0
             
-            channel_cpm = effective_cpm * avg_multiplier
-            total_weighted_multiplier += avg_multiplier
+            # Final CPM for this channel
+            channel_cpm = base_effective_cpm * avg_multiplier
+            total_weighted_cpm += channel_cpm
             
             channel_breakdown.append({
                 'channel': channel_name,
                 'ad_types': ad_types,
                 'cpm': round(channel_cpm, 2),
-                'multiplier': round(avg_multiplier, 2)
+                'multiplier': round(avg_multiplier, 2),
+                'base_cpm': round(base_effective_cpm, 2)
             })
         
-        # Calculate estimated reach
+        # Average CPM across all channels
         num_channels = len(channels)
-        avg_cpm = effective_cpm * (total_weighted_multiplier / num_channels if num_channels > 0 else 1)
-        estimated_impressions = int((budget / avg_cpm) * 1000)
-        estimated_reach = int(estimated_impressions * 0.7)  # Assuming 70% unique reach
+        avg_cpm = total_weighted_cpm / num_channels if num_channels > 0 else base_effective_cpm
         
-        # Calculate estimated performance metrics
+        # Step 4: Calculate estimated performance metrics
+        estimated_impressions = int((budget / avg_cpm) * 1000)
+        estimated_reach = int(estimated_impressions * 0.7)  # 70% unique reach
+        
         expected_ctr = cls._estimate_ctr(intent_level, use_value_intelligence)
         expected_clicks = int(estimated_impressions * expected_ctr)
         expected_conversions = int(expected_clicks * cls._estimate_conversion_rate(intent_level, use_value_intelligence))
@@ -139,8 +148,11 @@ class PricingEngine:
             'pricing_strategy': pricing_strategy,
             'intent_level': intent_level,
             'uses_value_intelligence': use_value_intelligence,
-            'base_cpm': round(base_cpm, 2),
-            'effective_cpm': round(effective_cpm, 2),
+            'base_cpm': cls.BASE_CPM,
+            'intent_multiplier': intent_multiplier,
+            'intent_cpm': round(base_with_intent, 2),
+            'vi_premium': round(vi_premium, 2),
+            'effective_cpm_base': round(base_effective_cpm, 2),
             'average_cpm': round(avg_cpm, 2),
             'total_budget': budget,
             'duration_days': duration_days,
@@ -152,7 +164,12 @@ class PricingEngine:
             'cost_per_click': round(cost_per_click, 2),
             'cost_per_conversion': round(cost_per_conversion, 2),
             'channel_breakdown': channel_breakdown,
-            'value_intelligence_premium': round((effective_cpm - base_cpm), 2) if use_value_intelligence else 0
+            'pricing_breakdown': {
+                'base': f"₹{cls.BASE_CPM}",
+                'intent': f"₹{cls.BASE_CPM} × {intent_multiplier} = ₹{base_with_intent:.0f}",
+                'vi_premium': f"+ ₹{vi_premium:.0f}" if use_value_intelligence else "+ ₹0",
+                'total': f"= ₹{base_effective_cpm:.0f}"
+            }
         }
     
     @classmethod
@@ -187,30 +204,41 @@ class PricingEngine:
     
     @classmethod
     def get_pricing_tiers(cls) -> Dict:
-        """Get all available pricing tiers"""
+        """Get all available pricing tiers with corrected model"""
         return {
+            'base_cpm': cls.BASE_CPM,
+            'model': 'additive',
+            'formula': '(BASE_CPM × Intent_Multiplier) + VI_Premium',
             'intent_tiers': [
                 {
                     'level': 'High',
-                    'base_cpm': cls.BASE_RATES['intent']['High'],
+                    'multiplier': cls.INTENT_MULTIPLIERS['High'],
+                    'cpm_without_vi': cls.BASE_CPM * cls.INTENT_MULTIPLIERS['High'],
+                    'cpm_with_vi': cls.BASE_CPM * (cls.INTENT_MULTIPLIERS['High'] + cls.VALUE_INTELLIGENCE_PREMIUM),
                     'description': 'Ready to buy - highest conversion',
                     'best_for': 'Direct sales, conversions, retargeting'
                 },
                 {
                     'level': 'Medium',
-                    'base_cpm': cls.BASE_RATES['intent']['Medium'],
+                    'multiplier': cls.INTENT_MULTIPLIERS['Medium'],
+                    'cpm_without_vi': cls.BASE_CPM * cls.INTENT_MULTIPLIERS['Medium'],
+                    'cpm_with_vi': cls.BASE_CPM * (cls.INTENT_MULTIPLIERS['Medium'] + cls.VALUE_INTELLIGENCE_PREMIUM),
                     'description': 'Considering - good engagement',
                     'best_for': 'Brand awareness, consideration'
                 },
                 {
                     'level': 'Low',
-                    'base_cpm': cls.BASE_RATES['intent']['Low'],
+                    'multiplier': cls.INTENT_MULTIPLIERS['Low'],
+                    'cpm_without_vi': cls.BASE_CPM * cls.INTENT_MULTIPLIERS['Low'],
+                    'cpm_with_vi': cls.BASE_CPM * (cls.INTENT_MULTIPLIERS['Low'] + cls.VALUE_INTELLIGENCE_PREMIUM),
                     'description': 'Browsing - mass reach',
                     'best_for': 'Top of funnel, brand discovery'
                 }
             ],
             'value_intelligence': {
-                'premium': cls.BASE_RATES['value_intelligence']['multiplier'],
+                'premium': cls.VALUE_INTELLIGENCE_PREMIUM,
+                'type': 'additive',
+                'amount': f"₹{cls.BASE_CPM * cls.VALUE_INTELLIGENCE_PREMIUM}",
                 'description': 'Identity-based targeting for higher ROI',
                 'benefit': '40-60% higher conversion rates'
             }
@@ -231,6 +259,8 @@ class PricingEngine:
         return {
             'budget': budget,
             'duration_days': duration_days,
+            'base_cpm': cls.BASE_CPM,
+            'model': 'additive (VI is added, not multiplied)',
             'strategies': comparisons
         }
 
