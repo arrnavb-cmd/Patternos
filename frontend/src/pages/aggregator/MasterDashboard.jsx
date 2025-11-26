@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { DollarSign, TrendingUp, Users, AlertTriangle, Target, BarChart3, Wallet } from 'lucide-react';
 
+const API_BASE_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000';
+
 export default function MasterDashboard() {
   const navigate = useNavigate();
   const [intentStats, setIntentStats] = useState(null);
@@ -32,14 +34,14 @@ export default function MasterDashboard() {
   const fetchData = async () => {
     try {
       const [intentRes, commerceRes, platformRes, brandsRes, oppsRes, visualRes, voiceRes, scoringRes] = await Promise.all([
-        fetch('http://localhost:8000/api/master/intent-stats?clientId=zepto'),
-        fetch('http://localhost:8000/api/master/dashboard-v2?clientId=zepto'),
-        fetch(`http://localhost:8000/api/master/platform-revenue?period=${period}`),
-        fetch(`http://localhost:8000/api/master/brand-performance-v2?period=${brandPeriod}`),
-        fetch('http://localhost:8000/api/master/revenue-opportunities?clientId=zepto&minScore=0.7'),
-        fetch('http://localhost:8000/api/v1/visual-intelligence/summary'),
-        fetch('http://localhost:8000/api/v1/voice-intelligence/summary'),
-        fetch('http://localhost:8000/api/scoring/summary')
+        fetch(`${API_BASE_URL}/api/master/intent-stats?clientId=zepto`),
+        fetch(`${API_BASE_URL}/api/master/dashboard-v2?clientId=zepto`),
+        fetch(`${API_BASE_URL}/api/master/platform-revenue?period=${period}`),
+        fetch(`${API_BASE_URL}/api/master/brand-performance-v2?period=${brandPeriod}`),
+        fetch(`${API_BASE_URL}/api/master/revenue-opportunities?clientId=zepto&minScore=0.7`),
+        fetch(`${API_BASE_URL}/api/v1/visual-intelligence/summary`),
+        fetch(`${API_BASE_URL}/api/v1/voice-intelligence/summary`),
+        fetch(`${API_BASE_URL}/api/scoring/summary`)
       ]);
       
       const intentData = await intentRes.json();
@@ -49,311 +51,138 @@ export default function MasterDashboard() {
       const oppsData = await oppsRes.json();
       const visualData = await visualRes.json();
       const voiceData = await voiceRes.json();
-      
-      const transformedCommerce = {
-        summary: {
-          totalRevenue: commerceData.total_gmv || 0,
-          attributedRevenue: commerceData.attributed_revenue || 0,
-          attributionRate: commerceData.total_gmv > 0 ? Math.round((commerceData.attributed_revenue / commerceData.total_gmv) * 100) : 0
-        },
-        high_intent_users: commerceData.high_intent_users || 0,
-        brands: brandsData.brands || []
-      };
+      const scoringData = await scoringRes.json();
       
       setIntentStats(intentData);
-      setCommerceData(transformedCommerce);
+      setCommerceData(commerceData);
       setPlatformRevenue(platformData);
       setOpportunities(oppsData.opportunities || []);
       setVisualData(visualData);
       setVoiceData(voiceData);
-      
-      const scoringData = await scoringRes.json();
       setScoringSummary(scoringData);
       setLoading(false);
     } catch (error) {
-      console.error('Failed to fetch data:', error);
+      console.error('Error fetching dashboard data:', error);
       setLoading(false);
     }
-  };
-
-  const formatCurrency = (amount) => {
-    if (!amount || amount === 0) return '₹0';
-    if (amount >= 10000000) return '₹' + (amount / 10000000).toFixed(1) + 'Cr';
-    if (amount >= 100000) return '₹' + (amount / 100000).toFixed(1) + 'L';
-    return '₹' + amount.toLocaleString();
   };
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-900 flex items-center justify-center">
-        <div className="text-white">Loading dashboard...</div>
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
       </div>
     );
   }
 
-  const platformMetrics = [
-    { 
-      label: 'Total GMV', 
-      value: formatCurrency(commerceData?.summary?.totalRevenue || 0), 
-      subtext: 'All purchases', 
-      icon: DollarSign, 
-      color: 'text-blue-400' 
-    },
-    { 
-      label: 'Attributed Revenue', 
-      value: formatCurrency(commerceData?.summary?.attributedRevenue || 0), 
-      subtext: `${commerceData?.summary?.attributionRate || 0}% from ads`, 
-      icon: TrendingUp, 
-      color: 'text-green-400' 
-    },
-    { 
-      label: 'Users Tracked', 
-      value: intentStats?.totalUsers || 0, 
-      subtext: 'Active shoppers', 
-      icon: Users, 
-      color: 'text-purple-400' 
-    },
-    { 
-      label: 'High Intent Users', 
-      value: commerceData?.high_intent_users || 0, 
-      subtext: 'Ready to purchase', 
-      icon: Target, 
-      color: 'text-orange-400' 
-    }
-  ];
-
-  const highIntentCount = intentStats?.intentDistribution?.high || 0;
-  
-  // Get top 5 brands by revenue
-  const topBrands = (Array.isArray(commerceData?.brands) ? commerceData.brands : []).sort((a, b) => (b.revenue || 0) - (a.revenue || 0)).slice(0, 5);
-
   return (
-    <div className="min-h-screen bg-slate-900">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-white mb-2">Zepto Master Dashboard</h1>
-          <p className="text-slate-400">Real-time commerce & advertising intelligence</p>
+    <div className="p-6 bg-gray-50 min-h-screen">
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold text-gray-900">PatternOS Master Dashboard</h1>
+        <p className="text-gray-600">Retail Media Intelligence Overview</p>
+      </div>
+
+      {/* Period Selector */}
+      <div className="mb-6 flex gap-4">
+        <select 
+          value={period} 
+          onChange={(e) => setPeriod(e.target.value)}
+          className="px-4 py-2 border rounded-lg"
+        >
+          <option value="daily">Daily</option>
+          <option value="weekly">Weekly</option>
+          <option value="monthly">Monthly</option>
+        </select>
+      </div>
+
+      {/* Stats Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+        <div className="bg-white p-6 rounded-lg shadow">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-gray-500 text-sm">Platform Revenue</p>
+              <p className="text-2xl font-bold">₹{platformRevenue?.totalRevenue?.toLocaleString() || '0'}</p>
+            </div>
+            <DollarSign className="h-10 w-10 text-green-500" />
+          </div>
         </div>
 
-        {/* Platform Metrics */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          {platformMetrics.map((metric, idx) => {
-            const Icon = metric.icon;
-            return (
-              <div key={idx} className="bg-slate-800 rounded-xl p-6 border border-slate-700">
-                <div className="flex items-center gap-3 mb-3">
-                  <div className={`w-12 h-12 rounded-lg ${metric.color.replace('text', 'bg').replace('400', '500/20')} flex items-center justify-center`}>
-                    <Icon className={metric.color} size={24} />
-                  </div>
-                </div>
-                <p className="text-slate-400 text-sm mb-1">{metric.label}</p>
-                <p className="text-3xl font-bold text-white mb-1">{metric.value}</p>
-                <p className="text-sm text-green-400">{metric.subtext}</p>
+        <div className="bg-white p-6 rounded-lg shadow">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-gray-500 text-sm">Active Intents</p>
+              <p className="text-2xl font-bold">{intentStats?.totalIntents?.toLocaleString() || '0'}</p>
+            </div>
+            <Target className="h-10 w-10 text-blue-500" />
+          </div>
+        </div>
+
+        <div className="bg-white p-6 rounded-lg shadow">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-gray-500 text-sm">High Intent Users</p>
+              <p className="text-2xl font-bold">{intentStats?.highIntentUsers?.toLocaleString() || '0'}</p>
+            </div>
+            <Users className="h-10 w-10 text-purple-500" />
+          </div>
+        </div>
+
+        <div className="bg-white p-6 rounded-lg shadow">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-gray-500 text-sm">Conversion Rate</p>
+              <p className="text-2xl font-bold">{commerceData?.conversionRate?.toFixed(2) || '0'}%</p>
+            </div>
+            <TrendingUp className="h-10 w-10 text-orange-500" />
+          </div>
+        </div>
+      </div>
+
+      {/* Intelligence Summary */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+        <div className="bg-white p-6 rounded-lg shadow">
+          <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+            <BarChart3 className="h-5 w-5 text-blue-600" />
+            Visual Intelligence
+          </h3>
+          <div className="space-y-2">
+            <p>Total Scans: {visualData?.totalScans?.toLocaleString() || '0'}</p>
+            <p>Products Identified: {visualData?.productsIdentified?.toLocaleString() || '0'}</p>
+            <p>Accuracy: {visualData?.accuracy?.toFixed(1) || '0'}%</p>
+          </div>
+        </div>
+
+        <div className="bg-white p-6 rounded-lg shadow">
+          <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+            <Wallet className="h-5 w-5 text-green-600" />
+            Voice Intelligence
+          </h3>
+          <div className="space-y-2">
+            <p>Voice Queries: {voiceData?.totalQueries?.toLocaleString() || '0'}</p>
+            <p>Languages: {voiceData?.languagesSupported || '0'}</p>
+            <p>Success Rate: {voiceData?.successRate?.toFixed(1) || '0'}%</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Revenue Opportunities */}
+      <div className="bg-white p-6 rounded-lg shadow">
+        <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+          <AlertTriangle className="h-5 w-5 text-yellow-600" />
+          Revenue Opportunities
+        </h3>
+        {opportunities.length > 0 ? (
+          <div className="space-y-3">
+            {opportunities.slice(0, 5).map((opp, idx) => (
+              <div key={idx} className="flex justify-between items-center p-3 bg-gray-50 rounded">
+                <span>{opp.description}</span>
+                <span className="font-semibold text-green-600">₹{opp.value?.toLocaleString()}</span>
               </div>
-            );
-          })}
-        </div>
-
-        {/* Platform Revenue Section */}
-        
-        {/* Period Toggle */}
-        <div className="mb-6 flex justify-end">
-          <div className="inline-flex rounded-lg bg-slate-800 p-1">
-            {['monthly', 'quarterly', 'half-yearly', 'yearly'].map(p => (
-              <button
-                key={p}
-                onClick={() => setPeriod(p)}
-                className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                  period === p 
-                    ? 'bg-purple-600 text-white' 
-                    : 'text-slate-400 hover:text-white'
-                }`}
-              >
-                {p.charAt(0).toUpperCase() + p.slice(1).replace('-', ' ')}
-              </button>
             ))}
           </div>
-        </div>
-
-        {platformRevenue && (
-          <div className="mb-8 bg-gradient-to-r from-purple-900/20 to-blue-900/20 border border-purple-500/30 rounded-xl p-6">
-            <div className="flex items-center gap-3 mb-4">
-              <Wallet className="text-purple-400" size={24} />
-              <div>
-                <h3 className="text-lg font-bold text-white">PatternOS Platform Revenue</h3>
-                <p className="text-slate-400 text-sm">Zepto's earnings from advertising platform</p>
-              </div>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              <div className="bg-slate-800/50 rounded-lg p-4">
-                <p className="text-slate-400 text-sm mb-1">Monthly Retainer</p>
-                <p className="text-2xl font-bold text-green-400">
-                  {formatCurrency(platformRevenue.monthly_retainer || 300000)}
-                </p>
-                <p className="text-xs text-slate-500 mt-1">
-                  Fixed platform fee
-                </p>
-              </div>
-              <div className="bg-slate-800/50 rounded-lg p-4">
-                <p className="text-slate-400 text-sm mb-1">Ad Commission (10%)</p>
-                <p className="text-2xl font-bold text-purple-400">
-                  {formatCurrency(platformRevenue.ad_commission)}
-                </p>
-                <p className="text-xs text-slate-500 mt-1">
-                  From {formatCurrency(platformRevenue.total_ad_spend || platformRevenue.totalAdSpend)} ad spend
-                </p>
-              </div>
-              <div className="bg-slate-800/50 rounded-lg p-4">
-                <p className="text-slate-400 text-sm mb-1">High-Intent Premium (20%)</p>
-                <p className="text-2xl font-bold text-blue-400">
-                  {formatCurrency(platformRevenue.high_intent_premium || platformRevenue.platformIntentShare)}
-                </p>
-                <p className="text-xs text-slate-500 mt-1">
-                  From {formatCurrency(platformRevenue.high_intent_campaign_spend || 0)} high-intent campaigns
-                </p>
-              </div>
-              <div className="bg-slate-800/50 rounded-lg p-4 border-2 border-purple-500/50">
-                <p className="text-slate-400 text-sm mb-1">Total Platform Revenue</p>
-                <p className="text-3xl font-bold text-white">
-                  {formatCurrency(platformRevenue.total_revenue)}
-                </p>
-                <p className="text-xs text-green-400 mt-1">Per month (incl. retainer)</p>
-              </div>
-            </div>
-          </div>
+        ) : (
+          <p className="text-gray-500">No opportunities at this time</p>
         )}
-
-        {/* High Intent Alert */}
-        <div className="mb-8 bg-gradient-to-r from-orange-900/20 to-red-900/20 border border-orange-500/30 rounded-xl p-6">
-          <div className="flex items-center gap-3 mb-4">
-            <AlertTriangle className="text-orange-400" size={24} />
-            <div>
-              <h3 className="text-lg font-bold text-white">{highIntentCount} High-Intent Users Detected</h3>
-              <p className="text-slate-400 text-sm">Contact brands immediately to capture revenue</p>
-            </div>
-          </div>
-          <button 
-            onClick={() => navigate('/intent')}
-            className="px-6 py-3 bg-orange-600 hover:bg-orange-700 text-white rounded-lg font-medium transition-colors"
-          >
-            View Intent Intelligence →
-          </button>
-        </div>
-
-        {/* Revenue Opportunities by Category */}
-        <div className="mb-8 bg-slate-800 rounded-xl p-6 border border-slate-700">
-          <div className="flex items-center justify-between mb-6">
-            <div>
-              <h2 className="text-xl font-bold text-white mb-2">Revenue Opportunities by Category</h2>
-              <p className="text-sm text-slate-400">Real-time data from Intent Intelligence database</p>
-            </div>
-          </div>
-          {opportunities.length === 0 ? (
-            <div className="text-center py-8 text-slate-400">
-              No high-intent opportunities detected yet.
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {(Array.isArray(opportunities) ? opportunities : []).map((opp, idx) => (
-                <div key={idx} className="bg-slate-700/50 rounded-lg p-4">
-                  <div className="flex items-center justify-between mb-3">
-                    <h3 className="text-white font-bold capitalize">{opp.category}</h3>
-                    <span className="text-orange-400 font-bold text-sm">Score: {opp.avg_intent_score?.toFixed(2)}</span>
-                  </div>
-                  <div className="space-y-2 mb-3">
-                    <div className="text-sm text-slate-400">
-                      <span className="text-white font-medium">{opp.users?.toLocaleString()}</span> users • {formatCurrency(opp.potential_revenue)}
-                    </div>
-                    <div className="text-sm text-slate-400">
-                      High Intent: <span className="text-green-400 font-medium">{opp.high_intent_users?.toLocaleString()}</span>
-                    </div>
-                  </div>
-                  <button 
-                    onClick={() => navigate('/intent/high-intent')}
-                    className="w-full text-sm text-blue-400 hover:text-blue-300 text-center py-2 border border-slate-600 rounded hover:border-blue-500 transition-colors"
-                  >
-                    View all {opp.users} users →
-                  </button>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* Top 5 Brands Performance */}
-        <div className="bg-slate-800 rounded-xl p-6 border border-slate-700">
-          <div className="flex items-center gap-2 mb-6">
-            <BarChart3 className="text-blue-400" size={24} />
-            <div>
-              <h2 className="text-xl font-bold text-white">Top 5 Brand Performance</h2>
-              <p className="text-sm text-slate-400">Highest revenue generating brands</p>
-            </div>
-          </div>
-                    {/* Brand Period Toggle */}
-          <div className="mb-4 flex justify-end">
-            <div className="inline-flex rounded-lg bg-slate-700 p-1">
-              {['monthly', 'quarterly', 'half-yearly', 'yearly'].map(p => (
-                <button
-                  key={p}
-                  onClick={() => setBrandPeriod(p)}
-                  className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
-                    brandPeriod === p 
-                      ? 'bg-blue-600 text-white' 
-                      : 'text-slate-400 hover:text-white'
-                  }`}
-                >
-                  {p.charAt(0).toUpperCase() + p.slice(1).replace('-', ' ')}
-                </button>
-              ))}
-            </div>
-          </div>
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b border-slate-700">
-                  <th className="text-left py-3 px-4 text-sm font-medium text-slate-400">Rank</th>
-                  <th className="text-left py-3 px-4 text-sm font-medium text-slate-400">Brand</th>
-                  <th className="text-left py-3 px-4 text-sm font-medium text-slate-400">Ad Spend</th>
-                  <th className="text-left py-3 px-4 text-sm font-medium text-slate-400">Revenue</th>
-                  <th className="text-left py-3 px-4 text-sm font-medium text-slate-400">ROAS</th>
-                  <th className="text-left py-3 px-4 text-sm font-medium text-slate-400">Purchases</th>
-                  <th className="text-left py-3 px-4 text-sm font-medium text-slate-400">CTR</th>
-                  <th className="text-left py-3 px-4 text-sm font-medium text-slate-400">Conv Rate</th>
-                  <th className="text-left py-3 px-4 text-sm font-medium text-slate-400">Channels</th>
-                </tr>
-              </thead>
-              <tbody>
-                {topBrands.map((brand, idx) => (
-                  <tr key={idx} className="border-b border-slate-700/50 hover:bg-slate-700/30 transition-colors">
-                    <td className="py-4 px-4">
-                      <span className="text-white font-bold text-lg">#{idx + 1}</span>
-                    </td>
-                    <td className="py-4 px-4">
-                      <span className="text-white font-medium">{brand.brand}</span>
-                    </td>
-                    <td className="py-4 px-4 text-slate-300">{formatCurrency(brand.ad_spend)}</td>
-                    <td className="py-4 px-4 text-green-400 font-medium">{formatCurrency(brand.revenue)}</td>
-                    <td className="py-4 px-4 text-orange-400 font-bold">{brand.roas}x</td>
-                    <td className="py-4 px-4 text-slate-300">{brand.purchases?.toLocaleString()}</td>
-                    <td className="py-4 px-4 text-blue-400">{brand.ctr}%</td>
-                    <td className="py-4 px-4 text-purple-400">{brand.conv_rate}%</td>
-                    <td className="py-4 px-4 text-slate-400">Multi</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-          <div className="mt-4 text-center">
-            <button 
-              onClick={() => navigate('/analytics')}
-              className="text-blue-400 hover:text-blue-300 text-sm"
-            >
-              View all brands →
-            </button>
-          </div>
-        </div>
-
       </div>
     </div>
   );
