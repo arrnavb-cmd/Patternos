@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 const API_BASE_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000';
 
 export default function Login() {
-  const [email, setEmail] = useState('');
+  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -16,9 +16,8 @@ export default function Login() {
     setLoading(true);
 
     try {
-      // FastAPI OAuth2 expects form data with 'username' field
       const formData = new URLSearchParams();
-      formData.append('username', email);
+      formData.append('username', username);
       formData.append('password', password);
 
       const response = await fetch(`${API_BASE_URL}/auth/login`, {
@@ -32,20 +31,17 @@ export default function Login() {
       const data = await response.json();
 
       if (!response.ok) {
-        // Extract error message properly
         const errorMessage = typeof data.detail === 'string' 
           ? data.detail 
           : (data.detail?.[0]?.msg || data.message || data.error || 'Login failed');
         throw new Error(errorMessage);
       }
 
-      // Store token and user info
       localStorage.setItem('token', data.access_token || data.token);
       if (data.user) {
         localStorage.setItem('user', JSON.stringify(data.user));
       }
       
-      // Navigate based on role
       const role = data.user?.role || data.role || 'brand';
       if (role === 'aggregator' || role === 'admin') {
         navigate('/master-dashboard');
@@ -72,12 +68,12 @@ export default function Login() {
 
         <form onSubmit={handleSubmit}>
           <div className="mb-4">
-            <label className="block text-gray-700 mb-2">Email</label>
+            <label className="block text-gray-700 mb-2">Username</label>
             <input
               type="text"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="admin or admin@patternos.com"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              placeholder="admin"
               className="w-full p-3 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
               required
             />
@@ -89,6 +85,7 @@ export default function Login() {
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
+              placeholder="admin123"
               className="w-full p-3 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
               required
             />
@@ -104,7 +101,7 @@ export default function Login() {
         </form>
 
         <p className="text-center mt-4 text-gray-500">
-          Demo: admin/admin123
+          Demo: admin / admin123
         </p>
       </div>
     </div>
