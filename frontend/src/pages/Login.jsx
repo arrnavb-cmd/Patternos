@@ -16,25 +16,34 @@ export default function Login() {
     setLoading(true);
 
     try {
+      // FastAPI OAuth2 expects form data with 'username' field
+      const formData = new URLSearchParams();
+      formData.append('username', email);
+      formData.append('password', password);
+
       const response = await fetch(`${API_BASE_URL}/auth/login`, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
+          'Content-Type': 'application/x-www-form-urlencoded',
         },
-        body: JSON.stringify({ email, password }),
+        body: formData,
       });
 
       const data = await response.json();
 
       if (!response.ok) {
-        // Fix: Extract error message properly from response
-        const errorMessage = data.detail || data.message || data.error || 'Login failed';
+        // Extract error message properly
+        const errorMessage = typeof data.detail === 'string' 
+          ? data.detail 
+          : (data.detail?.[0]?.msg || data.message || data.error || 'Login failed');
         throw new Error(errorMessage);
       }
 
       // Store token and user info
       localStorage.setItem('token', data.access_token || data.token);
-      localStorage.setItem('user', JSON.stringify(data.user || data));
+      if (data.user) {
+        localStorage.setItem('user', JSON.stringify(data.user));
+      }
       
       // Navigate based on role
       const role = data.user?.role || data.role || 'brand';
@@ -44,7 +53,6 @@ export default function Login() {
         navigate('/brand-dashboard');
       }
     } catch (err) {
-      // Fix: Ensure we display string, not object
       setError(err.message || 'An error occurred during login');
     } finally {
       setLoading(false);
@@ -58,7 +66,7 @@ export default function Login() {
         
         {error && (
           <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
-            {typeof error === 'string' ? error : JSON.stringify(error)}
+            {error}
           </div>
         )}
 
@@ -66,9 +74,10 @@ export default function Login() {
           <div className="mb-4">
             <label className="block text-gray-700 mb-2">Email</label>
             <input
-              type="email"
+              type="text"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
+              placeholder="admin or admin@patternos.com"
               className="w-full p-3 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
               required
             />
