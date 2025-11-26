@@ -1,184 +1,164 @@
+# app/ad_validation.py
 """
-AI-Powered Ad Validation Engine
-5 Pillars: Creative, SKU, Landing Page, Legal, Value Intelligence
+Ad content validation and compliance checking for PatternOS.
+Ensures ads meet legal, ethical, and platform standards.
 """
 
 import re
-from typing import Dict, List, Tuple
+from typing import Dict, List, Optional
+import logging
 
-class AdValidationEngine:
-    
-    @staticmethod
-    def validate_text_content(text: str) -> Dict:
-        """Pillar 1: Text compliance validation"""
-        issues = []
-        score = 100.0
-        
-        # Check for banned words/phrases
-        banned_keywords = ['hate', 'fake', 'scam', 'guaranteed cure', 'miracle']
-        for keyword in banned_keywords:
-            if keyword.lower() in text.lower():
-                issues.append(f"Contains banned keyword: {keyword}")
-                score -= 20
-        
-        # Check for unverified superlatives
-        superlatives = ['#1', 'best', 'top', 'leading', 'number one']
-        for sup in superlatives:
-            if sup.lower() in text.lower():
-                issues.append(f"Unverified superlative: {sup}")
-                score -= 10
-        
-        # Check discount claims
-        discount_pattern = r'\d+%\s*(?:off|discount)'
-        if re.search(discount_pattern, text, re.IGNORECASE):
-            issues.append("Discount claim detected - requires verification")
-            score -= 5
-        
-        # Grammar check (basic)
-        if len(text.split()) < 3:
-            issues.append("Text too short")
-            score -= 5
-        
-        return {
-            'status': 'pass' if score >= 70 else 'fail',
-            'score': max(0, score),
-            'issues': issues,
-            'checks_passed': len(issues) == 0
-        }
-    
-    @staticmethod
-    def validate_sku(sku_id: str, sku_data: Dict) -> Dict:
-        """Pillar 2: SKU validation"""
-        checks = {
-            'exists': sku_data.get('exists', False),
-            'in_stock': sku_data.get('stock', 0) > 0,
-            'price_valid': sku_data.get('price', 0) > 0,
-            'category_valid': sku_data.get('category') is not None,
-            'legal_category': sku_data.get('category') not in ['tobacco', 'alcohol', 'weapons'],
-            'fssai_check': True  # Placeholder
-        }
-        
-        score = (sum(checks.values()) / len(checks)) * 100
-        
-        return {
-            'status': 'pass' if score >= 80 else 'fail',
-            'score': score,
-            'checks': checks,
-            'issues': [k for k, v in checks.items() if not v]
-        }
-    
-    @staticmethod
-    def validate_landing_page(url: str) -> Dict:
-        """Pillar 3: Landing page validation"""
-        # Placeholder - would do actual URL check
-        checks = {
-            'url_loads': True,
-            'no_redirect': True,
-            'price_visible': True,
-            'product_match': True
-        }
-        
-        score = (sum(checks.values()) / len(checks)) * 100
-        
-        return {
-            'status': 'pass' if score >= 75 else 'fail',
-            'score': score,
-            'checks': checks
-        }
-    
-    @staticmethod
-    def validate_legal_compliance(category: str, claims: List[str]) -> Dict:
-        """Pillar 4: Legal compliance"""
-        regulated_categories = {
-            'food': ['fat-free', 'sugar-free', 'calories', 'organic'],
-            'cosmetics': ['anti-aging', 'fairness', 'skin whitening'],
-            'pharma': ['cure', 'treatment', 'medical'],
-            'baby': ['safe', 'certified', 'tested']
-        }
-        
-        issues = []
-        if category.lower() in regulated_categories:
-            restricted = regulated_categories[category.lower()]
-            for claim in claims:
-                if any(r in claim.lower() for r in restricted):
-                    issues.append(f"Restricted claim for {category}: {claim}")
-        
-        score = 100 - (len(issues) * 15)
-        
-        return {
-            'status': 'pass' if score >= 70 else 'fail',
-            'score': max(0, score),
-            'issues': issues,
-            'category': category
-        }
-    
-    @staticmethod
-    def validate_value_intelligence_alignment(
-        product_category: str,
-        customer_identity: str,
-        product_attributes: Dict
-    ) -> Dict:
-        """Pillar 5: Value Intelligence alignment"""
-        
-        alignment_rules = {
-            'eco': ['organic', 'sustainable', 'eco-friendly', 'natural'],
-            'health': ['healthy', 'nutritious', 'low-fat', 'vitamin'],
-            'aspirational': ['premium', 'luxury', 'exclusive', 'designer'],
-            'parenting': ['safe', 'baby', 'kids', 'family'],
-            'fitness': ['protein', 'energy', 'workout', 'sports']
-        }
-        
-        if customer_identity not in alignment_rules:
-            return {'status': 'pass', 'score': 100, 'aligned': True}
-        
-        required_attrs = alignment_rules[customer_identity]
-        product_desc = ' '.join(str(v) for v in product_attributes.values()).lower()
-        
-        matches = sum(1 for attr in required_attrs if attr in product_desc)
-        score = (matches / len(required_attrs)) * 100
-        
-        return {
-            'status': 'pass' if score >= 40 else 'warning',
-            'score': score,
-            'aligned': score >= 40,
-            'identity': customer_identity,
-            'matches_found': matches
-        }
-    
-    @staticmethod
-    def calculate_overall_risk_score(validations: Dict) -> Dict:
-        """Calculate overall risk and recommendation"""
-        
-        weights = {
-            'creative': 0.25,
-            'sku': 0.25,
-            'landing_page': 0.20,
-            'legal': 0.20,
-            'value_intelligence': 0.10
-        }
-        
-        weighted_score = sum(
-            validations.get(key, {}).get('score', 0) * weight
-            for key, weight in weights.items()
-        )
-        
-        risk_score = 100 - weighted_score
-        
-        if risk_score < 20:
-            recommendation = "AUTO-APPROVE: Low risk, all checks passed"
-            auto_approve = True
-        elif risk_score < 40:
-            recommendation = "REVIEW RECOMMENDED: Medium risk, manual review suggested"
-            auto_approve = False
-        else:
-            recommendation = "REJECT: High risk, significant issues found"
-            auto_approve = False
-        
-        return {
-            'overall_score': weighted_score,
-            'risk_score': risk_score,
-            'recommendation': recommendation,
-            'auto_approve_eligible': auto_approve,
-            'pillar_scores': {k: v.get('score', 0) for k, v in validations.items()}
-        }
+logger = logging.getLogger(__name__)
 
+
+def validate_ad_content(
+    ad_title: str,
+    ad_description: str,
+    ad_type: str,
+    target_audience: Optional[str] = None
+) -> Dict[str, any]:
+    """
+    Validate ad content for compliance with PatternOS policies.
+    
+    Args:
+        ad_title: Ad headline/title
+        ad_description: Ad body text
+        ad_type: Type of ad
+        target_audience: Target audience segment (optional)
+    
+    Returns:
+        Dictionary with validation results
+    """
+    errors = []
+    warnings = []
+    score = 100.0
+    
+    # Validate title
+    if not ad_title or len(ad_title.strip()) == 0:
+        errors.append("Ad title cannot be empty")
+        score -= 50
+    elif len(ad_title) > 100:
+        warnings.append(f"Title too long ({len(ad_title)} chars) - recommend <60 chars")
+        score -= 5
+    
+    # Validate description
+    if not ad_description or len(ad_description.strip()) == 0:
+        errors.append("Ad description cannot be empty")
+        score -= 50
+    elif len(ad_description) > 500:
+        warnings.append(f"Description too long ({len(ad_description)} chars) - recommend <300 chars")
+        score -= 5
+    
+    # Check for prohibited content
+    prohibited_patterns = [
+        (r'\b(viagra|cialis|rx)\b', "Pharmaceutical products not allowed"),
+        (r'\b(betting|gambling|casino)\b', "Gambling content not allowed"),
+        (r'\b(miracle cure|guaranteed)\b', "Misleading health claims not allowed"),
+    ]
+    
+    combined_text = f"{ad_title} {ad_description}".lower()
+    
+    for pattern, message in prohibited_patterns:
+        if re.search(pattern, combined_text, re.IGNORECASE):
+            errors.append(message)
+            score -= 20
+    
+    score = max(0.0, min(100.0, score))
+    
+    return {
+        'valid': len(errors) == 0,
+        'errors': errors,
+        'warnings': warnings,
+        'score': round(score, 1)
+    }
+
+
+def check_compliance(
+    ad_content: Dict[str, str],
+    target_region: str = "IN",
+    category: Optional[str] = None
+) -> Dict[str, any]:
+    """
+    Check ad compliance with regional regulations and industry standards.
+    
+    Args:
+        ad_content: Dictionary with 'title', 'description', 'category' keys
+        target_region: ISO country code (default: IN for India)
+        category: Product category
+    
+    Returns:
+        Dictionary with compliance check results
+    """
+    violations = []
+    required_disclosures = []
+    
+    title = ad_content.get('title', '').lower()
+    description = ad_content.get('description', '').lower()
+    ad_category = category or ad_content.get('category', '').lower()
+    
+    # India-specific compliance checks
+    if target_region == "IN":
+        if ad_category == 'food':
+            if any(term in title + description for term in ['health', 'diet', 'weight loss']):
+                required_disclosures.append("FSSAI license number must be displayed")
+            
+            if 'organic' in title + description:
+                required_disclosures.append("Organic certification details required")
+        
+        if ad_category in ['electronics', 'appliances']:
+            required_disclosures.append("BIS certification mark required for electronics")
+    
+    # Universal compliance checks
+    if any(term in title + description for term in ['kids', 'children', 'baby']):
+        if any(term in title + description for term in ['junk food', 'sugar', 'candy']):
+            violations.append("Restricted advertising to children for unhealthy products")
+        
+        required_disclosures.append("Parental guidance statement may be required")
+    
+    return {
+        'compliant': len(violations) == 0,
+        'violations': violations,
+        'required_disclosures': required_disclosures,
+        'region': target_region,
+        'category': ad_category
+    }
+
+
+def sanitize_input(text: str, max_length: int = 1000) -> str:
+    """
+    Sanitize user input to prevent injection attacks and malicious content.
+    
+    Args:
+        text: Input text to sanitize
+        max_length: Maximum allowed length
+    
+    Returns:
+        Sanitized text
+    """
+    if not text:
+        return ""
+    
+    # Truncate to max length
+    text = text[:max_length]
+    
+    # Remove HTML/script tags
+    text = re.sub(r'<script[^>]*>.*?</script>', '', text, flags=re.IGNORECASE | re.DOTALL)
+    text = re.sub(r'<[^>]+>', '', text)
+    
+    # Remove SQL injection patterns
+    sql_patterns = [
+        r"(\bOR\b.*?=.*?)",
+        r"(\bUNION\b.*?\bSELECT\b)",
+        r"(--\s*$)",
+    ]
+    
+    for pattern in sql_patterns:
+        text = re.sub(pattern, '', text, flags=re.IGNORECASE)
+    
+    # Remove dangerous special characters
+    text = text.replace('\\', '').replace('`', '').replace('$', '')
+    
+    # Normalize whitespace
+    text = ' '.join(text.split())
+    
+    return text.strip()
